@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body data-page-type="admin">
+  <header class="top">
+    <div class="brand" style="text-align: center;">
+
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+      
+      <h1 class="nav-gold">
+        <span 
+          data-en="Tu<br>Mejor<br>Version" 
+          data-es="Tu<br>Mejor<br>Versión">
+        </span>
+      </h1> 
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>>
+  </header>
+    <body>
+      <h1 class="nav-gold"><span data-en="Admin" data-es="Admin"></span></h1>
+      
+      <p><a href="/">Home</a></p>
+      <section>
+        <h2>Users</h2>
+        <div id="users"></div>
+      </section>
+      <section>
+        <h2>Accounting</h2>
+        <p><a href="/api/admin/accounting.csv" target="_blank">Download donations export (CSV)</a></p>
+      </section>
+    </body>  
+</main>
+<script src="/static/js/app.js"></script>
+<script>
+async function api(path, opts={}){
+  const r=await fetch(path,{credentials:'include', headers:{...(opts.body?{'content-type':'application/json'}:{})}, ...opts});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok) throw new Error(j?.error || 'Failed');
+  return j;
+}
+(async () => {
+  try {
+    console.log("ADMIN PAGE: starting");
+
+    const me = await api('/api/me');
+    console.log("ADMIN PAGE: /api/me =", me);
+
+    if (me.role !== 'admin') {
+      throw new Error('Admin only');
+    }
+
+    const users = await api('/api/admin/users');
+    console.log("ADMIN PAGE: /api/admin/users =", users);
+
+    const usersEl = document.getElementById('users');
+    if (!usersEl) {
+      console.error("ADMIN PAGE: #users element not found");
+      return;
+    }
+
+    usersEl.innerHTML =
+      '<ul>' +
+      users.map(u => {
+        const isAdmin = u.role === 'admin';
+        return `
+          <li>
+            ${u.id} — ${u.name} (${u.email}) [${u.role}]
+            <button
+              data-id="${u.id}"
+              data-name="${escapeHtml(u.name || '')}"
+              class="toggle-admin">
+              ${isAdmin ? 'Remove Admin' : 'Make Admin'}
+            </button>
+            <button
+              data-id="${u.id}"
+              data-name="${escapeHtml(u.name || '')}"
+              class="del">
+              Delete
+            </button>
+          </li>
+        `;
+      }).join('') +
+      '</ul>';
+
+    document.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+
+        console.log("DELETE CLICK: id =", id, "name =", name);
+
+        if (!confirm(`Delete user ${name || id}?`)) {
+          console.log("DELETE CANCELLED");
+          return;
+        }
+
+        try {
+          const result = await api(`/api/admin/users/${id}`, {
+            method: 'DELETE'
+          });
+
+          console.log("DELETE SUCCESS:", result);
+          location.reload();
+        } catch (err) {
+          console.error("DELETE FAILED:", err);
+          alert(`Delete failed: ${err.message}`);
+        }
+      });
+    });
+
+    document.querySelectorAll('.toggle-admin').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const rowText = btn.parentElement ? btn.parentElement.textContent : '';
+        const currentlyAdmin = rowText.includes('[admin]');
+        const newRole = currentlyAdmin ? 'user' : 'admin';
+
+        console.log("TOGGLE ADMIN CLICK:");
+        console.log("  id =", id);
+        console.log("  currentlyAdmin =", currentlyAdmin);
+        console.log("  newRole =", newRole);
+
+        if (!confirm(`Change user ${id} role to "${newRole}"?`)) {
+          console.log("ROLE CHANGE CANCELLED");
+          return;
+        }
+
+        try {
+          const result = await api(`/api/admin/users/${id}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role: newRole })
+          });
+
+          console.log("ROLE CHANGE SUCCESS:", result);
+          location.reload();
+        } catch (err) {
+          console.error("ROLE CHANGE FAILED:", err);
+          alert(`Role update failed: ${err.message}`);
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error("ADMIN PAGE FAILED:", err);
+    alert(err.message || 'Failed to load admin page');
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+})();
+</script>
+</body></html>

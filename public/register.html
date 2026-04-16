@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand" style="text-align: center;">
+
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+      
+      <h1 class="nav-gold">
+        <span 
+          data-en="Tu<br>Mejor<br>Version" 
+          data-es="Tu<br>Mejor<br>Versión">
+        </span>
+      </h1> 
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>>
+  </header>
+  <main class="container" style="padding-top:18px;max-width:520px;">
+    <body>
+      <h1 class="nav-gold"><span data-en="Register" data-es="Registrarse"></span></h1>
+    
+      <form id="f">
+        <label>Name<br><input name="name" required></label><br><br>
+        <label>Email<br><input name="email" type="email" required></label><br><br>
+        <label>Password<br><input name="password" type="password" minlength="8" required></label><br><br>
+        <button type="submit">Create Account</button>
+      </form>
+      <p id="msg"></p>
+      <p><a href="/">Home</a> · <a href="/login.html">Login</a></p>
+    </body>
+  </main>
+  <script src="/static/js/app.js"></script>
+  <script>
+    async function api(path, opts={}){
+      const r = await fetch(path, {credentials:'include', headers:{'content-type':'application/json', ...(opts.headers||{})}, ...opts});
+      const body = await r.json().catch(()=>null);
+      if(!r.ok) throw new Error(body?.error || 'Register failed');
+      return body;
+    }
+    document.getElementById('f').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = {name: fd.get('name'), email: String(fd.get('email')).toLowerCase().trim(), password: fd.get('password')};
+      try{
+        await api('/api/auth/register', {method:'POST', body: JSON.stringify(payload)});
+        location.href = '/';
+      }catch(err){
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

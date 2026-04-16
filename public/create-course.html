@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tu Mejor Versión</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <script src="/static/js/app.js"></script>
+  </head>
+  <body data-page-type="admin">
+    <header class="top">
+    <div class="brand" style="text-align: center;">
+
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+      
+      <h1 class="nav-gold">
+        <span 
+          data-en="Tu<br>Mejor<br>Version" 
+          data-es="Tu<br>Mejor<br>Versión">
+        </span>
+      </h1> 
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>>
+
+      </nav>
+    </div>
+  </header>
+
+
+    <h1 class="nav-gold"><span data-en="Create Course" data-es="Crear Curso"></span></h1>
+
+ <form id="courseForm" class="form">
+  <label>Course Name
+    <input name="name" required>
+  </label>
+
+  <label>Date & Time
+    <input type="datetime-local" name="date" required>
+  </label>
+
+  <label>Presenter
+    <input name="presenter" required>
+  </label>
+
+  <label>Location
+    <input name="location" required>
+  </label>
+
+  <label>Capacity
+    <input type="number" name="capacity" min="0">
+  </label>
+
+  <label>About
+    <textarea name="about" rows="6" required></textarea>
+  </label>
+
+  <label>Requirements
+    <textarea name="requirements" rows="4"></textarea>
+  </label>
+
+  <button type="submit">Submit</button>
+</form>
+
+<script id="course-form-debug">
+console.log("🚀 courseForm script loaded");
+
+const formEl = document.getElementById("courseForm");
+
+console.log("🔍 form element:", formEl);
+
+if (!formEl) {
+  console.error("❌ courseForm NOT FOUND");
+} else {
+  formEl.addEventListener("submit", async (e) => {
+    console.log("🖱️ SUBMIT event triggered");
+
+    e.preventDefault();
+
+    try {
+      const form = e.target;
+
+      console.log("📋 Raw form values:");
+      console.log("   name:", form.name?.value);
+      console.log("   date:", form.date?.value);
+      console.log("   presenter:", form.presenter?.value);
+      console.log("   location:", form.location?.value);
+      console.log("   capacity:", form.capacity?.value);
+      console.log("   about:", form.about?.value);
+      console.log("   requirements:", form.requirements?.value);
+
+      const payload = {
+        name: form.name.value.trim(),
+        date: form.date.value,
+        presenter: form.presenter.value.trim(),
+        location: form.location.value.trim(),
+        capacity: Number(form.capacity.value || 0),
+        about: form.about.value.trim(),
+        requirements: form.requirements.value.trim()
+      };
+
+      console.log("📦 Payload to send:", payload);
+      console.log("🌐 Sending POST → /api/courses");
+
+      const res = await fetch("/api/courses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log("📡 Response received:");
+      console.log("   status:", res.status);
+      console.log("   ok:", res.ok);
+
+      const rawText = await res.text();
+      console.log("📄 Raw response text:", rawText);
+
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (jsonErr) {
+        console.error("❌ Failed to parse JSON response", jsonErr);
+        return;
+      }
+
+      console.log("✅ Parsed response:", data);
+
+      if (res.ok) {
+        console.log("✅ Course created successfully → redirecting");
+        window.location.href = "/courses.html";
+        return;
+      }
+
+      if (!res.ok) {
+        console.error("❌ Server returned error:", data);
+      } else {
+        console.log("🎉 Course created successfully, ID:", data.id);
+      }
+
+    } catch (err) {
+      console.error("💥 FETCH / SUBMIT ERROR:", err);
+    }
+  });
+}
+</script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const lang = localStorage.getItem("lang") || "en";
+      updateLanguage(lang);
+    });
+  </script>
+</body>
+</html>
+

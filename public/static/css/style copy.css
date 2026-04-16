@@ -1,0 +1,638 @@
+/* =========================
+   ROOT COLOR SYSTEM
+========================= */
+:root{
+  --bg: #b900ac;         /* Main background */
+  --surface: #ffffff;    /* Cards / table background */
+  --decor: #e6dddd;      /* Borders / subtle decor */
+  --decor-strong: #d4c7c5;
+
+  --text-main: #1f1b1b;  /* Primary letters */
+  --text-soft: #4b4242;  /* Secondary letters */
+
+  --accent: #8a3d4a;     /* Special letters */
+  --accent-hover: #6f2f3a;
+}
+
+/* =========================
+   GLOBAL + RESPONSIVE BASE
+========================= */
+*,
+*::before,
+*::after{
+  box-sizing: border-box;
+}
+
+html{
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body{
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Amasis MT Pro;
+  margin: 0;
+  padding: 2rem;
+}
+
+/* Debug outline (enable only when troubleshooting) */
+/* body { outline: 5px solid rgb(0, 255, 76) !important; } */
+
+img, video{
+  max-width: 100%;
+  height: auto;
+}
+
+/* A general page container if you use .wrap in base.html */
+.wrap{
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* =========================
+   HEADER / NAV / LANGUAGE
+========================= */
+.top{
+  width: 100%;
+}
+
+.brand{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.flipped{
+  transform: scaleX(-1);
+}
+
+/* If your brand is an H1 inside .brand */
+.brand h1{
+  margin: 0;
+  text-align: center;
+  line-height: 1.1;
+}
+
+/* Language + Nav row */
+.top-row{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+/* Language toggle stays horizontal */
+.lang-toggle{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.lang-sep{
+  color: rgba(255,255,255,0.75);
+}
+
+/* =========================
+   POLISHED LANGUAGE BUTTONS
+========================= */
+.lang-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0.45rem 0.75rem;
+  min-height: 38px;
+
+  border-radius: 12px;
+  cursor: pointer;
+
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.92);
+  font-weight: 800;
+
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+  box-shadow:
+    0 10px 20px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+.lang-btn:hover{
+  background: rgba(0,0,0,0.26);
+  border-color: rgba(255,255,255,0.34);
+  transform: translateY(-1px);
+}
+
+.lang-btn:active{
+  transform: translateY(0px);
+}
+
+.lang-btn:focus-visible{
+  outline: 3px solid rgba(212,175,55,0.60);
+  outline-offset: 3px;
+}
+
+/* =========================
+   NAV LAYOUT
+========================= */
+.main-nav{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.main-nav a{
+  display: inline-flex;
+  text-decoration: none;
+  align-items: center;
+}
+
+/* =========================
+   METALLIC GOLD TEXT
+========================= */
+.nav-gold{
+  letter-spacing: 1px;
+
+  background: linear-gradient(
+    145deg,
+    #fceabb 0%,
+    #f8d568 20%,
+    #d4af37 40%,
+    #b8860b 60%,
+    #f8d568 80%,
+    #fff3c4 100%
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  background-clip: text;
+  color: transparent;
+
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-gold:hover{
+  filter: brightness(1.15);
+  text-shadow:
+    0 0 5px rgba(212,175,55,0.6),
+    0 0 12px rgba(212,175,55,0.4);
+}
+
+/* Headings */
+h1{
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+}
+
+/* Brand title size */
+.brand h1.nav-gold{
+  font-size: 3.4rem;
+}
+
+/* Brand image size */
+.brand-img{
+  height: 35px;
+  width: auto;
+}
+
+/* =========================
+   POLISHED NAV BUTTONS
+========================= */
+.nav-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0.6rem 1.05rem;
+  min-height: 42px;
+  border-radius: 14px;
+
+  /* “glass” chip look that reads pro on purple */
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.22);
+
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.16);
+
+  text-decoration: none;
+  line-height: 1;
+  user-select: none;
+
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+/* Nav label style (white + bold by default) */
+.nav-btn span{
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: rgba(255,255,255,0.94);
+}
+
+/* If you apply nav-gold to the inner span, keep it visible */
+.nav-btn span.nav-gold{
+  color: transparent;
+}
+
+/* Hover: lift + brighter */
+.nav-btn:hover{
+  background: rgba(255,255,255,0.20);
+  border-color: rgba(255,255,255,0.34);
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 28px rgba(0,0,0,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.20);
+}
+
+/* Active press */
+.nav-btn:active{
+  transform: translateY(0px);
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+.nav-btn:focus-visible{
+  outline: 3px solid rgba(212,175,55,0.60);
+  outline-offset: 3px;
+}
+
+/* =========================
+   GENERAL BUTTONS (.btn)
+========================= */
+.btn{
+  display: inline-block;
+  background-color: var(--accent);
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: transform 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+  border: 1px solid var(--decor-strong);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+}
+
+.btn:hover{
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn:active{
+  transform: translateY(0px);
+}
+
+.btn:focus-visible{
+  outline: 3px solid rgba(212,175,55,0.60);
+  outline-offset: 3px;
+}
+
+/* =========================
+   TABLE
+========================= */
+.table{
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--surface);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+.table th{
+  background-color: var(--decor);
+  color: var(--text-main);
+  text-align: left;
+  padding: 0.75rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--decor-strong);
+}
+
+.table td{
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--decor);
+  color: var(--text-soft);
+}
+
+.table tr:hover{
+  background-color: #f0eaea;
+}
+
+/* =========================
+   SECTION CARD BASE
+========================= */
+
+.section-card{
+  width: 100%;
+  padding: 40px 30px;      /* makes background taller */
+  margin-bottom: 40px;     /* space between sections */
+  border-radius: 20px;
+
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+/* =========================
+   CARD COLORS (index)
+========================= */
+.image-slider { background-color: #d4fc45; }
+.mission-card { background-color: #d4fc45; }
+.events-card { background-color: #459afc; }
+.courses-card { background-color: #2eec47; }
+.community-card { background-color: #459afc; }
+.share-card { background-color: #2eec47; }
+
+/* =========================
+   IMAGE SLIDER
+========================= */
+.image-slider{
+  position: relative;
+  width: 100%;
+  height: auto;
+  padding: 30px;     /* adds extra background space */
+  overflow: hidden;
+  border-radius: 15px;
+  margin: 0 auto 30px auto;
+}
+
+/* Overlay */
+.image-slider::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.slides{
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 100%;
+}
+
+.slides img{
+  flex: 0 0 100%;
+  width: 100%;
+  height: 500px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Buttons */
+.image-slider button{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3; /* above overlay */
+
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  font-size: 24px;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 50%;
+
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.prev{ left: 15px; }
+.next{ right: 15px; }
+
+.image-slider button:hover{
+  background: rgba(0,0,0,0.8);
+  transform: translateY(-50%) scale(1.03);
+}
+
+/* =========================
+   BEGINING OF FORM COURSE CREATION
+========================= */
+
+.form {
+  display: grid;
+  gap: 12px;
+  max-width: 600px;
+}
+
+/* Ensure grid behaves correctly ending the form input before the edge*/
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 25px;
+}
+
+.form-row label {
+  font-weight: 600;
+}
+
+.form-row input,
+.form-row textarea {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.form-row textarea {
+  resize: vertical;
+}
+
+/* =========================
+   END OF FORM COURSE CREATION
+========================= */
+
+
+/* =========================
+   BEGINING OF HAMBURGER MENU
+========================= */
+
+/* Container */
+.nav-container {
+  position: relative;
+}
+
+/* Hamburger button */
+.menu-toggle {
+  width: 40px;
+  height: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  background: none;
+  border: none;
+  z-index: 1001;
+}
+
+.menu-toggle span {
+  height: 4px;
+  width: 100%;
+  background: #d4af37; /* gold style */
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Animate into X */
+.menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translateY(10px);
+}
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translateY(-10px);
+}
+
+/* Menu overlay */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 260px;
+  height: 100%;
+  background: #08000871;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 10px;
+  gap: 10px;
+  transition: right 0.3s ease;  
+  z-index: 3000;
+}
+
+/* Show menu */
+.mobile-menu.active {
+  right: 0;
+}
+
+/* Links */
+.mobile-menu .nav-btn {
+  display: block;
+  padding: 6px 0;          /* reduced spacing */
+  margin: 0;               /* remove spacing between items */
+  background: none;        /* remove rectangle background */
+  border: none;            /* remove borders */
+  border-radius: 0;        /* remove rounded corners */
+  box-shadow: none;        /* remove button shadow */
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+.mobile-menu .nav-btn span {
+  background: linear-gradient(
+    135deg,
+    #d4af37,
+    #f6e27a,
+    #d4af37
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 20px;   /* 👈 ADD HERE */
+}
+
+.mobile-menu .nav-btn:hover {
+  color: #d4af37;
+}/* Container */
+
+
+/* =========================
+   END OF HAMBURGER MENU
+========================= */
+
+/* =========================
+   RESPONSIVE BREAKPOINTS
+========================= */
+@media (max-width: 900px){
+  body{
+    padding: 1.25rem;
+  }
+  .wrap{
+    max-width: 100%;
+  }
+  .brand h1.nav-gold{
+    font-size: 2.0rem;
+  }
+  .image-slider{
+    width: 80%;
+    height: 420px;
+  }
+  .slides img{
+    height: 420px;
+  }
+}
+
+/* =========================
+  BEG. Form for course container 
+========================= */
+//
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================
+  END Form for course container 
+========================= */
+
+@media (max-width: 600px){
+  body{
+    padding: 0.9rem;
+  }
+
+  .top-row{
+    gap: 0.75rem;
+    margin-top: 0.6rem;
+  }
+
+  .main-nav{
+    gap: 0.6rem;
+  }
+
+  .brand{
+    gap: 1rem;
+  }
+
+  .brand h1.nav-gold{
+    font-size: 1.75rem;
+  }
+
+  .brand-img{
+    height: 28px;
+  }
+
+  /* Tables: allow horizontal scroll on small screens */
+  .table{
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Slider full width on phones */
+  .image-slider{
+    width: 100%;
+    height: 320px;
+  }
+  .slides img{
+    height: 320px;
+  }
+}

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tu Mejor Versión</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <script src="/static/js/app.js"></script>
+  </head>
+  <body data-page-type="admin">
+    <header class="top">
+    <div class="brand" style="text-align: center;">
+
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+      
+       <h1 class="nav-gold">
+        <span 
+          data-en="Tu<br>Mejor<br>Version" 
+          data-es="Tu<br>Mejor<br>Versión">
+        </span>
+      </h1> 
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>>
+
+      </nav>
+    </div>
+  </header>
+
+
+    <h1 class="nav-gold"><span data-en="Create Event" data-es="Crear Evento"></span></h1>
+
+ <form id="eventForm" class="form">
+  <label>Event Name
+    <input name="name" required>
+  </label>
+
+  <label>Date & Time
+    <input type="datetime-local" name="date" required>
+  </label>
+
+  <label>Presenter
+    <input name="presenter" required>
+  </label>
+
+  <label>Location
+    <input name="location" required>
+  </label>
+
+  <label>Capacity
+    <input type="number" name="capacity" min="0">
+  </label>
+
+  <label>About
+    <textarea name="about" rows="6" required></textarea>
+  </label>
+
+  <label>Requirements
+    <textarea name="requirements" rows="4"></textarea>
+  </label>
+
+  <button type="submit">Create Event</button>
+</form>
+
+<script>
+console.log("🚀 eventForm script loaded");
+
+const formEl = document.getElementById("eventForm");
+console.log("🔍 event form element:", formEl);
+
+if (!formEl) {
+  console.error("❌ eventForm NOT FOUND");
+} else {
+  formEl.addEventListener("submit", async (e) => {
+    console.log("🖱️ EVENT SUBMIT triggered");
+    e.preventDefault();
+
+    try {
+      const form = e.target;
+
+      const payload = {
+        name: form.name.value.trim(),
+        date: form.date.value,
+        presenter: form.presenter.value.trim(),
+        location: form.location.value.trim(),
+        capacity: Number(form.capacity.value || 0),
+        about: form.about.value.trim(),
+        requirements: form.requirements.value.trim()
+      };
+
+      console.log("📦 Event payload:", payload);
+
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+
+      console.log("📡 event response status:", res.status);
+
+      const rawText = await res.text();
+      console.log("📄 raw response text:", rawText);
+
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (jsonErr) {
+        console.error("❌ Failed to parse event JSON response", jsonErr);
+        return;
+      }
+
+      console.log("✅ parsed event response:", data);
+
+      if (!res.ok) {
+        console.error("❌ Event create failed:", data);
+        alert("Failed to create event.");
+        return;
+      }
+
+      console.log("🎉 Event created successfully, ID:", data.id);
+      alert(`Event created successfully. ID: ${data.id}`);
+      form.reset();
+
+    } catch (err) {
+      console.error("💥 EVENT SUBMIT ERROR:", err);
+      alert("Unexpected error creating event.");
+    }
+  });
+}
+</script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const lang = localStorage.getItem("lang") || "en";
+      updateLanguage(lang);
+    });
+  </script>
+</body>
+</html>
+

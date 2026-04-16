@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <header class="top">
+    <div class="brand-index" style="text-align: center;">
+
+      <img src="/static/images/nuevos_comiensos.png"
+          alt="Logo"
+          class="brand-index-img">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px; margin-top: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>
+  </header>
+
+<!--  <header class="topbar">
+    <div class="container">
+      <a class="brand" href="/">Tu Mejor Versión</a>
+      <nav class="nav">
+        <a href="/events.html">Events</a>
+        <a href="/courses.html">Courses</a>
+        <a href="/forum.html">Forum</a>
+        <a href="/donate.html">Donate</a>
+        <span id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+-->
+  <main class="container" style="padding-top:18px;">
+    <h1 class="nav-gold">        
+      <span 
+        data-en="Welcome" 
+        data-es="Bienvenidos">
+      </span>
+    </h1>
+    <!--<p id="me"></p> -->
+    <!-- <div class="grid"> -->
+    <div class="image-slider">
+      <div class="slides">
+      <div class="image-slider">
+        <div class="slides" id="slides-container">
+          <!-- Images will be injected dynamically -->
+        </div>
+
+        <button class="prev">&#10094;</button>
+        <button class="next">&#10095;</button>
+      </div>
+      </div>
+
+    </div>
+
+    <section class="section-card  mission-card">
+          <!-- ✅ Overlay shown only when index == 1 -->
+        <div class="slider-overlay" data-show-on-index="1">
+          <div class="overlay-card">
+            <h2 
+                data-en='Mission of "Your Best Version"'
+                data-es='Misión de "Tu Mejor Versión"'></h2>
+
+            <p data-en="To empower women who have experienced mistreatment and abuse that have left them vulnerable, guiding them toward emotional healing and spiritual strengthening. Our mission is to offer the means to cultivate self-esteem and overcome depression, providing a faith-based support system so that each woman can discover and embrace her best self, becoming the linchpin of her family and positively impacting her community."
+              data-es="Empoderar a las mujeres que han experimentado maltrato y abuso que las han dejado vulnerables, guiándolas hacia la sanación emocional y el fortalecimiento espiritual. Nuestra misión es ofrecer los medios para cultivar la autoestima y superar la depresión, brindando un sistema de apoyo basado en la fe para que cada mujer pueda descubrir y abrazar su mejor versión, convirtiéndose en el pilar de su familia e impactando positivamente a su comunidad."></p>
+
+            <h2 
+                data-en='Vision of "Your Best Version"'
+                data-es='Visión de "Tu Mejor Versión"'></h2>
+
+            <p data-en='We envision "Your Best Version" as a shining beacon of hope and renewal. We imagine a safe space where every woman, regardless of her past, finds the spiritual strength to heal and thrive. We aspire to build a strong community, imbued with faith and spirituality, that inspires these women to transcend their scars, leading them to live full and empowered lives so they can take charge of their own destiny.'
+              data-es='Visualizamos "Tu Mejor Versión" como un faro brillante de esperanza y renovación. Imaginamos un espacio seguro donde cada mujer, sin importar su pasado, encuentre la fortaleza espiritual para sanar y prosperar. Aspiramos a construir una comunidad fuerte, impregnada de fe y espiritualidad, que inspire a estas mujeres a trascender sus heridas, llevándolas a vivir vidas plenas y empoderadas para que puedan tomar el control de su propio destino.'></p>
+          </div>
+        </div>
+      </section>
+      <section class="section-card  events-card">
+        <h2><span data-en="Events" data-es="Eventos"></span></h2>
+        <ul class="event-list" id="events-list">
+          <li>Loading events...</li>
+        </ul>
+        <div id="create-event-container" style="display:none;"></div>
+      </section>
+    <section class="section-card  courses-card">
+      <h2><span data-en="Courses" data-es="Cursos"></span></h2>
+
+        <ul class="course-list" id="courses-list">
+          <li>Loading courses...</li>
+        </ul>
+        <div id="create-course-container" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/index-slider.js"></script>
+
+  <script>
+  /*****************************************************************************
+   * BEGIN Page INIT
+   ***************************************************************************/
+  console.log("🚀 INIT EXECUTION BLOCK START");
+  console.log("📄 document.readyState =", document.readyState);
+
+  if (document.readyState === "loading") {
+    console.log("⏳ DOM still loading → attaching DOMContentLoaded listeners");
+
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("🔥 DOMContentLoaded fired");
+
+      if (typeof loadCourses === "function") {
+        console.log("📚 Calling loadCourses()");
+        loadCourses();
+      } else {
+        console.warn("⚠️ loadCourses is not defined");
+      }
+
+      if (typeof loadEvents === "function") {
+        console.log("📅 Calling loadEvents()");
+        loadEvents();
+      } else {
+        console.warn("⚠️ loadEvents is not defined");
+      }
+    });
+
+  } else {
+    console.log("⚡ DOM already loaded → executing immediately");
+
+    if (typeof loadCourses === "function") {
+      console.log("📚 Calling loadCourses()");
+      loadCourses();
+    } else {
+      console.warn("⚠️ loadCourses is not defined");
+    }
+
+    if (typeof loadEvents === "function") {
+      console.log("📅 Calling loadEvents()");
+      loadEvents();
+    } else {
+      console.warn("⚠️ loadEvents is not defined");
+    }
+  }
+
+  console.log("✅ INIT EXECUTION BLOCK END");
+  </script>
+
+  <script>
+
+
+  /* prepares the image slider */
+  document.addEventListener("DOMContentLoaded", function () {
+    const slides = document.querySelector(".slides");
+    const images = document.querySelectorAll(".slides img");
+    const prev = document.querySelector(".prev");
+    const next = document.querySelector(".next");
+
+    let index = 0;
+    const total = images.length;
+
+    console.log("Slider initialized");
+    console.log("Total images:", total);
+
+    console.log("slides element:", slides);
+    console.log("number of images:", images.length);
+
+    images.forEach((img, i) => {
+      console.log("----");
+      console.log("Index:", i);
+      console.log("src:", img.src);
+      console.log("complete:", img.complete);
+      console.log("naturalWidth:", img.naturalWidth);
+      console.log("naturalHeight:", img.naturalHeight);
+    });
+
+    function updateSlider() {
+      console.log("Updating slider. Current index:", index);
+      slides.style.transform = `translateX(-${index * 100}%)`;
+    }
+
+    next.addEventListener("click", function () {
+      console.log("NEXT clicked. Current index before:", index);
+
+      if (index < total - 1) {
+        index++;
+        console.log("Index incremented to:", index);
+        updateSlider();
+      } else {
+        console.log("Already at last slide.");
+      }
+    });
+
+    prev.addEventListener("click", function () {
+      console.log("PREV clicked. Current index before:", index);
+
+      if (index > 0) {
+        index--;
+        console.log("Index decremented to:", index);
+        updateSlider();
+      } else {
+        console.log("Already at first slide.");
+      }
+    });
+  });  
+
+  </script>
+ 
+</body>
+</html>

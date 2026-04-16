@@ -1,0 +1,20 @@
+name = "tu-mejor-version"
+main = "src/worker.ts"
+compatibility_date = "2026-02-24"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tumejorversion"
+database_id = "31323ca1-ff6e-4f95-8119-5e5b85dc9c27"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "tumejorversion-assets"
+
+[vars]
+# Generate a long random secret: openssl rand -base64 48
+JWT_SECRET = "WjL6DDiicScSqA1+4Dh+E8gFH0ISTc5ByfioNnXfi+9MaRzKdhKBOhJd8NbDT+co"

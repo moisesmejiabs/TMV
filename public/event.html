@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <header class="top">
+    <div class="brand" style="text-align: center;">
+
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+      
+      <h1 class="nav-gold">
+        <span 
+          data-en="Tu<br>Mejor<br>Version" 
+          data-es="Tu<br>Mejor<br>Versión">
+        </span>
+      </h1> 
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>>
+  </header>
+<body>
+  <main class="container" style="padding-top:18px;">
+  <h1 id="title">Event</h1>
+  <p id="meta"></p>
+  <div id="about"></div>
+  <p><b>Location:</b> <span id="loc"></span></p>
+  <p><b>Requirements:</b> <span id="req"></span></p>
+  <p><b>Capacity:</b> <span id="cap"></span> · <b>Registered:</b> <span id="count"></span></p>
+  <div id="actions"></div>
+  <div id="admin"></div>
+  <p><a href="/events.html">Back</a></p>
+  </main>
+  <section class="feedback-section card">
+    <h2 data-en="Leave Feedback" data-es="Dejar Comentarios">Leave Feedback</h2>
+
+    <form id="event-feedback-form" class="feedback-form">
+      <label for="event-feedback-text" data-en="Your feedback" data-es="Tus comentarios">
+        Your feedback
+      </label>
+
+      <div class="emoji-toolbar" id="emoji-toolbar">
+        <button type="button" class="emoji-btn" data-emoji="😀">😀</button>
+        <button type="button" class="emoji-btn" data-emoji="😊">😊</button>
+        <button type="button" class="emoji-btn" data-emoji="🙏">🙏</button>
+        <button type="button" class="emoji-btn" data-emoji="❤️">❤️</button>
+        <button type="button" class="emoji-btn" data-emoji="🎉">🎉</button>
+        <button type="button" class="emoji-btn" data-emoji="👏">👏</button>
+        <button type="button" class="emoji-btn" data-emoji="✨">✨</button>
+        <button type="button" class="emoji-btn" data-emoji="🙌">🙌</button>
+      </div>
+
+      <textarea
+        id="event-feedback-text"
+        name="feedback"
+        rows="5"
+        maxlength="1000"
+        placeholder="Write your feedback here..."
+        data-en-placeholder="Write your feedback here..."
+        data-es-placeholder="Escribe tus comentarios aquí..."
+        required
+      ></textarea>
+
+      <div class="feedback-actions">
+        <button type="submit" class="btn" data-en="Submit Feedback" data-es="Enviar Comentarios">
+          Submit Feedback
+        </button>
+        <span id="event-feedback-status" class="muted"></span>
+      </div>
+    </form>
+
+    <div class="feedback-list-wrap">
+      <h3 data-en="Comments" data-es="Comentarios">Comments</h3>
+      <ul id="event-feedback-list" class="feedback-list">
+        <li class="muted" data-en="No feedback yet." data-es="Aún no hay comentarios.">No feedback yet.</li>
+      </ul>
+    </div>
+  </section>
+  
+  <script src="/static/js/app.js"></script>
+
+  <script>
+  function q(name){return new URLSearchParams(location.search).get(name)}
+  async function api(path, opts={}){
+    const r=await fetch(path,{credentials:'include', headers:{...(opts.body?{'content-type':'application/json'}:{})}, ...opts});
+    const ct=r.headers.get('content-type')||'';
+    const b=ct.includes('application/json')?await r.json().catch(()=>null):await r.text().catch(()=>null);
+    if(!r.ok) throw new Error((b&&b.error)||'Request failed');
+    return b;
+  }
+  (async()=>{
+    const id=q('id');
+    const e=await api(`/api/events/${id}`);
+    document.title = e.name;
+    document.getElementById('title').textContent=e.name;
+    document.getElementById('meta').textContent = `${new Date(e.date).toLocaleString()} · Presenter: ${e.presenter}`;
+    document.getElementById('about').textContent = e.about;
+    document.getElementById('loc').textContent = e.location;
+    document.getElementById('req').textContent = e.requirements || '';
+    document.getElementById('cap').textContent = e.capacity || 0;
+    document.getElementById('count').textContent = e.enrolled_count;
+
+    const me = await api('/api/me').catch(()=>null);
+    let html='';
+    if(!me){ html = '<p><a href="/login.html">Login</a> to register.</p>'; }
+    else {
+      html += e.enrolled ? '<button id="cancel">Cancel Registration</button>' : '<button id="enroll">Register</button>';
+      if(me.role==='admin') html += ' <button id="delete">Delete Event</button>';
+    }
+    document.getElementById('actions').innerHTML = html;
+
+    const enrollBtn=document.getElementById('enroll');
+    if(enrollBtn) enrollBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/enroll`,{method:'POST'}); location.reload();});
+    const cancelBtn=document.getElementById('cancel');
+    if(cancelBtn) cancelBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/cancel`,{method:'POST'}); location.reload();});
+    const delBtn=document.getElementById('delete');
+    if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm('Delete this event?')){await api(`/api/events/${id}`,{method:'DELETE'}); location.href='/events.html';}});
+
+    if(me && me.role==='admin'){
+      const users = await api(`/api/events/${id}/registered`);
+      document.getElementById('admin').innerHTML = '<h3>Registered Users</h3>' + (users.length?('<ul>'+users.map(u=>`<li>${u.name} (${u.email})</li>`).join('')+'</ul>'):'<p>No registrations.</p>');
+    }
+  })().catch(err=>{document.getElementById('about').textContent=err.message;});
+  </script>
+</body></html>
