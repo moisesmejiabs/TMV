@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body data-page-type="user">
+  <header class="top">
+    <div class="brand" style="text-align: center;">
+
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+      
+      <h1 class="nav-gold">
+        <span 
+          data-en="Tu<br>Mejor<br>Version" 
+          data-es="Tu<br>Mejor<br>Versión">
+        </span>
+      </h1> 
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>>
+  </header>
+<body>
+  <h1 class="nav-gold">
+    <span data-en="User Profile" data-es="Perfil de Usuario"></span>
+  </h1>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
+  <p><a href="/">Administrative</a></p>
+
+  <section class="section-card">
+    <h2>Profile Information</h2>
+
+    <form id="admin-user-form" enctype="multipart/form-data">
+
+      <div>
+        <label for="username">Username</label><br>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Enter username"
+        >
+      </div>
+
+      <br>
+
+      <div>
+        <label for="first_name">First Name</label><br>
+        <input
+          type="text"
+          id="first_name"
+          name="first_name"
+          placeholder="Enter first name"
+        >
+      </div>
+
+      <br>
+
+      <div>
+        <label for="last_name">Last Name</label><br>
+        <input
+          type="text"
+          id="last_name"
+          name="last_name"
+          placeholder="Enter last name"
+        >
+      </div>
+
+      <br>
+
+      <div>
+        <label for="email">E-mail</label><br>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Enter email"
+        >
+      </div>
+
+      <br>
+
+      <div>
+        <label for="password">New Password</label><br>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Leave blank if not changing password"
+        >
+      </div>
+
+      <br>
+
+      <div>
+        <label for="photo">Upload Photo</label><br>
+        <input
+          type="file"
+          id="photo"
+          name="photo"
+          accept="image/*"
+        >
+      </div>
+
+      <br>
+
+      <div>
+        <label for="testimony">Testimony</label><br>
+        <textarea
+          id="testimony"
+          name="testimony"
+          rows="8"
+          placeholder="Write your testimony here..."
+        ></textarea>
+      </div>
+
+      <br>
+
+      <button type="submit">Save Changes</button>
+      <p id="profile-status"></p>
+
+    </form>
+  </section>
+
+</body> 
+</main>
+<script>
+  async function api(path, opts = {}) {
+    console.log("🌐 API CALL →", path);
+    console.log("📤 Options →", opts);
+
+    let r;
+    try {
+      r = await fetch(path, {
+        credentials: 'include',
+        headers: {
+          ...(opts.body ? { 'content-type': 'application/json' } : {})
+        },
+        ...opts
+      });
+    } catch (err) {
+      console.error("❌ FETCH FAILED:", err);
+      throw err;
+    }
+
+    console.log("📡 Response status:", r.status);
+
+    let j;
+    try {
+      j = await r.json();
+      console.log("📦 Response JSON:", j);
+    } catch (err) {
+      console.warn("⚠️ Failed to parse JSON");
+      j = null;
+    }
+
+    if (!r.ok) {
+      console.error("❌ API ERROR:", j);
+      throw new Error(j?.error || 'Failed');
+    }
+
+    console.log("✅ API SUCCESS");
+    return j;
+  }
+(async () => {
+  try {
+    console.log("REGISTER USER ADMIN PAGE: starting");
+
+    const me = await api('/api/me');
+    console.log("REGISTER USER ADMIN PAGE:  /api/me =", me);
+
+    // 🔐 AUTH CHECK
+    if (!me) {
+      console.log("❌ No user session → redirecting to login");
+      window.location.href = "/login.html";
+      return;
+    }
+
+    console.log("🧩 Starting form population...");
+
+    const usernameEl = document.getElementById('username');
+    const emailEl = document.getElementById('email');
+    const firstNameEl = document.getElementById('first_name');
+    const lastNameEl = document.getElementById('last_name');
+    const testimonyEl = document.getElementById('testimony');
+
+    console.log("🔍 Elements found:", {
+      usernameEl,
+      emailEl,
+      firstNameEl,
+      lastNameEl,
+      testimonyEl
+    });
+
+    if (usernameEl) {
+      usernameEl.value = me.name || '';
+      console.log("✏️ username populated:", usernameEl.value);
+    }
+
+    if (emailEl) {
+      emailEl.value = me.email || '';
+      console.log("✏️ email populated:", emailEl.value);
+    }
+
+    if (firstNameEl) {
+      firstNameEl.value = me.first_name || '';
+      console.log("✏️ first_name populated:", firstNameEl.value);
+    }
+
+    if (lastNameEl) {
+      lastNameEl.value = me.last_name || '';
+      console.log("✏️ last_name populated:", lastNameEl.value);
+    }
+
+    if (testimonyEl) {
+      testimonyEl.value = me.testimony || '';
+      console.log("✏️ testimony populated:", testimonyEl.value);
+    }
+
+    console.log("✅ Form population complete");
+
+    //const users = await api('/api/admin/users');
+    //console.log("REGISTER USER ADMIN PAGE:  /api/admin/users =", users);
+
+    //const usersEl = document.getElementById('users');
+    //if (!usersEl) {
+    //  console.error("REGISTER USER ADMIN PAGE:  #users element not found");
+    //  return;
+    //}
+
+    //usersEl.innerHTML =
+    //  '<ul>' +
+    //  users.map(u => {
+    //    const isAdmin = u.role === 'admin';
+    //    return `
+    //      <li>
+    //        ${u.id} — ${u.name} (${u.email}) [${u.role}]
+    //        <button
+    //          data-id="${u.id}"
+    //          data-name="${escapeHtml(u.name || '')}"
+    //          class="toggle-admin">
+    //          ${isAdmin ? 'Remove Admin' : 'Make Admin'}
+    //        </button>
+    //        <button
+    //          data-id="${u.id}"
+    //          data-name="${escapeHtml(u.name || '')}"
+    //          class="del">
+    //          Delete
+    //        </button>
+    //      </li>
+    //    `;
+    //  }).join('') +
+    //  '</ul>';
+
+    document.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+
+        console.log("DELETE CLICK: id =", id, "name =", name);
+
+        if (!confirm(`Delete user ${name || id}?`)) {
+          console.log("DELETE CANCELLED");
+          return;
+        }
+
+        try {
+          const result = await api(`/api/admin/users/${id}`, {
+            method: 'DELETE'
+          });
+
+          console.log("DELETE SUCCESS:", result);
+          location.reload();
+        } catch (err) {
+          console.error("DELETE FAILED:", err);
+          alert(`Delete failed: ${err.message}`);
+        }
+      });
+    });
+
+    document.getElementById('admin-user-form')
+    .addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = me.id /* selected user id */
+
+      const body = {
+        username: document.getElementById('username').value,
+        first_name: document.getElementById('first_name').value,
+        last_name: document.getElementById('last_name').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        image_url: document.getElementById('photo').value,
+        testimony: document.getElementById('testimony').value
+      };
+
+      console.log("📤 Sending update:", body);
+
+      await api(`/api/me`, {
+        method: 'PATCH',
+        body: JSON.stringify(body)
+      });
+
+      alert("✅ User updated");
+    });
+
+    document.querySelectorAll('.toggle-admin').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const rowText = btn.parentElement ? btn.parentElement.textContent : '';
+        const currentlyAdmin = rowText.includes('[admin]');
+        const newRole = currentlyAdmin ? 'user' : 'admin';
+
+        console.log("TOGGLE ADMIN CLICK:");
+        console.log("  id =", id);
+        console.log("  currentlyAdmin =", currentlyAdmin);
+        console.log("  newRole =", newRole);
+
+        if (!confirm(`Change user ${id} role to "${newRole}"?`)) {
+          console.log("ROLE CHANGE CANCELLED");
+          return;
+        }
+
+        try {
+          const result = await api(`/api/admin/users/${id}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role: newRole })
+          });
+
+          console.log("ROLE CHANGE SUCCESS:", result);
+          location.reload();
+        } catch (err) {
+          console.error("ROLE CHANGE FAILED:", err);
+          alert(`Role update failed: ${err.message}`);
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error("❌ PAGE LOAD ERROR:", err);
+    alert(`Page load failed: ${err.message}`);
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+})();
+</script>
+<script src="/static/js/app.js"></script>
+</body></html>

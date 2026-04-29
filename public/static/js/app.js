@@ -8,6 +8,15 @@ function sharePage() {
   }
 }
 
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 async function api(path, opts = {}) {
   const r = await fetch(path, {
     credentials: "include",
@@ -19,46 +28,46 @@ async function api(path, opts = {}) {
 
   const ct = r.headers.get("content-type") || "";
   const body = ct.includes("application/json")
-    ? await r.json().catch(() => null)
-    : await r.text().catch(() => null);
+      ? await r.json().catch(() => null)
+      : await r.text().catch(() => null);
 
-  if (!r.ok) {
-    const msg = (body && body.error)
-      ? body.error
-      : (typeof body === "string" ? body : "Request failed");
-    throw new Error(msg);
+    if (!r.ok) {
+      const msg = (body && body.error)
+        ? body.error
+        : (typeof body === "string" ? body : "Request failed");
+      throw new Error(msg);
+    }
+
+    return body;
   }
 
-  return body;
-}
+  function setLanguage(lang) {
+    localStorage.setItem("lang", lang);
+    console.log("setLanguage", lang);
+    updateLanguage(lang);
+  }
 
-function setLanguage(lang) {
-  localStorage.setItem("lang", lang);
-  console.log("setLanguage", lang);
-  updateLanguage(lang);
-}
+  function updateLanguage(lang) {
+    document.querySelectorAll("[data-en][data-es]").forEach(el => {
+      const value = lang === "es" ? el.dataset.es : el.dataset.en;
 
-function updateLanguage(lang) {
-  document.querySelectorAll("[data-en][data-es]").forEach(el => {
-    const value = lang === "es" ? el.dataset.es : el.dataset.en;
+      // 🔥 KEY CHANGE HERE
+      el.innerHTML = value;
+    });
 
-    // 🔥 KEY CHANGE HERE
-    el.innerHTML = value;
-  });
+    localStorage.setItem("lang", lang);
+  }
 
-  localStorage.setItem("lang", lang);
-}
-
-function renderGuestLinks(container) {
-  container.innerHTML = `
-    <a href="/login.html" class="nav-btn">
-      <span data-en="Login" data-es="Iniciar sesión">Login</span>
-    </a>
-    <a href="/register.html" class="nav-btn">
-      <span data-en="Register" data-es="Registrarse">Register</span>
-    </a>
-  `;
-}
+  function renderGuestLinks(container) {
+    container.innerHTML = `
+      <a href="/login.html" class="nav-btn">
+        <span data-en="Login" data-es="Iniciar sesión">Login</span>
+      </a>
+      <a href="/register.html" class="nav-btn">
+        <span data-en="Register" data-es="Registrarse">Register</span>
+      </a>
+    `;
+  }
 
 function renderAuthLinks(me) {
   const container = document.getElementById("auth-links");
@@ -93,12 +102,15 @@ function renderAuthLinks(me) {
       <a href="/admin.html" class="nav-btn">
         <span data-en="Admin" data-es="Admin">Admin</span>
       </a>
+      <a href="/media" class="nav-btn">
+        <span data-en="Media" data-es="Medios"></span>
+      </a>
     `;
   } else {
     console.log("renderAuthLinks: NON-ADMIN detected");
     html += `
-      <a href="/admin-accounting.html" class="nav-btn">
-        <span data-en="Accounting" data-es="Contabilidad">Accounting</span>
+      <a href="/adminuser.html" class="nav-btn">
+          <span data-en="Profile" data-es="Perfil"></span>
       </a>
     `;
   }
@@ -127,21 +139,21 @@ function renderAuthLinks(me) {
   }
 
   const lang = localStorage.getItem("lang") || "en";
-  updateLanguage(lang);
-}
+    updateLanguage(lang);
+  }
 
-function listCards(items, hrefFn, field) {
-  const arr = items?.items || items || [];
-  if (!arr.length) return "<p>No items found.</p>";
+  function listCards(items, hrefFn, field) {
+    const arr = items?.items || items || [];
+    if (!arr.length) return "<p>No items found.</p>";
 
-  return arr.map(item => `
-    <a class="card-link" href="${hrefFn(item)}">
-      <div class="card">
-        <strong>${item[field] || ""}</strong>
-      </div>
-    </a>
-  `).join("");
-}
+    return arr.map(item => `
+      <a class="card-link" href="${hrefFn(item)}">
+        <div class="card">
+          <strong>${item[field] || ""}</strong>
+        </div>
+      </a>
+    `).join("");
+  }
 
 async function initApp() {
   console.log("🚀 initApp START");
@@ -178,9 +190,14 @@ async function initApp() {
   console.log("🔍 #me element:", meEl);
 
   if (meEl) {
-    meEl.textContent = me
-      ? `Logged in as ${me.email} (${me.role})`
-      : "Not logged in.";
+    if (me) {
+      const nameSpan = meEl.querySelector('#me-name');
+      const emailSpan = meEl.querySelector('#me-email');
+      if (nameSpan) nameSpan.textContent = me.name || me.first_name || 'Unknown';
+      if (emailSpan) emailSpan.textContent = me.email;
+    } else {
+      meEl.innerHTML = '<h3>Unregistered</h3>';
+    }
   }
 
   
@@ -199,6 +216,12 @@ async function initApp() {
 
   const pageType = document.body?.dataset?.pageType || "public";
   console.log("🔐 pageType =", pageType);
+
+  if (pageType === "user" && !me) {
+    console.warn("🚫 user page but not logged in → redirecting");
+    window.location.href = "/login.html";
+    return;
+  }
 
   console.log("Checking if page calling app.js has courseForm")
   if (document.getElementById("courseForm")) {
@@ -223,7 +246,6 @@ async function initApp() {
     }
     loadCoursesForDeletion();
   }
-  
   /******************
    * check if page is to delete events
    */
@@ -264,8 +286,12 @@ async function initApp() {
     loadCourseFeedback();
     initCourseFeedbackSubmit();
   }
-    
 
+  if (document.getElementById("testimonials-list")) {
+    console.log("about to call loadTestimonials()");
+    loadTestimonials();
+  }
+    
   /* All pages should init menu */
   initMenu()
    
@@ -932,7 +958,8 @@ async function handleDeleteEvent(eventId, eventName) {
     console.error("❌ Delete failed:", err);
     alert(`Delete failed: ${err.message || err}`);
   }
-}function handleModifyEvent(eventId) {
+}
+function handleModifyEvent(eventId) {
   console.log("✏️ handleModifyEvent ENTRY");
   console.log("✏️ eventId =", eventId);
 
@@ -1370,6 +1397,34 @@ async function loadCourseFeedback() {
 /*****************************************************************************
  * END loadCourseFeedback
  ***************************************************************************/
+async function loadTestimonials() {
+  const listEl = document.getElementById("testimonials-list");
+  if (!listEl) return;
+
+  try {
+    const testimonials = await api('/api/testimonials');
+    const rows = Array.isArray(testimonials) ? testimonials : [];
+
+    if (!rows.length) {
+      listEl.innerHTML = `<li class="list-item"><b>No testimonials yet.</b></li>`;
+      return;
+    }
+
+    listEl.innerHTML = rows.map((t) => `
+      <li class="list-item">
+        <div>
+          <strong>${escapeHtml(t.name || 'Anonymous')}</strong>
+          <div class="muted">${formatDate(t.created_at)}</div>
+          <p style="margin-top:8px; white-space:pre-wrap;">${escapeHtml(t.testimony || '')}</p>
+        </div>
+      </li>
+    `).join('');
+  } catch (err) {
+    console.error("❌ loadTestimonials failed:", err);
+    listEl.innerHTML = `<li class="list-item"><b>Error loading testimonials.</b></li>`;
+  }
+}
+
 function bindCourseFeedbackDeleteButtons() {
   document.querySelectorAll(".delete-course-feedback-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {

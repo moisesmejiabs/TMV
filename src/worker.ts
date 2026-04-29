@@ -30,6 +30,18 @@ function text(data: string, status = 200, headers: Record<string, string> = {}) 
   });
 }
 
+// =========================
+// GLOBAL HELPERS
+// =========================
+function escapeHtml(value: any): string {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function badRequest(message: string) {
   return json({ error: message }, 400);
 }
@@ -198,7 +210,58 @@ async function ensureDefaultAdmin(env: Env) {
   ).bind(email, name, salt, iterations, hash, role, isoNow()).run();
 }
 
+async function ensureApprovalSchema(env: Env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS course_feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      feedback TEXT NOT NULL,
+      approved INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(course_id) REFERENCES course(id),
+      FOREIGN KEY(user_id) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS event_feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      feedback TEXT NOT NULL,
+      approved INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(event_id) REFERENCES event(id),
+      FOREIGN KEY(user_id) REFERENCES user(id)
+    )
+  `).run();
+
+  const userInfo = await env.DB.prepare('PRAGMA table_info(user)').all() as any;
+  const userCols = (userInfo?.results || []).map((row: any) => row.name);
+  if (!userCols.includes('testimony_approved')) {
+    await env.DB.prepare('ALTER TABLE user ADD COLUMN testimony_approved INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  const courseInfo = await env.DB.prepare('PRAGMA table_info(course_feedback)').all() as any;
+  const courseCols = (courseInfo?.results || []).map((row: any) => row.name);
+  if (!courseCols.includes('approved')) {
+    await env.DB.prepare('ALTER TABLE course_feedback ADD COLUMN approved INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  const eventInfo = await env.DB.prepare('PRAGMA table_info(event_feedback)').all() as any;
+  const eventCols = (eventInfo?.results || []).map((row: any) => row.name);
+  if (!eventCols.includes('approved')) {
+    await env.DB.prepare('ALTER TABLE event_feedback ADD COLUMN approved INTEGER NOT NULL DEFAULT 0').run();
+  }
+}
+
 async function handleAuth(request: Request, env: Env, pathname: string) {
+  
   if (request.method === 'POST' && pathname === '/api/auth/register') {
     const body = await readJson(request);
     if (!body) return badRequest('Expected JSON');
@@ -265,6 +328,12 @@ async function handleAuth(request: Request, env: Env, pathname: string) {
 async function handleApi(request, env) {
   const url = new URL(request.url);
 
+  console.log("🌍 TOP ROUTER request");
+  console.log("   method:", request.method);
+  console.log("   pathname:", pathname);
+  console.log("   full URL:", url.toString());
+  console.log("   search:", url.search);
+
   if (url.pathname === "/api/me" && request.method === "GET") {
     try {
       const session = await getSessionFromRequest(request, env.JWT_SECRET);
@@ -302,11 +371,89 @@ async function handleApi(request, env) {
 }
 
 async function handleMe(request: Request, env: Env, pathname: string) {
+  console.log("🚀 handleMe CALLED:", request.method, pathname);
+
   if (request.method === 'GET' && pathname === '/api/me') {
+    console.log("✅ GET /api/me MATCHED");
+
     const u = await requireUser(request, env);
     if (!u) return unauthorized();
-    return json(u);
+
+    const fullUser = await env.DB.prepare(`
+      SELECT
+        id,
+        email,
+        name,
+        role,
+        created_at,
+        first_name,
+        last_name,
+        image_url,
+        testimony,
+        testimony_approved
+      FROM user
+      WHERE id = ?
+    `).bind(u.id).first();
+
+    console.log("📦 fullUser:", fullUser);
+
+    if (!fullUser) return unauthorized();
+
+    return json(fullUser);
   }
+
+  if (request.method === 'PATCH' && pathname === '/api/me') {
+    console.log("✅ PATCH /api/me MATCHED");
+
+    const u = await requireUser(request, env);
+    if (!u) return unauthorized();
+
+    const body = await request.json() as any;
+    console.log("📦 PATCH body:", body);
+
+    let updateFields = [];
+    let updateValues = [];
+
+    if (body.username !== undefined) {
+      updateFields.push('name = ?');
+      updateValues.push(body.username || '');
+    }
+    if (body.first_name !== undefined) {
+      updateFields.push('first_name = ?');
+      updateValues.push(body.first_name || '');
+    }
+    if (body.last_name !== undefined) {
+      updateFields.push('last_name = ?');
+      updateValues.push(body.last_name || '');
+    }
+    if (body.email !== undefined) {
+      updateFields.push('email = ?');
+      updateValues.push(body.email || '');
+    }
+    if (body.testimony !== undefined) {
+      updateFields.push('testimony = ?');
+      updateValues.push(body.testimony || '');
+    }
+
+    if (body.password) {
+      if (body.password.length < 8) return badRequest('Password must be at least 8 characters');
+      const salt = randomSaltB64();
+      const iterations = 100000;
+      const hash = await pbkdf2Hash(body.password, salt, iterations);
+      updateFields.push('password_salt = ?, password_iterations = ?, password_hash = ?');
+      updateValues.push(salt, iterations, hash);
+    }
+
+    if (updateFields.length === 0) return json({ ok: true });
+
+    const sql = `UPDATE user SET ${updateFields.join(', ')} WHERE id = ?`;
+    updateValues.push(u.id);
+
+    await env.DB.prepare(sql).bind(...updateValues).run();
+
+    return json({ ok: true });
+  }
+
   return null;
 }
 
@@ -537,6 +684,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
   }
 
   const mFeedback = pathname.match(/^\/api\/events\/(\d+)\/feedback$/);
+  const mEventFeedbackApprove = pathname.match(/^\/api\/event-feedback\/(\d+)\/approve$/);
 
   // Get feedback for one event
   if (request.method === 'GET' && mFeedback) {
@@ -549,10 +697,12 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
         ef.user_id,
         ef.name,
         ef.feedback,
+        ef.approved,
         ef.created_at,
         ef.updated_at
       FROM event_feedback ef
       WHERE ef.event_id = ?
+        AND ef.approved = 1
       ORDER BY ef.created_at DESC
     `).bind(eventId).all();
 
@@ -581,13 +731,14 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     const displayName = String(u.name || u.email || 'User').trim();
 
     const res = await env.DB.prepare(`
-      INSERT INTO event_feedback (event_id, user_id, name, feedback, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO event_feedback (event_id, user_id, name, feedback, approved, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(
       eventId,
       u.id,
       u.name || u.email || 'User',
       feedback,
+      0,
       isoNow(),
       isoNow()
     ).run();
@@ -597,6 +748,26 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       id: res.meta.last_row_id,
       name: displayName
     });
+  }
+
+  // Approve event feedback (admin only)
+  if (request.method === 'PATCH' && mEventFeedbackApprove) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const feedbackId = Number(mEventFeedbackApprove[1]);
+
+    const result = await env.DB.prepare(`
+      UPDATE event_feedback
+      SET approved = 1, updated_at = ?
+      WHERE id = ?
+    `).bind(isoNow(), feedbackId).run();
+
+    if (!result.meta || result.meta.changes === 0) {
+      return notFound('Feedback not found');
+    }
+
+    return json({ ok: true });
   }
 
   // Admin delete feedback
@@ -672,32 +843,297 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
 /*******************************************************************
  * END Handle Events  
 ******************************************************************** */
-
 async function handleCourses(request: Request, env: Env, pathname: string) {
   const url = new URL(request.url);
 
+  // 🔥 GLOBAL ENTRY LOG (MOST IMPORTANT)
+  console.log("🚨 handleCourses CALLED");
+  console.log("   method:", request.method);
+  console.log("   pathname:", pathname);
+  console.log("   full URL:", url.toString());
+  console.log("   search:", url.search);
+
+  // 🔍 DEBUG CONDITIONS
+  console.log("🔎 Checking route conditions...");
+  console.log("   matches /api/courses:", pathname === '/api/courses');
+  console.log("   matches /course:", pathname === '/course');
+
+  // =========================
+  // API: GET /api/courses
+  // =========================
   if (request.method === 'GET' && pathname === '/api/courses') {
+    console.log("✅ MATCHED: /api/courses");
+
     const limit = Math.min(Number(url.searchParams.get('limit') || '0') || 0, 50);
-    const sql = 'SELECT id,name,date,presenter,about,location,requirements,capacity,created_by,created_at FROM course ORDER BY created_at DESC' + (limit ? ' LIMIT ?' : '');
+    console.log("🔢 limit:", limit);
+
+    const sql =
+      'SELECT id,name,date,presenter,about,location,requirements,capacity,created_by,created_at FROM course ORDER BY created_at DESC' +
+      (limit ? ' LIMIT ?' : '');
+
+    console.log("🗄️ SQL:", sql);
+
     const stmt = env.DB.prepare(sql);
     const out = limit ? await stmt.bind(limit).all() : await stmt.all();
+
+    console.log("📦 results count:", (out.results || []).length);
+
     return json(out.results || []);
   }
 
-  const m = pathname.match(/^\/api\/courses\/(\d+)$/);
-  if (request.method === 'GET' && m) {
-    const id = Number(m[1]);
-    const c = await env.DB.prepare('SELECT * FROM course WHERE id = ?').bind(id).first() as any;
-    if (!c) return notFound();
-    const countRow = await env.DB.prepare('SELECT COUNT(1) as c FROM enrollment WHERE course_id = ? AND status = ?').bind(id, 'registered').first() as any;
-    const enrolled_count = Number(countRow?.c || 0);
-    let enrolled = false;
-    const u = await requireUser(request, env);
-    if (u) {
-      const row = await env.DB.prepare('SELECT 1 as x FROM enrollment WHERE user_id = ? AND course_id = ? AND status = ?').bind(u.id, id, 'registered').first();
-      enrolled = !!row;
+  // =========================
+  // PAGE: GET /course?id=...
+  // =========================
+  // =========================
+  // FB OG PAGE: GET /courseog?id=...
+  // =========================
+  if (request.method === 'GET' && pathname === '/courseog') {
+    console.log("🚀 MATCHED: /courseog route");
+    console.log("🌐 Full URL:", url.toString());
+
+    const idParam = url.searchParams.get("id");
+    console.log("🔍 Raw id param:", idParam);
+
+    const id = Number(idParam);
+    console.log("🔢 Parsed id:", id);
+
+    if (!id || Number.isNaN(id)) {
+      console.error("❌ Invalid or missing course id");
+      return new Response("Missing course id", {
+        status: 400,
+        headers: {
+          "content-type": "text/plain; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
     }
-    return json({ ...c, enrolled_count, enrolled });
+
+    console.log("🗄️ Querying DB for course id:", id);
+
+    let c: any;
+    try {
+      c = await env.DB
+        .prepare('SELECT * FROM course WHERE id = ?')
+        .bind(id)
+        .first();
+
+      console.log("📦 DB result:", c);
+    } catch (err) {
+      console.error("❌ DB query failed:", err);
+      return new Response("DB error", { status: 500 });
+    }
+
+    if (!c) {
+      console.error("❌ Course not found for id:", id);
+      return new Response("Course not found", { status: 404 });
+    }
+
+    const title = escapeHtml(c.name || "Tu Mejor Versión");
+    const c_date = c.date;
+    const description = escapeHtml(
+      [
+        c.date ? `Fecha: ${c.date}` : "",
+        c.location ? `Lugar: ${c.location}` : "",
+        c.presenter ? `Presentador: ${c.presenter}` : "",
+        c.about ? String(c.about).replace(/\s+/g, " ").trim() : ""
+      ]
+        .filter(Boolean)
+        .join(" · ")
+        .slice(0, 240)
+    );
+
+    const ogImage = c.image_url
+      ? `${url.origin}/static/images/${c.image_url}`
+      : `${url.origin}/static/images/nuevos_comiensos.png`;
+
+    //const ogImage = `${url.origin}/static/images/${c.image_url}`;
+    const realCourseUrl = `${url.origin}/course?id=${id}`;
+    const ogUrl = `${url.origin}/courseog?id=${id}`;
+
+    console.log("🧠 Building OG-only page:");
+    console.log("   title:", title);
+    console.log("   date:", c_date);
+    console.log("   description:", description);
+    console.log("   ogImage:", ogImage);
+    console.log("   ogUrl:", ogUrl);
+    console.log("   realCourseUrl:", realCourseUrl);
+
+    const html = `<!doctype html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+
+      <!-- OG_DEBUG_COURSEOG_HANDLER -->
+      <meta property="og:type" content="website">
+      <meta property="og:title" content="${title}">
+      <meta property="og:description" content="${description}">
+      <meta property="og:image" content="${ogImage}">
+      <meta property="og:url" content="${ogUrl}">
+      <meta property="og:site_name" content="Tu Mejor Versión">
+
+      <meta name="description" content="${description}">
+      <link rel="canonical" href="${ogUrl}">
+
+      <script>
+        window.location.replace("${realCourseUrl}");
+      </script>
+    </head>
+    <body>
+      <p>Redirigiendo al curso...</p>
+      <p><a href="${realCourseUrl}">Abrir curso</a></p>
+    </body>
+    </html>`;
+
+    console.log("✅ OG-only HTML generated");
+    console.log("📄 HTML preview:", html.slice(0, 300));
+    console.log("📤 Returning /courseog HTML response for course id:", id);
+
+    return new Response(html, {
+      headers: {
+        "content-type": "text/html; charset=UTF-8",
+        "cache-control": "no-store"
+      }
+    });
+  }
+
+
+ /*************
+   * END FB Course handler and return met
+   */
+
+  /*************
+   * BEGIN app Course handler and return met
+   */
+
+  const m = pathname.match(/^\/api\/courses\/(\d+)$/);
+
+  if (request.method === 'GET' && m) {
+    console.log("🚀 /api/courses/:id route HIT");
+    console.log("🌐 Full URL:", request.url);
+    console.log("📍 Pathname:", pathname);
+
+    const id = Number(m[1]);
+    console.log("🔢 Parsed course id:", id);
+
+    // =========================
+    // DB: Fetch course
+    // =========================
+    console.log("🗄️ Querying course table...");
+
+    let c: any;
+    try {
+      c = await env.DB
+        .prepare('SELECT * FROM course WHERE id = ?')
+        .bind(id)
+        .first();
+
+      console.log("📦 Course DB result:", c);
+    } catch (err) {
+      console.error("❌ DB error (course):", err);
+      return new Response("DB error", { status: 500 });
+    }
+
+    if (!c) {
+      console.error("❌ Course not found for id:", id);
+      return notFound();
+    }
+
+    // =========================
+    // DB: Enrollment count
+    // =========================
+    console.log("🧮 Counting enrolled users...");
+
+    let countRow: any;
+    try {
+      countRow = await env.DB
+        .prepare('SELECT COUNT(1) as c FROM enrollment WHERE course_id = ? AND status = ?')
+        .bind(id, 'registered')
+        .first();
+
+      console.log("📊 Enrollment count row:", countRow);
+    } catch (err) {
+      console.error("❌ DB error (count):", err);
+    }
+
+    const enrolled_count = Number(countRow?.c || 0);
+    console.log("👥 Total enrolled:", enrolled_count);
+
+    // =========================
+    // Auth: Current user
+    // =========================
+    console.log("🔐 Checking current user session...");
+
+    let enrolled = false;
+    let u: any = null;
+
+    try {
+      u = await requireUser(request, env);
+      console.log("👤 Current user:", u);
+    } catch (err) {
+      console.error("❌ Error retrieving user:", err);
+    }
+
+    if (u) {
+      console.log("🔎 Checking if user is enrolled...");
+
+      try {
+        const row = await env.DB
+          .prepare('SELECT 1 as x FROM enrollment WHERE user_id = ? AND course_id = ? AND status = ?')
+          .bind(u.id, id, 'registered')
+          .first();
+
+        console.log("📄 Enrollment row for user:", row);
+
+        enrolled = !!row;
+      } catch (err) {
+        console.error("❌ DB error (user enrollment):", err);
+      }
+    }
+
+    console.log("✅ User enrolled status:", enrolled);
+
+    // =========================
+    // OG META BUILD
+    // =========================
+    const origin = new URL(request.url).origin;
+    console.log("🌍 Origin:", origin);
+
+    const og_title = c.name || 'Course';
+    const og_date = c.date;
+
+    const og_description = [
+      c.date ? `Date: ${c.date}` : '',
+      c.location ? `Location: ${c.location}` : '',
+      c.about ? String(c.about).replace(/\s+/g, ' ').trim() : ''
+    ]
+      .filter(Boolean)
+      .join(' · ')
+      .slice(0, 220);
+
+    const og_image = `${origin}/static/images/course-default.jpg`;
+    const og_url = `${origin}/course?id=${id}`;
+    const og_type = 'website';
+
+    console.log("🧠 OG DATA:");
+    console.log("   title:", og_title);
+    console.log("   description:", og_description);
+    console.log("   image:", og_image);
+    console.log("   url:", og_url);
+    console.log("   type:", og_type);
+
+    console.log("📤 Returning JSON response for course id:", id);
+
+    return json({
+      ...c,
+      enrolled_count,
+      enrolled,
+      og_title,
+      og_description,
+      og_image,
+      og_url,
+      og_type
+    });
   }
 
   const mEnroll = pathname.match(/^\/api\/courses\/(\d+)\/enroll$/);
@@ -777,7 +1213,25 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
   }
 
   const mCourseFeedback = pathname.match(/^\/api\/courses\/(\d+)\/feedback$/);
+  const mCourseFeedbackApprove = pathname.match(/^\/api\/course-feedback\/(\d+)\/approve$/);
   const mCourseFeedbackById = pathname.match(/^\/api\/course-feedback\/(\d+)$/);
+
+  if (request.method === 'GET' && pathname === '/api/testimonials') {
+    const out = await env.DB.prepare(`
+      SELECT
+        id,
+        name,
+        testimony,
+        created_at
+      FROM user
+      WHERE testimony IS NOT NULL
+        AND TRIM(testimony) != ''
+        AND testimony_approved = 1
+      ORDER BY created_at DESC
+    `).all();
+
+    return json(out.results || []);
+  }
 
   // Get feedback for one course
   if (request.method === 'GET' && mCourseFeedback) {
@@ -790,10 +1244,12 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
         cf.user_id,
         cf.name,
         cf.feedback,
+        cf.approved,
         cf.created_at,
         cf.updated_at
       FROM course_feedback cf
       WHERE cf.course_id = ?
+        AND cf.approved = 1
       ORDER BY cf.created_at DESC
     `).bind(courseId).all();
 
@@ -822,13 +1278,14 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
     const displayName = String(u.name || u.email || 'User').trim();
 
     const res = await env.DB.prepare(`
-      INSERT INTO course_feedback (course_id, user_id, name, feedback, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO course_feedback (course_id, user_id, name, feedback, approved, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(
       courseId,
       u.id,
       u.name || u.email || 'User',
       feedback,
+      0,
       isoNow(),
       isoNow()
     ).run();
@@ -838,6 +1295,26 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
       id: res.meta.last_row_id,
       name: displayName
     });
+  }
+
+  // Approve course feedback (admin only)
+  if (request.method === 'PATCH' && mCourseFeedbackApprove) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const feedbackId = Number(mCourseFeedbackApprove[1]);
+
+    const result = await env.DB.prepare(`
+      UPDATE course_feedback
+      SET approved = 1, updated_at = ?
+      WHERE id = ?
+    `).bind(isoNow(), feedbackId).run();
+
+    if (!result.meta || result.meta.changes === 0) {
+      return notFound('Feedback not found');
+    }
+
+    return json({ ok: true });
   }
 
   // Edit course feedback (owner or admin)
@@ -1057,6 +1534,8 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
   }
 
   async function handleAdmin(request: Request, env: Env, pathname: string) {
+    const url = new URL(request.url);
+
     if (request.method === 'GET' && pathname === '/api/admin/users') {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
@@ -1086,6 +1565,7 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
 
+      const pendingOnly = url.searchParams.get('pending') === 'true';
       const out = await env.DB.prepare(`
         SELECT
           ef.id,
@@ -1094,10 +1574,12 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
           ef.user_id,
           ef.name,
           ef.feedback,
+          ef.approved,
           ef.created_at,
           ef.updated_at
         FROM event_feedback ef
         JOIN event e ON e.id = ef.event_id
+        ${pendingOnly ? 'WHERE ef.approved = 0' : ''}
         ORDER BY ef.created_at DESC
       `).all();
 
@@ -1134,6 +1616,7 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
 
+      const pendingOnly = url.searchParams.get('pending') === 'true';
       const out = await env.DB.prepare(`
         SELECT
           cf.id,
@@ -1142,48 +1625,339 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
           cf.user_id,
           cf.name,
           cf.feedback,
+          cf.approved,
           cf.created_at,
           cf.updated_at
         FROM course_feedback cf
         JOIN course c ON c.id = cf.course_id
+        ${pendingOnly ? 'WHERE cf.approved = 0' : ''}
         ORDER BY cf.created_at DESC
       `).all();
 
       return json(out.results || []);
     }
 
+    if (request.method === 'GET' && pathname === '/api/admin/testimonies') {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const pendingOnly = url.searchParams.get('pending') === 'true';
+      const out = await env.DB.prepare(`
+        SELECT
+          id,
+          email,
+          name,
+          testimony,
+          testimony_approved,
+          created_at
+        FROM user
+        WHERE testimony IS NOT NULL
+          AND TRIM(testimony) != ''
+          ${pendingOnly ? 'AND testimony_approved = 0' : ''}
+        ORDER BY created_at DESC
+      `).all();
+
+      return json(out.results || []);
+    }
+
+    const mTestimonyApprove = pathname.match(/^\/api\/admin\/testimonies\/(\d+)$/);
+    if (request.method === 'PATCH' && mTestimonyApprove) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const userId = Number(mTestimonyApprove[1]);
+      const body = await readJson(request);
+      if (!body) return badRequest('Expected JSON');
+
+      const approved = body.testimony_approved ? 1 : 0;
+
+      const result = await env.DB.prepare(`
+        UPDATE user
+        SET testimony_approved = ?
+        WHERE id = ?
+      `).bind(approved, userId).run();
+
+      if (!result.meta || result.meta.changes === 0) {
+        return notFound('User not found');
+      }
+
+      return json({ ok: true });
+    }
+
+    const mUserUpdate = pathname.match(/^\/api\/admin\/users\/(\d+)$/);
+
+    if (request.method === 'PATCH' && mUserUpdate) {
+      console.log("🔥 PATCH /api/admin/users/:id HIT");
+      console.log("🌐 URL:", request.url);
+
+      // =========================
+      // 🔐 AUTH: Require admin
+      // =========================
+      const admin = await requireAdmin(request, env);
+      if (admin?.error) {
+        console.error("❌ Admin auth failed");
+        return admin.error;
+      }
+
+      console.log("✅ Admin verified:", admin);
+
+      // =========================
+      // 🔢 Parse user ID
+      // =========================
+      const userId = Number(mUserUpdate[1]);
+      console.log("🔢 Target userId:", userId);
+
+      if (!userId || Number.isNaN(userId)) {
+        console.error("❌ Invalid user id");
+        return json({ error: "Invalid user id" }, 400);
+      }
+
+      // =========================
+      // 📥 Parse request body
+      // =========================
+      let body: any;
+      try {
+        body = await request.json();
+        console.log("📦 Incoming body:", body);
+      } catch (err) {
+        console.error("❌ Failed to parse JSON:", err);
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      // =========================
+      // 🧠 Extract fields
+      // =========================
+      const {
+        username,
+        first_name,
+        last_name,
+        email,
+        password,
+        role,
+        image_url,
+        testimony
+      } = body;
+
+      console.log("🧠 Parsed fields:", {
+        username,
+        first_name,
+        last_name,
+        email,
+        role,
+        image_url,
+        testimony
+      });
+
+      // =========================
+      // 🛠️ Build dynamic UPDATE
+      // =========================
+      const fields: string[] = [];
+      const values: any[] = [];
+
+      function add(field: string, value: any) {
+        fields.push(`${field} = ?`);
+        values.push(value);
+      }
+
+      if (username) add("name", username); // assuming name = username
+      if (first_name) add("first_name", first_name);
+      if (last_name) add("last_name", last_name);
+      if (email) add("email", email);
+      if (role) add("role", role);
+      if (image_url) add("image_url", image_url);
+      if (testimony) add("testimony", testimony);
+
+      // ⚠️ Password requires hashing
+      if (password) {
+        console.log("🔐 Updating password...");
+        const salt = crypto.randomUUID();
+        const iterations = 100000;
+
+        const encoder = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(password),
+          { name: "PBKDF2" },
+          false,
+          ["deriveBits"]
+        );
+
+        const derivedBits = await crypto.subtle.deriveBits(
+          {
+            name: "PBKDF2",
+            salt: encoder.encode(salt),
+            iterations,
+            hash: "SHA-256"
+          },
+          keyMaterial,
+          256
+        );
+
+        const hash = btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
+
+        add("password_salt", salt);
+        add("password_iterations", iterations);
+        add("password_hash", hash);
+      }
+
+      if (!fields.length) {
+        console.warn("⚠️ No fields to update");
+        return json({ error: "No fields to update" }, 400);
+      }
+
+      // =========================
+      // 🗄️ Execute UPDATE
+      // =========================
+      const sql = `UPDATE user SET ${fields.join(", ")} WHERE id = ?`;
+      values.push(userId);
+
+      console.log("🗄️ SQL:", sql);
+      console.log("📊 Values:", values);
+
+      try {
+        await env.DB.prepare(sql).bind(...values).run();
+        console.log("✅ User updated successfully");
+      } catch (err) {
+        console.error("❌ DB update failed:", err);
+        return json({ error: "Database update failed" }, 500);
+      }
+
+      return json({ ok: true });
+    }
+
     return null;
   }
 
-  async function handleMedia(request: Request, env: Env, pathname: string) {
-    // Upload slider image
-    if (request.method === 'POST' && pathname === '/api/upload-image') {
-      const u = await requireUser(request, env);
-      if (!u) return unauthorized();
-      if (!(u.role === 'admin' || u.role === 'instructor')) return forbidden();
+async function handleMedia(request: Request, env: Env, pathname: string) {
+  console.log("🚀 handleMedia ENTRY");
+  console.log("📍 pathname:", pathname);
+  console.log("📍 method:", request.method);
 
-      const ct = request.headers.get('content-type') || '';
-      if (!ct.includes('multipart/form-data')) {
-        return badRequest('Expected multipart/form-data');
+  if (request.method === 'POST' && pathname === '/api/upload-image') {
+    console.log("✅ Matched /api/upload-image route");
+
+    const u = await requireUser(request, env);
+    console.log("👤 requireUser result:", u);
+
+    if (!u) {
+      console.warn("❌ Unauthorized user");
+      return unauthorized();
+    }
+
+    if (!(u.role === 'admin' || u.role === 'instructor')) {
+      console.warn("❌ Forbidden role:", u.role);
+      return forbidden();
+    }
+
+    const ct = request.headers.get('content-type') || '';
+    console.log("📦 Content-Type:", ct);
+
+    if (!ct.includes('multipart/form-data')) {
+      console.error("❌ Invalid content-type");
+      return badRequest('Expected multipart/form-data');
+    }
+
+    console.log("📥 Parsing formData...");
+    const form = await request.formData();
+
+    console.log("📦 formData entries:");
+    for (const [key, value] of form.entries()) {
+      console.log(`   ${key}:`, value);
+    }
+
+    const overwrite = String(form.get('overwrite') || '').toLowerCase() === 'true';
+    console.log("♻️ overwrite =", overwrite);
+
+    const file = form.get('image');
+    console.log("📄 file object:", file);
+
+    if (!(file instanceof File)) {
+      console.error("❌ No valid file found in formData");
+      return badRequest('No image uploaded');
+    }
+
+    console.log("📄 file.name:", file.name);
+    console.log("📄 file.type:", file.type);
+    console.log("📄 file.size:", file.size);
+
+    if (!(file.type || '').startsWith('image/')) {
+      console.error("❌ File is not an image:", file.type);
+      return badRequest('Uploaded file must be an image');
+    }
+
+    // 🔍 Check current DB state BEFORE any changes
+    const countBeforeRes = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM media_asset
+      WHERE r2_key LIKE 'slider/%'
+    `).first<{ count: number }>();
+
+    const countBefore = Number(countBeforeRes?.count || 0);
+    console.log("📊 Current slider image count BEFORE:", countBefore);
+
+    if (overwrite) {
+      console.log("♻️ Overwrite requested → deleting existing slider images");
+
+      const existing = await env.DB.prepare(`
+        SELECT id, r2_key
+        FROM media_asset
+        WHERE r2_key LIKE 'slider/%'
+      `).all();
+
+      const rows = existing.results || [];
+      console.log("🗑️ Found existing images:", rows.length);
+
+      for (const row of rows as Array<{ id: number; r2_key: string }>) {
+        if (row.r2_key) {
+          try {
+            console.log("🗑️ Deleting R2 object:", row.r2_key);
+            await env.R2.delete(row.r2_key);
+          } catch (err) {
+            console.error("❌ Failed deleting R2 object:", row.r2_key, err);
+          }
+        }
       }
 
-      const form = await request.formData();
-      const file = form.get('image');
-      if (!(file instanceof File)) return badRequest('No image uploaded');
+      console.log("🗑️ Deleting DB records...");
+      await env.DB.prepare(`
+        DELETE FROM media_asset
+        WHERE r2_key LIKE 'slider/%'
+      `).run();
 
-      if (!(file.type || '').startsWith('image/')) {
-        return badRequest('Uploaded file must be an image');
-      }
+      console.log("✅ Existing slider images deleted");
 
-      const original = file.name || 'image';
-      const safeBase = original.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
-      const key = `slider/${Date.now()}_${crypto.randomUUID()}_${safeBase}`;
+      // 🔍 Verify deletion
+      const countAfterDeleteRes = await env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM media_asset
+        WHERE r2_key LIKE 'slider/%'
+      `).first<{ count: number }>();
 
+      const countAfterDelete = Number(countAfterDeleteRes?.count || 0);
+      console.log("📊 Count AFTER delete:", countAfterDelete);
+    }
+
+    const original = file.name || 'image';
+    const safeBase = original.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+
+    const key = `slider/${Date.now()}_${crypto.randomUUID()}_${safeBase}`;
+    console.log("📤 Generated R2 key:", key);
+
+    try {
+      console.log("📤 Uploading to R2...");
       await env.R2.put(key, await file.arrayBuffer(), {
         httpMetadata: { contentType: file.type || 'application/octet-stream' }
       });
+      console.log("✅ R2 upload SUCCESS");
+    } catch (err) {
+      console.error("❌ R2 upload FAILED:", err);
+      return json({ ok: false, error: "R2 upload failed" }, 500);
+    }
 
-      const res = await env.DB.prepare(
+    let res;
+    try {
+      console.log("🗄️ Inserting DB record...");
+      res = await env.DB.prepare(
         'INSERT INTO media_asset (r2_key, original_name, mimetype, uploaded_by, created_at) VALUES (?, ?, ?, ?, ?)'
       ).bind(
         key,
@@ -1193,14 +1967,35 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
         isoNow()
       ).run();
 
-      const id = Number(res.meta.last_row_id);
-
-      return json({
-        ok: true,
-        id,
-        url: `/api/media/${id}`
-      });
+      console.log("✅ DB insert SUCCESS:", res);
+    } catch (err) {
+      console.error("❌ DB insert FAILED:", err);
+      return json({ ok: false, error: "DB insert failed" }, 500);
     }
+
+    const id = Number(res.meta.last_row_id);
+    console.log("📌 New media_asset id:", id);
+
+    // 🔍 Final count check
+    const countFinalRes = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM media_asset
+      WHERE r2_key LIKE 'slider/%'
+    `).first<{ count: number }>();
+
+    const countFinal = Number(countFinalRes?.count || 0);
+    console.log("📊 FINAL slider image count:", countFinal);
+
+    console.log("✅ handleMedia COMPLETE");
+
+    return json({
+      ok: true,
+      id,
+      url: `/api/media/${id}`
+    });
+  }
+
+  console.log("⚠️ handleMedia: route not matched");
 
     // List slider images
     if (request.method === 'GET' && pathname === '/api/slider-images') {
@@ -1367,12 +2162,26 @@ async function generateReceiptPdf(d: {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     await ensureDefaultAdmin(env);
+    await ensureApprovalSchema(env);
 
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // API routes
-    if (pathname.startsWith('/api') || pathname.startsWith('/uploads/')) {
+    console.log("🌍 TOP ROUTER request");
+    console.log("   method:", request.method);
+    console.log("   pathname:", pathname);
+    console.log("   full URL:", url.toString());
+    console.log("   search:", url.search);
+
+    // API routes + special course page route
+    if (
+      pathname.startsWith('/api') ||
+      pathname.startsWith('/uploads/') ||
+      pathname === '/course' ||
+      pathname === '/courseog'
+    ) {
+      console.log("➡️ Entering handler pipeline for pathname:", pathname);
+
       const handlers = [
         handleAuth,
         handleMe,
@@ -1385,14 +2194,21 @@ export default {
       ];
 
       for (const h of handlers) {
+        console.log("🧪 Trying handler:", h.name, "for pathname:", pathname);
+
         const resp = await h(request, env, pathname as any);
-        if (resp) return resp;
+
+        if (resp) {
+          console.log("✅ Handler matched:", h.name, "for pathname:", pathname);
+          return resp;
+        }
       }
 
+      console.error("❌ No handler matched pathname in handler pipeline:", pathname);
       return notFound();
     }
 
-    // Static assets + pages
+    console.log("📦 Falling through to ASSETS for pathname:", pathname);
     return env.ASSETS.fetch(request);
   },
 };

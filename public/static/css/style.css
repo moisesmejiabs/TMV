@@ -217,13 +217,20 @@ a{
 ========================= */
 .nav-gold{
   letter-spacing: 0.12em;
-  background: linear-gradient(145deg, #fff6df 0%, #e9c98c 20%, #c9a86a 42%, #b28749 64%, #f4ddb0 84%, #fff6df 100%);
-  -webkit-background-clip: text;
+  background: linear-gradient(
+    145deg,
+    #c28e2c 0%,
+    #9a6f1f 30%,
+    #6f4f14 50%,
+    #9a6f1f 70%,
+    #c28e2c 100%
+  );  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
   position: relative;
   transition: all 0.3s ease;
+  filter: brightness(1.1) contrast(1.1);
 }
 
 .nav-gold:hover{
@@ -524,6 +531,114 @@ h1{
 
 /* =========================
    END OF FORM COURSE CREATION
+========================= */
+
+
+/* =========================
+   BEGIN OF YOUTUBE
+========================= */
+.yt-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  max-width: 420px;
+  margin-top: 10px;
+}
+
+.yt-thumb {
+  position: relative;
+}
+
+.yt-thumb img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.yt-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: red;
+  color: white;
+  font-size: 30px;
+  padding: 10px 14px;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+
+.yt-info h3 {
+  margin: 10px 0 5px;
+  font-size: 18px;
+}
+
+.yt-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #777;
+}
+/* =========================
+   END OF YOUTUBE
+========================= */
+
+/* =========================
+   BEGIN OF FB
+========================= */
+.fb-share-btn {
+  display: inline-block;
+  padding: 10px 16px;
+  background-color: #1877f2;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.fb-share-btn:hover {
+  background-color: #145dbf;
+}
+/* =========================
+   END OF FB
+========================= */
+
+/* =========================
+   begin OF Book
+========================= */
+  .book-card {
+    max-width: none;          /* 🔥 remove constraint */
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+
+  .book-card h2 {
+    margin: 0 0 8px;
+    font-size: 1.4rem;
+  }
+
+  .book-card p {
+    margin: 0 0 16px;
+    color: #555;
+  }
+
+  .amazon-btn {
+    display: inline-block;
+    padding: 12px 18px;
+    background: #ff9900;
+    color: #111;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+
+  .amazon-btn:hover {
+    opacity: 0.9;
+  }
+/* =========================
+   END OF Book
 ========================= */
 
 /* =========================

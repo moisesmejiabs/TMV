@@ -111,81 +111,115 @@
     });
   }
 
-  // 🚀 UPDATED UPLOAD
-async function handleUpload() {
-  const input = document.getElementById("slider-images");
-  const statusEl = document.getElementById("image-upload-status");
+  async function handleUpload() {
+    console.log("🚀 handleUpload ENTER");
 
-  const files = input && input.files ? Array.from(input.files) : [];
+    const input = document.getElementById("slider-images");
+    const statusEl = document.getElementById("image-upload-status");
+    const overwriteEl = document.getElementById("OverwriteAllow");
 
-  if (!files.length) {
-    if (statusEl) statusEl.textContent = "Please choose at least one image.";
-    return;
-  }
+    console.log("🔍 input element:", input);
+    console.log("🔍 statusEl element:", statusEl);
+    console.log("🔍 overwriteEl element:", overwriteEl);
 
-  try {
-    const currentImages = await fetchImagesFromServer();
-    const remaining = MAX_IMAGES - currentImages.length;
+    const files = input && input.files ? Array.from(input.files) : [];
+    console.log("📂 files array:", files);
+    console.log("📂 files length:", files.length);
 
-    console.log("📦 Current images:", currentImages.length);
-    console.log("📦 Selected files:", files.length);
-    console.log("📦 Remaining slots:", remaining);
-
-    if (remaining <= 0) {
-      if (statusEl) statusEl.textContent = `Maximum total images reached (${MAX_IMAGES}).`;
+    if (!files.length) {
+      console.warn("⚠️ No files selected");
+      if (statusEl) statusEl.textContent = "Please choose at least one image.";
       return;
     }
 
-    if (files.length > remaining) {
+    try {
+      console.log("📡 About to call fetchImagesFromServer()");
+      const currentImages = await fetchImagesFromServer();
+      console.log("📥 currentImages:", currentImages);
+
+      const overwrite = overwriteEl ? overwriteEl.checked : false;
+      console.log("♻️ overwrite checked:", overwrite);
+
+      const remaining = MAX_IMAGES - currentImages.length;
+
+      console.log("📦 Current images:", currentImages.length);
+      console.log("📦 Selected files:", files.length);
+      console.log("📦 Remaining slots:", remaining);
+
+      if (!overwrite) {
+        if (remaining <= 0) {
+          console.warn("❌ remaining <= 0");
+          if (statusEl) statusEl.textContent = `Maximum total images reached (${MAX_IMAGES}).`;
+          return;
+        }
+
+        if (files.length > remaining) {
+          console.warn("❌ files.length > remaining");
+          if (statusEl) {
+            statusEl.textContent = `You can upload only ${remaining} more image(s). Maximum total is ${MAX_IMAGES}.`;
+          }
+          return;
+        }
+      } else {
+        console.log("♻️ Overwrite enabled → skipping max-image block");
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`📤 Processing file ${i + 1}/${files.length}:`, file.name, file.type, file.size);
+
+        if (!file.type.startsWith("image/")) {
+          console.warn("❌ Not an image:", file.name, file.type);
+          if (statusEl) statusEl.textContent = `File "${file.name}" is not an image.`;
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("overwrite", overwrite && i === 0 ? "true" : "false");
+
+        console.log("🌐 POST /api/upload-image for:", file.name);
+
+        const r = await fetch("/api/upload-image", {
+          method: "POST",
+          body: formData,
+          credentials: "include"
+        });
+
+        console.log("📡 Response status for", file.name, ":", r.status);
+
+        let result = null;
+        try {
+          result = await r.json();
+        } catch (jsonErr) {
+          console.error("❌ Failed to parse upload response JSON:", jsonErr);
+          throw new Error(`Upload failed for "${file.name}" with status ${r.status}`);
+        }
+
+        console.log("📥 Upload result:", result);
+
+        if (!r.ok || !result.ok) {
+          throw new Error(result?.error || `Upload failed for "${file.name}"`);
+        }
+      }
+
+      input.value = "";
+
       if (statusEl) {
-        statusEl.textContent = `You can upload only ${remaining} more image(s). Maximum total is ${MAX_IMAGES}.`;
+        statusEl.textContent = overwrite
+          ? "Images overwritten successfully."
+          : "Images uploaded successfully.";
       }
-      return;
+
+      console.log("🔄 Refreshing image list");
+      await refreshImageList();
+      console.log("✅ handleUpload COMPLETE");
+
+    } catch (err) {
+      console.error("❌ handleUpload failed:", err);
+      if (statusEl) statusEl.textContent = err.message || "Image upload failed.";
     }
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      if (!file.type.startsWith("image/")) {
-        if (statusEl) statusEl.textContent = `File "${file.name}" is not an image.`;
-        return;
-      }
-
-      console.log("📤 Uploading:", file.name);
-
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const r = await fetch("/api/upload-image", {
-        method: "POST",
-        body: formData,
-        credentials: "include"
-      });
-
-      let result = null;
-      try {
-        result = await r.json();
-      } catch (jsonErr) {
-        console.error("❌ Failed to parse upload response JSON:", jsonErr);
-        throw new Error(`Upload failed for "${file.name}" with status ${r.status}`);
-      }
-
-      console.log("📥 Upload result:", result);
-
-      if (!r.ok || !result.ok) {
-        throw new Error(result?.error || `Upload failed for "${file.name}"`);
-      }
-    }
-
-    input.value = "";
-    if (statusEl) statusEl.textContent = "Images uploaded successfully.";
-
-    await refreshImageList();
-  } catch (err) {
-    console.error("❌ handleUpload failed:", err);
-    if (statusEl) statusEl.textContent = err.message || "Image upload failed.";
   }
-}
 
   async function fetchImagesFromServer() {
     console.log("🌐 fetchImagesFromServer CALLED");

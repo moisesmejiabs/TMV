@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
@@ -82,8 +83,17 @@
       </nav>
     </div>>
     </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
     <main class="container" style="padding-top:18px;">
       <h1 id="title">Course</h1>
+      <!-- NEW IMAGE -->
+      <img id="course-image" style="max-width:100%; border-radius:10px; margin:10px 0; display:none;" />
       <p id="meta"></p>
       <div id="about"></div>
       <p><b>Location:</b> <span id="loc"></span></p>
@@ -92,6 +102,16 @@
       <div id="actions"></div>
       <div id="admin"></div>
       <p><a href="/courses.html">Back</a></p>
+      <!-- FACEBOOK SHARE BUTTON -->
+      <div style="margin-top:10px;">
+        <a
+          href="#"
+          onclick="shareCourseOnFacebook(event)"
+          class="fb-share-btn"
+        >
+          Compartir curso en Facebook
+        </a>
+      </div>
     </main>
     <section class="feedback-section card">
       <h2>Leave Feedback</h2>
@@ -122,6 +142,7 @@
       </div>
     </section>
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/facebook.js"></script>
   <script>
     function q(name){return new URLSearchParams(location.search).get(name)}
     async function api(path, opts={}){
@@ -136,12 +157,23 @@
       const c=await api(`/api/courses/${id}`);
       document.title = c.name;
       document.getElementById('title').textContent=c.name;
-      document.getElementById('meta').textContent = `${new Date(c.date).toLocaleString()} · Presenter: ${c.presenter}`;
+      document.getElementById('meta').textContent =`${new Date(c.date).toLocaleString('en-US', {timeZone: 'America/New_York'})} · Presenter: ${c.presenter}`;
       document.getElementById('about').textContent = c.about;
       document.getElementById('loc').textContent = c.location;
       document.getElementById('req').textContent = c.requirements || '';
       document.getElementById('cap').textContent = c.capacity || 0;
       document.getElementById('count').textContent = c.enrolled_count;
+
+      const img = document.getElementById('course-image');
+
+      if (img && c.image_url) {
+        img.src = c.image_url.startsWith('http')
+          ? c.image_url
+          : `/static/images/${c.image_url}`;
+
+        img.alt = c.name || 'Course image';
+        img.style.display = 'block';
+      }
 
       const me = await api('/api/me').catch(()=>null);
       let html='';

@@ -54,11 +54,6 @@
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
         </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
         <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
@@ -67,11 +62,21 @@
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
         </a>
 
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
     </div>
   </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
 
 <!--  <header class="topbar">
     <div class="container">
@@ -144,6 +149,109 @@
         </ul>
         <div id="create-course-container" style="display:none;"></div>
     </section>
+    <section class="section-card book-card">
+      <img src="/static/images/AmazonBook.png" alt="Tu Mejor Versión" class="book-cover">
+      
+      <h2>Tu Mejor Versión: Transformando tu Vida en Bendición</h2>
+      <p>Spanish Edition</p>
+
+      <!-- AMAZON LINK -->
+      <a
+        href="https://a.co/d/052II0pU"
+        target="_blank"
+        rel="noopener noreferrer sponsored"
+        class="amazon-btn"
+      >
+        Ver en Amazon
+      </a>
+
+      <!-- FACEBOOK SHARE -->
+      <a
+        href="https://www.facebook.com/sharer/sharer.php?u=https://a.co/d/052II0pU"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="fb-share-btn"
+      >
+        Compartir en Facebook
+      </a>
+    </section>
+    <section class="section-card TMV-friends-card">
+    <h1 class="nav-gold">        
+      <span 
+        data-en="Gracias a las organizasiones que nos apoyan." 
+        data-es="Thank you to the oraganizations that support us">
+      </span>
+    </h1>
+      <img src="/static/images/SCWE_TMV.png" alt="Tu Mejor Versión" class="book-cover">
+      <h2>Suffolk County Women's Business Enterprise Coalition</h2>
+
+      <a      
+        href="  https://scwbec.org/"
+      >
+        Oprima el link para mas informacion
+      </a>
+      <br>
+
+      <img src="/static/images/HCC_TMV.png" alt="Tu Mejor Versión" class="book-cover">
+      <h2>Hispanic Counseling Center</h2>
+
+      <a      
+        href="https://www.hispaniccounseling.org/"
+      >
+        Oprima el link para mas informacion
+      </a>
+
+      <img src="/static/images/YES+Logo+JPEG+File+110515.webp" alt="Tu Mejor Versión" class="book-cover">
+      <h2>Youth Enrichment Services</h2>
+
+      <a      
+        href="https://www.yesnews.org/yes-news"
+      >
+        Oprima el link para mas informacion
+      </a>
+    </section>
+    <section class="section-card TMV-friends-card">
+
+      <h1 class="nav-gold">        
+        <span 
+          data-en="Our YouTube Channel" 
+          data-es="Nuestro Canal YouTube">
+        </span>
+      </h1>
+
+      <!-- YOUTUBE VIDEO CARD -->
+      <a
+        href="https://youtu.be/wvby2X0BD1Y"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="yt-card"
+      >
+        <div class="yt-thumb">
+          <img
+            src="https://img.youtube.com/vi/wvby2X0BD1Y/hqdefault.jpg"
+            alt="Nuestro Canal YouTube"
+          >
+          <div class="yt-play">▶</div>
+        </div>
+
+        <div class="yt-info">
+          <h3>Visita Nuestro Canal en YouTube</h3>
+        </div>
+      </a>
+
+      <!-- OPTIONAL: FACEBOOK SHARE -->
+      <a
+        href="https://www.facebook.com/sharer/sharer.php?u=https://youtu.be/wvby2X0BD1Y"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="fb-share-btn"
+        style="margin-top:10px; display:inline-block;"
+      >
+        Compartir en Facebook
+      </a>
+
+    </section>
+    
   </main>
 
   <script src="/static/js/app.js"></script>

@@ -18,3 +18,8 @@ bucket_name = "tumejorversion-assets"
 [vars]
 # Generate a long random secret: openssl rand -base64 48
 JWT_SECRET = "WjL6DDiicScSqA1+4Dh+E8gFH0ISTc5ByfioNnXfi+9MaRzKdhKBOhJd8NbDT+co"
+
+routes = [
+  { pattern = "moestyle.me/*", zone_name = "moestyle.me" },
+  { pattern = "www.moestyle.me/*", zone_name = "moestyle.me" }
+]

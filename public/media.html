@@ -77,11 +77,22 @@
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
         </a>
 
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
     </div>>
   </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
   <main class="container" style="padding-top:18px;max-width:640px;">
     <h1 class="nav-gold">        
       <span 
@@ -90,8 +101,8 @@
       </span>
     </h1>
     <form id="media-upload">
-      <label><input type="checkbox" name="10max"> 10 imagenes max</label><br><br>
-        <!-- 🔥 NEW: Image Upload (Admin Only) -->
+      <label><input type="checkbox" id="OverwriteAllow" name="OverwriteAllow"> Overwrite Allow </label><br><br>
+
       <div id="image-upload-section">
         <label>Upload Slider Images (Max total: 10)<br>
           <input type="file" id="slider-images" accept="image/*" multiple>
@@ -99,7 +110,6 @@
         <div id="image-upload-status" style="margin-top:8px;"></div>
         <br>
         <button type="button" id="upload-images-btn">Upload Images</button>
-        <!-- <div id="image-upload-status"></div> -->
         <ul id="current-images-list"></ul>
       </div>
     </form>

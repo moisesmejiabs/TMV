@@ -1,5 +1,14 @@
 node_modules/
+.wrangler/
+cookies.txt
 .env
 *.log
 dist/
 .wrangler/
+checkiflogedin.sh
+logout.sh
+login.sh
+listtablesinD1.sh
+addimagetocoursetable.sh
+addcolumntotable.sh
+listtablestructure.sh

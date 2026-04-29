@@ -77,11 +77,22 @@
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
         </a>
 
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
     </div>>
   </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
   <main>
     <h1 class="nav-gold">        
       <span 
@@ -106,7 +117,7 @@
   async function api(p){const r=await fetch(p,{credentials:'include'});const j=await r.json();if(!r.ok)throw new Error(j.error||'fail');return j;}
   (async()=>{
     const items=await api('/api/courses');
-    document.getElementById('list').innerHTML = '<ul>'+items.map(c=>`<li><a href="/course.html?id=${c.id}">${c.name}</a> — ${new Date(c.date).toLocaleString()}</li>`).join('')+'</ul>';
+    document.getElementById('list').innerHTML = '<ul>'+items.map(c=>`<li><a href="/course.html?id=${c.id}">${escapeHtml(c.name)}</a> — ${new Date(c.date).toLocaleString()}</li>`).join('')+'</ul>';
   })().catch(e=>{document.getElementById('courses-list').textContent=e.message;});
   loadCourses();
   createCoursebutton();

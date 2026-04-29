@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Testimonials - Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body data-page-type="public">
+  <header class="top">
+    <div class="brand" style="text-align: center;">
+      <img src="/static/images/TuMejorVersionBird.png" alt="Logo" class="brand-img flipped">
+      <h1 class="nav-gold">
+        <span data-en="Tu<br>Mejor<br>Version" data-es="Tu<br>Mejor<br>Versión"></span>
+      </h1>
+      <img src="/static/images/TuMejorVersionBird.png" alt="Logo" class="brand-img flipped">
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+    </div>
+    <div style="margin-bottom: 20px;">
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    <div class="nav-container">
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav id="mobile-menu" class="mobile-menu">
+        <a href="/" class="nav-btn"><span data-en="Home" data-es="Inicio"></span></a>
+        <a href="/courses" class="nav-btn"><span data-en="Courses" data-es="Cursos"></span></a>
+        <a href="/events" class="nav-btn"><span data-en="Events" data-es="Eventos"></span></a>
+        <a href="/donate" class="nav-btn"><span data-en="Donate" data-es="Donar"></span></a>
+        <a href="/media" class="nav-btn"><span data-en="Media" data-es="Medios"></span></a>
+        <a href="/forum" class="nav-btn"><span data-en="Forum" data-es="Foro"></span></a>
+        <a href="/about" class="nav-btn"><span data-en="About Us" data-es="Sobre Nosotros"></span></a>
+        <div id="auth-links" class="auth-links"></div>
+      </nav>
+    </div>
+  </header>
+  <main class="section-card">
+    <h1><span data-en="Testimonials" data-es="Testimonios"></span></h1>
+    <p><span data-en="Only admin-approved testimonials appear here." data-es="Solo los testimonios aprobados por el administrador aparecen aquí."></span></p>
+    <ul id="testimonials-list" class="list"></ul>
+  </main>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

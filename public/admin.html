@@ -77,11 +77,22 @@
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
         </a>
 
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
     </div>>
   </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
     <body>
       <h1 class="nav-gold"><span data-en="Admin" data-es="Admin"></span></h1>
       
@@ -89,6 +100,18 @@
       <section>
         <h2>Users</h2>
         <div id="users"></div>
+      </section>
+      <section>
+        <h2>Course Feedback Approval</h2>
+        <div id="course-feedback-admin"></div>
+      </section>
+      <section>
+        <h2>Event Feedback Approval</h2>
+        <div id="event-feedback-admin"></div>
+      </section>
+      <section>
+        <h2>Testimonials Approval</h2>
+        <div id="testimonials-admin"></div>
       </section>
       <section>
         <h2>Accounting</h2>
@@ -111,8 +134,16 @@ async function api(path, opts={}){
     const me = await api('/api/me');
     console.log("ADMIN PAGE: /api/me =", me);
 
+    if (!me) {
+      console.warn("ADMIN PAGE: not logged in → redirecting to login");
+      window.location.href = "/login.html";
+      return;
+    }
+
     if (me.role !== 'admin') {
-      throw new Error('Admin only');
+      console.warn("ADMIN PAGE: non-admin user → redirecting to profile");
+      window.location.href = "/adminuser.html";
+      return;
     }
 
     const users = await api('/api/admin/users');
@@ -219,6 +250,169 @@ async function api(path, opts={}){
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
   }
+
+  // Load and display course feedback for approval
+  async function loadCourseFeedbackAdmin() {
+    try {
+      const items = await api('/api/admin/course-feedback?pending=true');
+      const container = document.getElementById('course-feedback-admin');
+      
+      if (!items.length) {
+        container.innerHTML = '<p>No pending feedback.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(f => `
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <strong>${escapeHtml(f.course_name || 'Unknown Course')}</strong><br>
+          <em>${escapeHtml(f.name || 'User')}</em> - ${new Date(f.created_at).toLocaleDateString()}
+          <p style="margin-top: 8px;">${escapeHtml(f.feedback)}</p>
+          <button data-id="${f.id}" class="approve-course-feedback-btn">Approve</button>
+          <button data-id="${f.id}" class="delete-course-feedback-btn">Delete</button>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.approve-course-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/course-feedback/${feedbackId}/approve`, { method: 'PATCH' });
+            loadCourseFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to approve: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-course-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Delete this feedback?')) return;
+          try {
+            await api(`/api/course-feedback/${feedbackId}`, { method: 'DELETE' });
+            loadCourseFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to delete: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Error loading course feedback:', err);
+      document.getElementById('course-feedback-admin').innerHTML = '<p>Error loading feedback.</p>';
+    }
+  }
+
+  // Load and display event feedback for approval
+  async function loadEventFeedbackAdmin() {
+    try {
+      const items = await api('/api/admin/event-feedback?pending=true');
+      const container = document.getElementById('event-feedback-admin');
+      
+      if (!items.length) {
+        container.innerHTML = '<p>No pending feedback.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(f => `
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <strong>${escapeHtml(f.event_name || 'Unknown Event')}</strong><br>
+          <em>${escapeHtml(f.name || 'User')}</em> - ${new Date(f.created_at).toLocaleDateString()}
+          <p style="margin-top: 8px;">${escapeHtml(f.feedback)}</p>
+          <button data-id="${f.id}" class="approve-event-feedback-btn">Approve</button>
+          <button data-id="${f.id}" class="delete-event-feedback-btn">Delete</button>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.approve-event-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/event-feedback/${feedbackId}/approve`, { method: 'PATCH' });
+            loadEventFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to approve: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-event-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Delete this feedback?')) return;
+          try {
+            await api(`/api/event-feedback/${feedbackId}`, { method: 'DELETE' });
+            loadEventFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to delete: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Error loading event feedback:', err);
+      document.getElementById('event-feedback-admin').innerHTML = '<p>Error loading feedback.</p>';
+    }
+  }
+
+  // Load and display testimonials for approval
+  async function loadTestimonialsAdmin() {
+    try {
+      const items = await api('/api/admin/testimonies?pending=true');
+      const container = document.getElementById('testimonials-admin');
+      
+      if (!items.length) {
+        container.innerHTML = '<p>No pending testimonials.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(t => `
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <strong>${escapeHtml(t.name || 'Anonymous')}</strong> (${escapeHtml(t.email || '')}) - ${new Date(t.created_at).toLocaleDateString()}
+          <p style="margin-top: 8px; white-space: pre-wrap;">${escapeHtml(t.testimony)}</p>
+          <button data-id="${t.id}" class="approve-testimony-btn">Approve</button>
+          <button data-id="${t.id}" class="delete-testimony-btn">Delete</button>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.approve-testimony-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/admin/testimonies/${userId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ testimony_approved: 1 })
+            });
+            loadTestimonialsAdmin();
+          } catch (err) {
+            alert('Failed to approve: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-testimony-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = btn.getAttribute('data-id');
+          if (!confirm('Delete this testimony?')) return;
+          try {
+            await api(`/api/admin/testimonies/${userId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ testimony_approved: 0 })
+            });
+            loadTestimonialsAdmin();
+          } catch (err) {
+            alert('Failed to delete: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Error loading testimonials:', err);
+      document.getElementById('testimonials-admin').innerHTML = '<p>Error loading testimonials.</p>';
+    }
+  }
+
+  // Load all approval panels
+  loadCourseFeedbackAdmin();
+  loadEventFeedbackAdmin();
+  loadTestimonialsAdmin();
 })();
 </script>
 </body></html>

@@ -83,6 +83,13 @@
       </nav>
     </div>>
   </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
     <main class="container" style="padding-top:18px;max-width:900px;">
       <h1 id="title">Thread</h1>
       <div id="posts"></div>
@@ -92,6 +99,14 @@
     <script src="/static/js/app.js"></script>
     <script>
       function q(name){return new URLSearchParams(location.search).get(name)}
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
       async function api(path, opts={}){
         const r=await fetch(path,{credentials:'include', headers:{...(opts.body?{'content-type':'application/json'}:{})}, ...opts});
         const j=await r.json().catch(()=>null);
@@ -105,8 +120,8 @@
         document.getElementById('title').textContent=t.title;
         const posts = await api(`/api/forum/threads/${id}/posts`);
         document.getElementById('posts').innerHTML = posts.length ? posts.map(p=>`<div style="border:1px solid #ddd;padding:10px;margin:10px 0;">
-          <div style="font-size:12px;opacity:.8;">${p.author_name} · ${new Date(p.created_at).toLocaleString()}</div>
-          <div style="white-space:pre-wrap;">${p.body}</div>
+          <div style="font-size:12px;opacity:.8;">${escapeHtml(p.author_name)} · ${new Date(p.created_at).toLocaleString()}</div>
+          <div style="white-space:pre-wrap;">${escapeHtml(p.body).replace(/\n/g, '<br>')}</div>
         </div>`).join('') : '<p>No posts.</p>';
 
         const me = await api('/api/me').catch(()=>null);
