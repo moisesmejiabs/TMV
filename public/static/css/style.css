@@ -99,8 +99,8 @@ a{
 .brand-index{
   justify-content: center;
   gap: 1.5rem;
-  width: min(100%, 720px);
-  aspect-ratio: 12 / 7;
+  width: 100%;
+  aspect-ratio: 12 / 5;
   height: auto;
   margin: 0 auto;
   overflow: hidden;
@@ -697,6 +697,7 @@ article{
   .brand-index{
     gap: 1rem;
     width: 100%;
+    aspect-ratio: 12 / 7;
     height: auto;
     border-radius: 16px;
   }
