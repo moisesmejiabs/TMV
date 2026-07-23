@@ -670,6 +670,79 @@ article{
   }
 }
 
+/* =========================
+   UNIFIED TMV PAGE HEADER
+   Scoped to legacy pages whose brand is the direct child of .top.
+   The index and milk-registration pages use their own equivalent,
+   page-specific header styles.
+========================= */
+.top > .brand{
+  min-height: 180px;
+  margin: -2rem -2rem 0;
+  padding: 28px clamp(20px, 4vw, 56px);
+  gap: clamp(18px, 3vw, 38px);
+  background:
+    radial-gradient(circle at 50% 44%, #cf0b88 0%, #b30773 34%, #861447 72%, #5b142f 100%);
+  border-bottom: 1px solid rgba(246, 234, 223, 0.34);
+  box-shadow: 0 14px 36px rgba(73, 15, 42, 0.22);
+}
+
+.top > .brand .brand-img{
+  width: auto;
+  height: clamp(82px, 9vw, 126px);
+  border-radius: 0;
+  -webkit-mask-image: radial-gradient(ellipse 76% 72% at center, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 76% 72% at center, #000 55%, transparent 100%);
+  filter:
+    saturate(0.92)
+    drop-shadow(0 10px 16px rgba(62, 5, 35, 0.28))
+    drop-shadow(0 0 12px rgba(255, 239, 205, 0.2));
+}
+
+.top > .brand .brand-img:first-of-type{
+  transform: scaleX(-1);
+}
+
+.top > .brand .brand-img:last-of-type{
+  transform: scaleX(1);
+}
+
+.top > .brand h1.nav-gold{
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 0.92;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-shadow: 0 8px 20px rgba(21, 5, 13, 0.34);
+}
+
+.top > .brand > #nav-auth:empty{
+  display: none !important;
+}
+
+@media (max-width: 900px){
+  .top > .brand{
+    margin: -1.25rem -1.25rem 0;
+  }
+}
+
+@media (max-width: 600px){
+  .top > .brand{
+    min-height: 150px;
+    margin: -0.9rem -0.9rem 0;
+    padding: 22px 14px;
+    gap: 12px;
+  }
+
+  .top > .brand .brand-img{
+    height: clamp(62px, 18vw, 82px);
+  }
+
+  .top > .brand h1.nav-gold{
+    font-size: clamp(1.55rem, 6vw, 2rem);
+  }
+}
+
 @media (max-width: 600px){
   body{
     padding: 0.9rem;
