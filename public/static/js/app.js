@@ -1285,11 +1285,15 @@ async function loadEvents() {
         <a class="event-thumbnail" href="/event.html?id=${safeId}" aria-label="View ${safeName}">
           <img src="${safeImageUrl}" alt="${safeName} event image" loading="lazy">
         </a>
-      ` : "";
+      ` : `
+        <div class="event-thumbnail event-thumbnail-placeholder" aria-label="No event image">
+          <span>No image</span>
+        </div>
+      `;
 
       return `
         <li class="list-item">
-          <div class="event-summary${safeImageUrl ? "" : " no-image"}">
+          <div class="event-summary">
             ${thumbnail}
             <div class="event-summary-details">
               <a href="/event.html?id=${safeId}">
