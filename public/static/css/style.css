@@ -100,7 +100,7 @@ a{
   justify-content: center;
   gap: 1.5rem;
   width: min(100%, 720px);
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 12 / 7;
   height: auto;
   margin: 0 auto;
   overflow: hidden;
@@ -131,7 +131,8 @@ a{
 .brand-index-img{
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -707,7 +708,8 @@ article{
   .brand-index-img{
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
   }
 
   .table{
