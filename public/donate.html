@@ -5,6 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    .donate-page {
+      padding-top: 18px;
+      padding-bottom: 40px;
+      max-width: 720px;
+    }
+    .zelle-card {
+      margin: 0 auto 28px;
+      padding: clamp(18px, 4vw, 28px);
+      border: 1px solid rgba(91, 45, 109, 0.14);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 12px 32px rgba(74, 35, 90, 0.1);
+      text-align: center;
+    }
+    .zelle-card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .zelle-card p {
+      margin-top: 0;
+    }
+    .zelle-image {
+      display: block;
+      width: 100%;
+      max-width: 440px;
+      height: auto;
+      margin: 18px auto 0;
+      border-radius: 14px;
+      box-shadow: 0 8px 22px rgba(48, 29, 54, 0.14);
+    }
+    .donation-form-card {
+      padding: clamp(20px, 4vw, 30px);
+      border-radius: 22px;
+    }
+    .donation-form-card input:not([type="checkbox"]) {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
 </head>
 <body>
   <header class="top">
@@ -80,19 +121,30 @@
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
-    </div>>
+    </div>
   </header>
-  <main class="container" style="padding-top:18px;max-width:640px;">
+  <main class="container donate-page">
   <h1 class="nav-gold">Donate</h1>
-  <form id="f">
-    <label>Name<br><input name="donor_name" required></label><br><br>
-    <label>Email<br><input name="donor_email" type="email" required></label><br><br>
-    <label>Amount (USD)<br><input name="amount" type="number" step="0.01" min="1" required></label><br><br>
-    <label>Campaign (optional)<br><input name="campaign"></label><br><br>
-    <label><input type="checkbox" name="restricted"> Restricted</label><br><br>
-    <button type="submit">Submit Donation</button>
-  </form>
-  <p id="msg"></p>
+  <section class="zelle-card">
+    <h2>Donate with Zelle</h2>
+    <p>Scan the QR code below with your phone to send your donation.</p>
+    <img
+      class="zelle-image"
+      src="/static/images/Zelle.jpg"
+      alt="Tu Mejor Versión Zelle donation QR code"
+    >
+  </section>
+  <section class="donation-form-card card">
+    <form id="f">
+      <label>Name<br><input name="donor_name" required></label><br><br>
+      <label>Email<br><input name="donor_email" type="email" required></label><br><br>
+      <label>Amount (USD)<br><input name="amount" type="number" step="0.01" min="1" required></label><br><br>
+      <label>Campaign (optional)<br><input name="campaign"></label><br><br>
+      <label><input type="checkbox" name="restricted"> Restricted</label><br><br>
+      <button type="submit">Submit Donation</button>
+    </form>
+    <p id="msg"></p>
+  </section>
   <p><a href="/">Home</a></p>
   </main>
   <script src="/static/js/app.js"></script>
