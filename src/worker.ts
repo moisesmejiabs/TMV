@@ -1539,6 +1539,25 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
+    // The milk giveaway form contains private registration fields and is
+    // available only to registered users with a valid session.
+    if (
+      (request.method === 'GET' || request.method === 'HEAD') &&
+      (pathname === '/milk-giveaway' || pathname === '/milk-giveaway.html')
+    ) {
+      const user = await requireUser(request, env);
+      if (!user) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: '/login?next=%2Fmilk-giveaway',
+            'cache-control': 'no-store',
+          },
+        });
+      }
+      return env.ASSETS.fetch(request);
+    }
+
     // API routes
     if (pathname.startsWith('/api') || pathname.startsWith('/uploads/')) {
       const handlers = [
