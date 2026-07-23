@@ -5,6 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    .event-page {
+      padding-top: 24px;
+      padding-bottom: 40px;
+    }
+    .event-detail-card {
+      overflow: hidden;
+      margin: 0 auto 24px;
+      border: 1px solid rgba(91, 45, 109, 0.14);
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 12px 32px rgba(74, 35, 90, 0.1);
+    }
+    .event-image-wrap {
+      width: 100%;
+      background: #f8f3f8;
+      text-align: center;
+    }
+    .event-image-wrap[hidden] { display: none; }
+    .event-detail-image {
+      display: block;
+      width: 100%;
+      max-height: 680px;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+    .event-detail-content {
+      padding: clamp(20px, 4vw, 36px);
+    }
+    .event-detail-content h1 {
+      margin-top: 0;
+      margin-bottom: 22px;
+    }
+    .event-facts {
+      display: grid;
+      gap: 14px;
+      margin: 0 0 24px;
+    }
+    .event-fact {
+      display: grid;
+      grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+    .event-fact dt { font-weight: 700; }
+    .event-fact dd {
+      min-width: 0;
+      margin: 0;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+    .feedback-section {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .feedback-list,
+    .feedback-item,
+    .feedback-text {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .feedback-section textarea,
+    .edit-feedback-textarea {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    @media (max-width: 640px) {
+      .event-page { padding-top: 14px; }
+      .event-detail-card { border-radius: 16px; }
+      .event-fact {
+        grid-template-columns: 1fr;
+        gap: 3px;
+      }
+    }
+  </style>
 </head>
 <body>
     <header class="top">
@@ -80,21 +162,30 @@
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
-    </div>>
+    </div>
   </header>
-<body>
-  <main class="container" style="padding-top:18px;">
-  <h1 id="title">Event</h1>
-  <p id="meta"></p>
-  <div id="about"></div>
-  <p><b>Location:</b> <span id="loc"></span></p>
-  <p><b>Requirements:</b> <span id="req"></span></p>
-  <p><b>Capacity:</b> <span id="cap"></span> · <b>Registered:</b> <span id="count"></span></p>
-  <div id="actions"></div>
-  <div id="admin"></div>
-  <p><a href="/events.html">Back</a></p>
-  </main>
-  <section class="feedback-section card">
+  <main class="container event-page">
+    <article class="event-detail-card">
+      <div id="event-image-wrap" class="event-image-wrap" hidden>
+        <img id="event-image" class="event-detail-image" alt="">
+      </div>
+      <div class="event-detail-content">
+        <h1 id="title">Event</h1>
+        <dl class="event-facts">
+          <div class="event-fact"><dt>Date:</dt><dd id="date"></dd></div>
+          <div class="event-fact"><dt>Presenter:</dt><dd id="presenter"></dd></div>
+          <div class="event-fact"><dt>Description:</dt><dd id="about"></dd></div>
+          <div class="event-fact"><dt>Location:</dt><dd id="loc"></dd></div>
+          <div class="event-fact"><dt>Requirements:</dt><dd id="req"></dd></div>
+          <div class="event-fact"><dt>Capacity:</dt><dd id="cap"></dd></div>
+          <div class="event-fact"><dt>Registered:</dt><dd id="count"></dd></div>
+        </dl>
+        <div id="actions"></div>
+        <div id="admin"></div>
+        <p><a href="/events.html">Back</a></p>
+      </div>
+    </article>
+    <section class="feedback-section card">
     <h2 data-en="Leave Feedback" data-es="Dejar Comentarios">Leave Feedback</h2>
 
     <form id="event-feedback-form" class="feedback-form">
@@ -138,7 +229,8 @@
         <li class="muted" data-en="No feedback yet." data-es="Aún no hay comentarios.">No feedback yet.</li>
       </ul>
     </div>
-  </section>
+    </section>
+  </main>
   
   <script src="/static/js/app.js"></script>
 
@@ -156,12 +248,23 @@
     const e=await api(`/api/events/${id}`);
     document.title = e.name;
     document.getElementById('title').textContent=e.name;
-    document.getElementById('meta').textContent = `${new Date(e.date).toLocaleString()} · Presenter: ${e.presenter}`;
+    document.getElementById('date').textContent = new Date(e.date).toLocaleString();
+    document.getElementById('presenter').textContent = e.presenter || 'Not specified';
     document.getElementById('about').textContent = e.about;
     document.getElementById('loc').textContent = e.location;
-    document.getElementById('req').textContent = e.requirements || '';
+    document.getElementById('req').textContent = e.requirements || 'None';
     document.getElementById('cap').textContent = e.capacity || 0;
     document.getElementById('count').textContent = e.enrolled_count;
+    if(e.image_url){
+      const imageWrap = document.getElementById('event-image-wrap');
+      const image = document.getElementById('event-image');
+      image.alt = `${e.name} event image`;
+      image.addEventListener('error', () => {
+        imageWrap.hidden = true;
+      }, { once: true });
+      image.src = e.image_url;
+      imageWrap.hidden = false;
+    }
 
     const me = await api('/api/me').catch(()=>null);
     let html='';
