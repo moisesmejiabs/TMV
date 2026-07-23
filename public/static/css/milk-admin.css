@@ -17,21 +17,34 @@
   box-shadow: 0 8px 28px rgba(109, 33, 64, 0.08);
 }
 
-.milk-admin-header h1 {
-  margin: 3px 0 0;
-  font-size: clamp(1.7rem, 4vw, 2.6rem);
-  line-height: 1.1;
+.milk-admin-heading {
   text-align: center;
 }
 
-.milk-admin-kicker {
-  display: block;
-  color: var(--accent);
-  font-size: 0.8rem;
+.milk-admin-brand {
+  color: inherit;
+  gap: clamp(14px, 2vw, 24px);
+  text-decoration: none;
+}
+
+.milk-admin-brand .brand-img {
+  width: auto;
+  height: clamp(85px, 10vw, 135px);
+  border-radius: 0;
+}
+
+.milk-admin-brand h1.nav-gold {
+  margin: 0;
+  font-size: clamp(1.9rem, 4vw, 3.25rem);
+  line-height: 0.95;
+}
+
+.milk-admin-heading > p {
+  margin: 12px 0 0;
+  color: var(--berry);
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
   font-weight: 900;
-  letter-spacing: 0.12em;
-  text-align: center;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .milk-admin-back,
@@ -234,7 +247,15 @@
     justify-self: stretch;
   }
 
-  .milk-admin-header > div { grid-row: 1; }
+  .milk-admin-heading { grid-row: 1; }
+
+  .milk-admin-brand .brand-img {
+    height: 74px;
+  }
+
+  .milk-admin-brand h1.nav-gold {
+    font-size: 1.75rem;
+  }
 
   .milk-admin-summary {
     align-items: stretch;
