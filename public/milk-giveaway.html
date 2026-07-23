@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6d2140">
+  <title>Registro para entrega de leche | Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/milk-giveaway.css">
+</head>
+<body class="milk-page">
+  <header class="milk-header">
+    <a class="milk-brand" href="/" aria-label="Ir al inicio de Tu Mejor Versión">
+      <img src="/static/images/TuMejorVersionBird.png" alt="">
+      <span>Tu Mejor Versión</span>
+    </a>
+    <button class="milk-logout" id="logoutButton" type="button">Cerrar sesión</button>
+  </header>
+
+  <main class="milk-shell">
+    <section class="milk-intro" aria-labelledby="pageTitle">
+      <p class="milk-eyebrow">Evento comunitario especial</p>
+      <h1 id="pageTitle">Registro para entrega de leche para bebés</h1>
+      <p class="milk-organizers">
+        Organizado por <strong>Walter Mejía — Asuntos Comunitarios del Estado de Nueva York</strong>
+        y <strong>Tu Mejor Versión, Organización Sin Fines de Lucro.</strong>
+      </p>
+      <p>
+        Complete este formulario para registrar a una persona y solicitar leche (fórmula)
+        gratuita para su bebé. La entrega se realizará mientras haya disponibilidad.
+      </p>
+      <div class="milk-user" id="userGreeting" aria-live="polite">Verificando su sesión…</div>
+    </section>
+
+    <section class="milk-card" id="formSection" hidden aria-labelledby="formTitle">
+      <div class="milk-progress"><span>Formulario de registro</span><span>5 preguntas</span></div>
+      <h2 id="formTitle">Información de la persona y el bebé</h2>
+      <p class="milk-required"><span aria-hidden="true">*</span> Todos los campos son obligatorios.</p>
+
+      <form id="milkRegistrationForm" novalidate>
+        <div class="milk-field">
+          <label for="fullName">1. Nombre completo <span aria-hidden="true">*</span></label>
+          <p class="milk-hint" id="fullNameHint">Nombre de la persona que recibirá la fórmula.</p>
+          <input id="fullName" name="full_name" type="text" autocomplete="name"
+                 maxlength="120" aria-describedby="fullNameHint" required>
+        </div>
+
+        <div class="milk-field">
+          <label for="phone">2. Número de teléfono <span aria-hidden="true">*</span></label>
+          <p class="milk-hint" id="phoneHint">Incluya el código de área.</p>
+          <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel"
+                 maxlength="30" placeholder="Ejemplo: (212) 555-0123"
+                 aria-describedby="phoneHint" required>
+        </div>
+
+        <div class="milk-field">
+          <label for="babyName">3. Nombre del bebé <span aria-hidden="true">*</span></label>
+          <input id="babyName" name="baby_name" type="text" autocomplete="off"
+                 maxlength="120" required>
+        </div>
+
+        <div class="milk-field">
+          <label for="babyAge">4. ¿Cuántos meses tiene el bebé? <span aria-hidden="true">*</span></label>
+          <p class="milk-hint" id="babyAgeHint">Escriba la edad en meses, de 0 a 36.</p>
+          <input id="babyAge" name="baby_age_months" type="number" inputmode="numeric"
+                 min="0" max="36" step="1" placeholder="Ejemplo: 8"
+                 aria-describedby="babyAgeHint" required>
+        </div>
+
+        <fieldset class="milk-field milk-formula">
+          <legend>5. ¿Qué tipo de fórmula usa su bebé? <span aria-hidden="true">*</span></legend>
+          <div class="milk-options">
+            <label class="milk-option">
+              <input type="radio" name="formula_type" value="Enfamil" required>
+              <span>Enfamil</span>
+            </label>
+            <label class="milk-option">
+              <input type="radio" name="formula_type" value="Similac">
+              <span>Similac</span>
+            </label>
+            <label class="milk-option">
+              <input type="radio" name="formula_type" value="Enfamil Gentlease">
+              <span>Enfamil Gentlease</span>
+            </label>
+            <label class="milk-option">
+              <input type="radio" name="formula_type" value="Similac Sensitive">
+              <span>Similac Sensitive</span>
+            </label>
+            <label class="milk-option">
+              <input type="radio" name="formula_type" value="Otra fórmula">
+              <span>Otra fórmula</span>
+            </label>
+          </div>
+          <div id="otherFormulaField" class="milk-other" hidden>
+            <label for="formulaOther">Nombre de la otra fórmula</label>
+            <input id="formulaOther" name="formula_other" type="text" maxlength="120">
+          </div>
+        </fieldset>
+
+        <div id="formMessage" class="milk-message" role="alert" aria-live="assertive" hidden></div>
+        <button id="submitButton" class="milk-submit" type="submit">
+          Enviar registro
+        </button>
+      </form>
+    </section>
+
+    <section class="milk-success" id="successSection" hidden tabindex="-1" aria-labelledby="successTitle">
+      <div class="milk-check" aria-hidden="true">✓</div>
+      <h2 id="successTitle">¡Registro completado!</h2>
+      <p>La información fue guardada correctamente.</p>
+      <p class="milk-confirmation" id="confirmationNumber"></p>
+      <button class="milk-submit" id="anotherRegistration" type="button">
+        Registrar a otra persona
+      </button>
+      <a class="milk-home-link" href="/">Volver al inicio</a>
+    </section>
+  </main>
+
+  <script src="/static/js/milk-giveaway.js"></script>
+</body>
+</html>

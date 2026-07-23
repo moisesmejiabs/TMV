@@ -1,0 +1,352 @@
+.milk-page {
+  min-height: 100vh;
+  padding: 0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(242, 215, 222, 0.9), transparent 34rem),
+    linear-gradient(180deg, #fffaf8 0%, #f6ecee 100%);
+  font-size: 18px;
+}
+
+.milk-header {
+  min-height: 84px;
+  padding: 12px clamp(18px, 4vw, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: #fff;
+  border-bottom: 1px solid rgba(109, 33, 64, 0.12);
+  box-shadow: 0 8px 24px rgba(109, 33, 64, 0.08);
+}
+
+.milk-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--berry);
+  font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+  font-size: clamp(1.15rem, 3vw, 1.55rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.milk-brand img {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.milk-logout {
+  min-height: 52px;
+  padding: 10px 20px;
+  border: 2px solid var(--berry);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--berry);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.milk-shell {
+  width: min(100% - 32px, 780px);
+  margin: 0 auto;
+  padding: clamp(28px, 6vw, 64px) 0 72px;
+}
+
+.milk-intro,
+.milk-card,
+.milk-success {
+  border: 1px solid rgba(109, 33, 64, 0.12);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 22px 55px rgba(109, 33, 64, 0.12);
+}
+
+.milk-intro {
+  margin-bottom: 28px;
+  padding: clamp(26px, 6vw, 52px);
+  border-top: 8px solid var(--berry);
+}
+
+.milk-eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.milk-intro h1 {
+  margin: 0 0 22px;
+  color: var(--berry);
+  font-size: clamp(2rem, 7vw, 3.7rem);
+  line-height: 1.04;
+}
+
+.milk-intro p {
+  margin: 0 0 18px;
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
+  line-height: 1.65;
+}
+
+.milk-organizers {
+  padding: 18px 20px;
+  border-left: 5px solid var(--gold);
+  border-radius: 0 14px 14px 0;
+  background: var(--champagne);
+}
+
+.milk-user {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #f7edf1;
+  color: var(--berry);
+  font-weight: 800;
+}
+
+.milk-card {
+  padding: clamp(24px, 6vw, 50px);
+}
+
+.milk-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.milk-card h2 {
+  margin: 0 0 8px;
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.milk-required {
+  margin: 0 0 30px;
+  color: #6b5961;
+}
+
+.milk-required span,
+.milk-field > label span,
+.milk-field legend span {
+  color: #a31348;
+}
+
+.milk-field {
+  margin: 0;
+  padding: 30px 0;
+  border: 0;
+  border-top: 1px solid rgba(109, 33, 64, 0.14);
+}
+
+.milk-field > label,
+.milk-field legend,
+.milk-other label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--berry);
+  font-size: clamp(1.15rem, 3.5vw, 1.4rem);
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.milk-hint {
+  margin: -2px 0 12px;
+  color: #685a62;
+  font-size: 0.95rem;
+}
+
+.milk-field input[type="text"],
+.milk-field input[type="tel"],
+.milk-field input[type="number"] {
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 16px;
+  border: 2px solid #b69ba6;
+  border-radius: 14px;
+  background: #fff;
+  color: #2f2430;
+  font: inherit;
+  font-size: 1.15rem;
+}
+
+.milk-field input:focus {
+  border-color: var(--accent);
+  outline: 4px solid rgba(161, 79, 106, 0.18);
+  outline-offset: 2px;
+}
+
+.milk-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.milk-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.milk-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.milk-option span {
+  min-height: 76px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #b69ba6;
+  border-radius: 16px;
+  background: #fff;
+  color: var(--berry);
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.milk-option input:checked + span {
+  border-color: var(--berry);
+  background: var(--berry);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(109, 33, 64, 0.2);
+}
+
+.milk-option input:focus-visible + span {
+  outline: 4px solid rgba(201, 168, 106, 0.65);
+  outline-offset: 3px;
+}
+
+.milk-option:active span {
+  transform: scale(0.98);
+}
+
+.milk-other {
+  margin-top: 18px;
+}
+
+.milk-message {
+  margin: 6px 0 20px;
+  padding: 18px;
+  border: 2px solid #b4234d;
+  border-radius: 14px;
+  background: #fff0f3;
+  color: #7d1533;
+  font-weight: 800;
+}
+
+.milk-submit {
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 24px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--berry), var(--accent));
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 900;
+  box-shadow: 0 16px 30px rgba(109, 33, 64, 0.24);
+}
+
+.milk-submit:hover {
+  filter: brightness(1.08);
+}
+
+.milk-submit:focus-visible,
+.milk-logout:focus-visible,
+.milk-home-link:focus-visible {
+  outline: 4px solid rgba(201, 168, 106, 0.75);
+  outline-offset: 4px;
+}
+
+.milk-submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.milk-success {
+  padding: clamp(36px, 8vw, 70px);
+  text-align: center;
+}
+
+.milk-check {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #287a50;
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+.milk-success h2 {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+.milk-confirmation {
+  margin: 20px 0;
+  font-weight: 900;
+}
+
+.milk-home-link {
+  min-height: 58px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: var(--berry);
+  font-weight: 900;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 600px) {
+  .milk-page {
+    font-size: 17px;
+  }
+
+  .milk-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .milk-brand {
+    justify-content: center;
+  }
+
+  .milk-logout {
+    width: 100%;
+  }
+
+  .milk-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

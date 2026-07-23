@@ -311,6 +311,81 @@ async function handleMe(request: Request, env: Env, pathname: string) {
 }
 
 /*******************************************************************
+ * Baby formula giveaway registrations
+ ******************************************************************** */
+
+const FORMULA_TYPES = [
+  'Enfamil',
+  'Similac',
+  'Enfamil Gentlease',
+  'Similac Sensitive',
+  'Otra fórmula',
+] as const;
+
+function normalizePhone(value: unknown) {
+  return String(value || '').trim().replace(/[^\d+().\-\s]/g, '');
+}
+
+async function handleMilkGiveaway(request: Request, env: Env, pathname: string) {
+  if (request.method === 'POST' && pathname === '/api/milk-registrations') {
+    const user = await requireUser(request, env);
+    if (!user) return unauthorized('Debe iniciar sesión para registrar a una persona.');
+
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Se esperaba información en formato JSON.');
+
+    const fullName = String(body.full_name || '').trim();
+    const phone = normalizePhone(body.phone);
+    const babyName = String(body.baby_name || '').trim();
+    const babyAgeMonths = Number(body.baby_age_months);
+    const formulaType = String(body.formula_type || '').trim();
+    const formulaOther = String(body.formula_other || '').trim();
+
+    if (fullName.length < 2 || fullName.length > 120) {
+      return badRequest('Escriba el nombre completo de la persona que recibirá la leche.');
+    }
+    if (phone.replace(/\D/g, '').length < 7 || phone.length > 30) {
+      return badRequest('Escriba un número de teléfono válido.');
+    }
+    if (babyName.length < 2 || babyName.length > 120) {
+      return badRequest('Escriba el nombre del bebé.');
+    }
+    if (!Number.isInteger(babyAgeMonths) || babyAgeMonths < 0 || babyAgeMonths > 36) {
+      return badRequest('La edad del bebé debe ser un número de 0 a 36 meses.');
+    }
+    if (!FORMULA_TYPES.includes(formulaType as typeof FORMULA_TYPES[number])) {
+      return badRequest('Seleccione un tipo de fórmula de la lista.');
+    }
+    if (formulaType === 'Otra fórmula' && (formulaOther.length < 2 || formulaOther.length > 120)) {
+      return badRequest('Escriba el nombre de la fórmula que usa el bebé.');
+    }
+
+    const result = await env.DB.prepare(
+      `INSERT INTO milk_giveaway_registration
+       (registered_by, full_name, phone, baby_name, baby_age_months, formula_type, formula_other, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      user.id,
+      fullName,
+      phone,
+      babyName,
+      babyAgeMonths,
+      formulaType,
+      formulaType === 'Otra fórmula' ? formulaOther : null,
+      isoNow()
+    ).run();
+
+    return json({
+      ok: true,
+      registration_id: Number(result.meta.last_row_id),
+      message: 'Registro completado.',
+    }, 201);
+  }
+
+  return null;
+}
+
+/*******************************************************************
  * BEGIN Handle Events  
 ******************************************************************** */
 
@@ -1376,6 +1451,7 @@ export default {
       const handlers = [
         handleAuth,
         handleMe,
+        handleMilkGiveaway,
         handleEvents,
         handleCourses,
         handleForum,

@@ -84,7 +84,9 @@ function renderAuthLinks(me) {
   console.log("renderAuthLinks: normalized role =", role);
 
   let html = `
- 
+    <a href="/milk-giveaway" class="nav-btn">
+      <span data-en="Milk registration" data-es="Registro de leche">Milk registration</span>
+    </a>
   `;
 
   if (role === "admin") {
