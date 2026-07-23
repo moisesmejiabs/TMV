@@ -1,6 +1,10 @@
 name = "tu-mejor-version"
 main = "src/worker.ts"
 compatibility_date = "2026-02-24"
+routes = [
+  { pattern = "tumejorversion-li.org/*", zone_name = "tumejorversion-li.org" },
+  { pattern = "www.tumejorversion-li.org/*", zone_name = "tumejorversion-li.org" }
+]
 
 [assets]
 directory = "./public"
@@ -18,8 +22,3 @@ bucket_name = "tumejorversion-assets"
 [vars]
 # Generate a long random secret: openssl rand -base64 48
 JWT_SECRET = "WjL6DDiicScSqA1+4Dh+E8gFH0ISTc5ByfioNnXfi+9MaRzKdhKBOhJd8NbDT+co"
-
-routes = [
-  { pattern = "moestyle.me/*", zone_name = "moestyle.me" },
-  { pattern = "www.moestyle.me/*", zone_name = "moestyle.me" }
-]

@@ -64,13 +64,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -145,6 +139,11 @@
     <script src="/static/js/facebook.js"></script>
   <script>
     function q(name){return new URLSearchParams(location.search).get(name)}
+    function imageSrc(value){
+      if(!value) return '';
+      if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+      return `/static/images/${value}`;
+    }
     async function api(path, opts={}){
       const r=await fetch(path,{credentials:'include', headers:{...(opts.body?{'content-type':'application/json'}:{})}, ...opts});
       const ct=r.headers.get('content-type')||'';
@@ -167,10 +166,7 @@
       const img = document.getElementById('course-image');
 
       if (img && c.image_url) {
-        img.src = c.image_url.startsWith('http')
-          ? c.image_url
-          : `/static/images/${c.image_url}`;
-
+        img.src = imageSrc(c.image_url);
         img.alt = c.name || 'Course image';
         img.style.display = 'block';
       }
@@ -180,7 +176,7 @@
       if(!me){ html = '<p><a href="/login.html">Login</a> to register.</p>'; }
       else {
         html += c.enrolled ? '<button id="cancel">Cancel Enrollment</button>' : '<button id="enroll">Enroll</button>';
-        if(me.role==='admin') html += ' <button id="delete">Delete Course</button>';
+        if(me.role==='admin') html += ` <a class="btn" href="/create-course.html?id=${encodeURIComponent(id)}">Edit Course</a> <button id="delete">Delete Course</button>`;
       }
       document.getElementById('actions').innerHTML = html;
 
@@ -189,7 +185,7 @@
       const cancelBtn=document.getElementById('cancel');
       if(cancelBtn) cancelBtn.addEventListener('click', async()=>{await api(`/api/courses/${id}/cancel`,{method:'POST'}); location.reload();});
       const delBtn=document.getElementById('delete');
-      if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm('Delete this course?')){await api(`/api/courses/${id}`,{method:'DELETE'}); location.href='/courses.html';}});
+      if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm('Delete this course? Feedback will be saved for future display.')){await api(`/api/courses/${id}`,{method:'DELETE'}); location.href='/courses.html';}});
 
       if(me && me.role==='admin'){
         const users = await api(`/api/courses/${id}/registered`);

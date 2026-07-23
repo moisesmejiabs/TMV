@@ -383,6 +383,159 @@ h1{
   backdrop-filter: blur(12px);
 }
 
+.section-title{
+  margin: 0 0 1.5rem;
+  text-align: left;
+}
+
+.section-description{
+  max-width: 760px;
+  margin: 0 0 1.75rem;
+  text-align: left;
+  color: var(--text-soft);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.overlay-card .section-description{
+  margin-bottom: 1.25rem;
+}
+
+.workshops-card .list-item,
+.events-card .list-item{
+  display: grid;
+  gap: 16px;
+}
+
+.workshop-media-link,
+.event-media-link{
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(109,33,64,0.08);
+}
+
+.workshop-media-link img,
+.event-media-link img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.event-detail-card{
+  display: grid;
+  gap: 24px;
+}
+
+.event-detail-card #title{
+  margin: 0;
+}
+
+.event-detail-media{
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(109,33,64,0.08);
+}
+
+.event-detail-media img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.event-detail-section h2{
+  margin: 0 0 0.75rem;
+}
+
+.event-detail-section p{
+  margin: 0;
+  white-space: pre-line;
+}
+
+.event-detail-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.event-detail-grid div{
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.62);
+  border: 1px solid rgba(161,79,106,0.10);
+}
+
+.event-detail-grid dt{
+  color: var(--berry);
+  font-weight: 800;
+  margin-bottom: 0.35rem;
+}
+
+.event-detail-grid dd{
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.event-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feedback-section{
+  width: 100%;
+}
+
+.feedback-form{
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+
+.feedback-form textarea,
+.edit-feedback-textarea,
+.edit-course-feedback-textarea{
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(161,79,106,0.16);
+  background: rgba(255,255,255,0.82);
+  color: var(--text-main);
+}
+
+.feedback-actions{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.emoji-toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.emoji-btn{
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(161,79,106,0.14);
+  background: rgba(255,255,255,0.72);
+  cursor: pointer;
+}
+
 /* =========================
    CARD COLORS (index)
 ========================= */
@@ -541,17 +694,25 @@ h1{
   display: block;
   text-decoration: none;
   color: inherit;
-  max-width: 420px;
+  width: 100%;
   margin-top: 10px;
 }
 
 .yt-thumb {
   position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(109,33,64,0.08);
 }
 
 .yt-thumb img {
   width: 100%;
-  border-radius: 12px;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 0;
 }
 
 .yt-play {
@@ -580,6 +741,79 @@ h1{
 /* =========================
    END OF YOUTUBE
 ========================= */
+
+.partner-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+.partner-item{
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.partner-item h2{
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.partner-media-link{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(161,79,106,0.12);
+  box-shadow: 0 10px 24px rgba(109,33,64,0.08);
+}
+
+.partner-media-link img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.youtube-slider {
+  width: 100%;
+}
+
+.youtube-slider-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #111;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.youtube-slider-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.youtube-slider-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.youtube-slider-controls button {
+  min-width: 42px;
+  min-height: 36px;
+}
 
 /* =========================
    BEGIN OF FB
@@ -649,18 +883,22 @@ h1{
 }
 
 .menu-toggle{
+  position: fixed;
+  top: 18px;
+  right: 18px;
   width: 44px;
   height: 32px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  background: rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.82);
   border: 1px solid rgba(161,79,106,0.14);
   border-radius: 12px;
   padding: 6px;
-  z-index: 1001;
+  z-index: 4001;
   box-shadow: 0 10px 22px rgba(109,33,64,0.10);
+  backdrop-filter: blur(10px);
 }
 
 .menu-toggle span{
@@ -691,7 +929,7 @@ h1{
     linear-gradient(180deg, rgba(255,250,250,0.94) 0%, rgba(246,236,238,0.96) 100%);
   display: flex;
   flex-direction: column;
-  padding: 40px 18px;
+  padding: 72px 18px 40px;
   gap: 10px;
   transition: right 0.3s ease;
   z-index: 3000;
@@ -714,6 +952,12 @@ h1{
   text-decoration: none;
   color: inherit;
   text-align: center;
+}
+
+.mobile-menu button.nav-btn{
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
 }
 
 .mobile-menu .nav-btn span{

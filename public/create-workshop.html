@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Workshop</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="/static/js/app.js"></script>
+</head>
+<body data-page-type="admin">
+  <main class="container" style="padding-top:18px;">
+    <h1 class="nav-gold"><span id="workshop-form-title" data-en="Create Workshop" data-es="Crear Taller"></span></h1>
+
+    <form id="workshopForm" class="form">
+      <label>Workshop Name
+        <input name="name" required>
+      </label>
+
+      <label>Date & Time
+        <input type="datetime-local" name="date" required>
+      </label>
+
+      <label>Presenter
+        <input name="presenter" required>
+      </label>
+
+      <label>Location
+        <input name="location" required>
+      </label>
+
+      <label>Capacity
+        <input type="number" name="capacity" min="0">
+      </label>
+
+      <label>About
+        <textarea name="about" rows="6" required></textarea>
+      </label>
+
+      <label>Requirements
+        <textarea name="requirements" rows="4"></textarea>
+      </label>
+
+      <label>Workshop Image
+        <input type="file" name="image" accept="image/*">
+      </label>
+
+      <button type="submit">Create Workshop</button>
+    </form>
+  </main>
+
+  <script>
+  const formEl = document.getElementById("workshopForm");
+  const editWorkshopId = new URLSearchParams(window.location.search).get("id");
+
+  function toDatetimeLocal(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    const offsetMs = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+  }
+
+  function localInputToIso(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? value : d.toISOString();
+  }
+
+  async function loadWorkshopForEdit() {
+    if (!editWorkshopId) return;
+    const res = await fetch(`/api/workshops/${encodeURIComponent(editWorkshopId)}`, { credentials: "include" });
+    const workshop = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((workshop && workshop.error) || "Failed to load workshop");
+    document.getElementById("workshop-form-title").textContent = "Edit Workshop";
+    const submit = formEl.querySelector('button[type="submit"]');
+    if (submit) submit.textContent = "Save Workshop";
+    formEl.elements.name.value = workshop.name || "";
+    formEl.elements.date.value = toDatetimeLocal(workshop.date);
+    formEl.elements.presenter.value = workshop.presenter || "";
+    formEl.elements.location.value = workshop.location || "";
+    formEl.elements.capacity.value = workshop.capacity || 0;
+    formEl.elements.about.value = workshop.about || "";
+    formEl.elements.requirements.value = workshop.requirements || "";
+  }
+
+  loadWorkshopForEdit().catch((err) => {
+    console.error("Failed to load workshop for edit:", err);
+    alert(err.message || "Failed to load workshop.");
+  });
+
+  formEl.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+
+    try {
+      let imageUrl = "";
+      const imageFile = form.image?.files?.[0];
+      if (imageFile) {
+        const imageForm = new FormData();
+        imageForm.append("image", imageFile);
+        const uploadRes = await fetch("/api/upload-image", {
+          method: "POST",
+          credentials: "include",
+          body: imageForm
+        });
+        const uploadData = await uploadRes.json().catch(() => null);
+        if (!uploadRes.ok) throw new Error((uploadData && uploadData.error) || "Image upload failed");
+        imageUrl = uploadData.url || "";
+      }
+
+      const payload = {
+        name: form.elements.name.value.trim(),
+        date: localInputToIso(form.elements.date.value),
+        presenter: form.elements.presenter.value.trim(),
+        location: form.elements.location.value.trim(),
+        capacity: Number(form.elements.capacity.value || 0),
+        about: form.elements.about.value.trim(),
+        requirements: form.elements.requirements.value.trim(),
+        image_url: imageUrl
+      };
+
+      const res = await fetch(editWorkshopId ? `/api/workshops/${encodeURIComponent(editWorkshopId)}` : "/api/workshops", {
+        method: editWorkshopId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error((data && data.error) || "Failed to save workshop");
+      window.location.href = "/workshop.html?id=" + encodeURIComponent(data.id || editWorkshopId);
+    } catch (err) {
+      alert(err.message || "Unexpected error creating workshop.");
+    }
+  });
+  </script>
+</body>
+</html>

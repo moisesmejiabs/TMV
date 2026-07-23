@@ -63,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -97,6 +91,13 @@
         <label>Name<br><input name="name" required></label><br><br>
         <label>Email<br><input name="email" type="email" required></label><br><br>
         <label>Password<br><input name="password" type="password" minlength="8" required></label><br><br>
+        <div id="agreement-container" style="display:none; margin-bottom:20px; padding:12px; border:1px solid #ccc; border-radius:8px; background:#f8f8f8;">
+          <h3 style="margin-top:0;">Required agreement</h3>
+          <div id="agreement-docs"></div>
+          <p style="margin:8px 0 0;font-size:0.95rem;color:#555;">
+            By checking the box for each document, you acknowledge and agree to the document.
+          </p>
+        </div>
         <button type="submit">Create Account</button>
       </form>
       <p id="msg"></p>
@@ -105,16 +106,70 @@
   </main>
   <script src="/static/js/app.js"></script>
   <script>
+    let activeAgreementDocs = [];
+
     async function api(path, opts={}){
       const r = await fetch(path, {credentials:'include', headers:{'content-type':'application/json', ...(opts.headers||{})}, ...opts});
       const body = await r.json().catch(()=>null);
       if(!r.ok) throw new Error(body?.error || 'Register failed');
       return body;
     }
+
+    async function loadAgreementDocs() {
+      try {
+        const docs = await api('/api/agreement-docs');
+        activeAgreementDocs = docs || [];
+        const container = document.getElementById('agreement-container');
+        const docsEl = document.getElementById('agreement-docs');
+
+        if (!activeAgreementDocs.length) {
+          container.style.display = 'none';
+          docsEl.innerHTML = '';
+          return;
+        }
+
+        container.style.display = 'block';
+        docsEl.innerHTML = activeAgreementDocs.map(doc => `
+          <div style="margin-bottom: 14px;">
+            <p style="margin: 0 0 6px;"><strong>${escapeHtml(doc.title)}</strong> by ${escapeHtml(doc.author)} <a href="${doc.download_url}" target="_blank">(download PDF)</a></p>
+            <label style="font-size:0.95rem;">
+              <input type="checkbox" name="agreement_doc_ids" value="${doc.id}"> I acknowledge and agree to this document.
+            </label>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.warn('Unable to load agreement documents', err);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     document.getElementById('f').addEventListener('submit', async (e)=>{
       e.preventDefault();
+      document.getElementById('msg').textContent = '';
       const fd = new FormData(e.target);
-      const payload = {name: fd.get('name'), email: String(fd.get('email')).toLowerCase().trim(), password: fd.get('password')};
+      const payload = {
+        name: fd.get('name'),
+        email: String(fd.get('email')).toLowerCase().trim(),
+        password: fd.get('password')
+      };
+
+      if (activeAgreementDocs.length) {
+        const acceptedIds = fd.getAll('agreement_doc_ids');
+        if (acceptedIds.length !== activeAgreementDocs.length) {
+          document.getElementById('msg').textContent = 'Please acknowledge and agree to all required documents.';
+          return;
+        }
+        payload.agreement_doc_ids = acceptedIds;
+      }
+
       try{
         await api('/api/auth/register', {method:'POST', body: JSON.stringify(payload)});
         location.href = '/';
@@ -122,6 +177,8 @@
         document.getElementById('msg').textContent = err.message;
       }
     });
+
+    loadAgreementDocs();
   </script>
 </body>
 </html>

@@ -63,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -93,7 +87,7 @@
   <p><b>Email:</b> <span id="me-email"></span></p>
   </div>
 
-    <h1 class="nav-gold"><span data-en="Create Course" data-es="Crear Curso"></span></h1>
+    <h1 class="nav-gold"><span id="course-form-title" data-en="Create Course" data-es="Crear Curso"></span></h1>
 
  <form id="courseForm" class="form">
   <label>Course Name
@@ -124,6 +118,10 @@
     <textarea name="requirements" rows="4"></textarea>
   </label>
 
+  <label>Course Image
+    <input type="file" name="image" accept="image/*">
+  </label>
+
   <button type="submit">Submit</button>
 </form>
 
@@ -131,6 +129,43 @@
 console.log("🚀 courseForm script loaded");
 
 const formEl = document.getElementById("courseForm");
+const editCourseId = new URLSearchParams(window.location.search).get("id");
+
+function toDatetimeLocal(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const offsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function localInputToIso(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? value : d.toISOString();
+}
+
+async function loadCourseForEdit() {
+  if (!editCourseId || !formEl) return;
+  const res = await fetch(`/api/courses/${encodeURIComponent(editCourseId)}`, { credentials: "include" });
+  const course = await res.json().catch(() => null);
+  if (!res.ok) throw new Error((course && course.error) || "Failed to load course");
+  document.getElementById("course-form-title").textContent = "Edit Course";
+  const submit = formEl.querySelector('button[type="submit"]');
+  if (submit) submit.textContent = "Save Course";
+  formEl.elements.name.value = course.name || "";
+  formEl.elements.date.value = toDatetimeLocal(course.date);
+  formEl.elements.presenter.value = course.presenter || "";
+  formEl.elements.location.value = course.location || "";
+  formEl.elements.capacity.value = course.capacity || 0;
+  formEl.elements.about.value = course.about || "";
+  formEl.elements.requirements.value = course.requirements || "";
+}
+
+loadCourseForEdit().catch((err) => {
+  console.error("Failed to load course for edit:", err);
+  alert(err.message || "Failed to load course.");
+});
 
 console.log("🔍 form element:", formEl);
 
@@ -146,32 +181,52 @@ if (!formEl) {
       const form = e.target;
 
       console.log("📋 Raw form values:");
-      console.log("   name:", form.name?.value);
-      console.log("   date:", form.date?.value);
-      console.log("   presenter:", form.presenter?.value);
-      console.log("   location:", form.location?.value);
-      console.log("   capacity:", form.capacity?.value);
-      console.log("   about:", form.about?.value);
-      console.log("   requirements:", form.requirements?.value);
+      console.log("   name:", form.elements.name?.value);
+      console.log("   date:", form.elements.date?.value);
+      console.log("   presenter:", form.elements.presenter?.value);
+      console.log("   location:", form.elements.location?.value);
+      console.log("   capacity:", form.elements.capacity?.value);
+      console.log("   about:", form.elements.about?.value);
+      console.log("   requirements:", form.elements.requirements?.value);
+
+      let imageUrl = "";
+      const imageFile = form.image?.files?.[0];
+      if (imageFile) {
+        const imageForm = new FormData();
+        imageForm.append("image", imageFile);
+
+        const uploadRes = await fetch("/api/upload-image", {
+          method: "POST",
+          credentials: "include",
+          body: imageForm
+        });
+        const uploadData = await uploadRes.json().catch(() => null);
+        if (!uploadRes.ok) {
+          throw new Error((uploadData && uploadData.error) || "Image upload failed");
+        }
+        imageUrl = uploadData.url || "";
+      }
 
       const payload = {
-        name: form.name.value.trim(),
-        date: form.date.value,
-        presenter: form.presenter.value.trim(),
-        location: form.location.value.trim(),
-        capacity: Number(form.capacity.value || 0),
-        about: form.about.value.trim(),
-        requirements: form.requirements.value.trim()
+        name: form.elements.name.value.trim(),
+        date: localInputToIso(form.elements.date.value),
+        presenter: form.elements.presenter.value.trim(),
+        location: form.elements.location.value.trim(),
+        capacity: Number(form.elements.capacity.value || 0),
+        about: form.elements.about.value.trim(),
+        requirements: form.elements.requirements.value.trim(),
+        image_url: imageUrl
       };
 
       console.log("📦 Payload to send:", payload);
-      console.log("🌐 Sending POST → /api/courses");
+      console.log("🌐 Sending course save request");
 
-      const res = await fetch("/api/courses", {
-        method: "POST",
+      const res = await fetch(editCourseId ? `/api/courses/${encodeURIComponent(editCourseId)}` : "/api/courses", {
+        method: editCourseId ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(payload)
       });
 
@@ -193,8 +248,8 @@ if (!formEl) {
       console.log("✅ Parsed response:", data);
 
       if (res.ok) {
-        console.log("✅ Course created successfully → redirecting");
-        window.location.href = "/courses.html";
+        console.log("✅ Course saved successfully → redirecting");
+        window.location.href = editCourseId ? `/course.html?id=${encodeURIComponent(editCourseId)}` : "/courses.html";
         return;
       }
 
@@ -218,4 +273,3 @@ if (!formEl) {
   </script>
 </body>
 </html>
-

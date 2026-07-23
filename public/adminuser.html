@@ -63,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -177,6 +171,19 @@
       <br>
 
       <div>
+        <label for="video_url">Testimony Video URL</label><br>
+        <input
+          type="url"
+          id="video_url"
+          name="video_url"
+          placeholder="Paste YouTube video URL"
+        >
+        <p style="font-size: 0.9rem; color: #555;">Enter a YouTube video link for admin approval.</p>
+      </div>
+
+      <br>
+
+      <div>
         <label for="testimony">Testimony</label><br>
         <textarea
           id="testimony"
@@ -192,6 +199,10 @@
       <p id="profile-status"></p>
 
     </form>
+  </section>
+  <section>
+    <h2>Pending Agreement Documents</h2>
+    <div id="pending-agreements"></div>
   </section>
 
 </body> 
@@ -289,6 +300,12 @@
       console.log("✏️ testimony populated:", testimonyEl.value);
     }
 
+    const videoUrlEl = document.getElementById('video_url');
+    if (videoUrlEl) {
+      videoUrlEl.value = me.video_url || '';
+      console.log("✏️ video_url populated:", videoUrlEl.value);
+    }
+
     console.log("✅ Form population complete");
 
     //const users = await api('/api/admin/users');
@@ -363,7 +380,8 @@
         email: document.getElementById('email').value,
         password: document.getElementById('password').value,
         image_url: document.getElementById('photo').value,
-        testimony: document.getElementById('testimony').value
+        testimony: document.getElementById('testimony').value,
+        video_url: document.getElementById('video_url').value
       };
 
       console.log("📤 Sending update:", body);
@@ -407,6 +425,68 @@
         }
       });
     });
+
+    async function loadPendingAgreements() {
+      const container = document.getElementById('pending-agreements');
+      if (!container) return;
+      try {
+        const docs = await api('/api/agreement-docs');
+        const pending = docs.filter((doc) => !doc.acknowledged);
+        const accepted = docs.filter((doc) => doc.acknowledged);
+
+        if (!docs.length) {
+          container.innerHTML = '<p>No agreement documents are currently active.</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div style="margin-bottom: 18px;">
+            <strong>Accepted documents</strong>
+            ${accepted.length ? `<ul>${accepted.map((doc) => `
+              <li>${escapeHtml(doc.title)} by ${escapeHtml(doc.author)} <a href="${doc.download_url}" target="_blank">Download</a></li>
+            `).join('')}</ul>` : '<p>No documents accepted yet.</p>'}
+          </div>
+          <div>
+            <strong>Pending documents</strong>
+            ${pending.length ? `<ul>${pending.map((doc) => `
+              <li style="margin-bottom: 10px;">
+                ${escapeHtml(doc.title)} by ${escapeHtml(doc.author)}
+                <a href="${doc.download_url}" target="_blank">Download</a>
+                <button type="button" data-doc-id="${doc.id}" class="acknowledge-doc">Acknowledge</button>
+              </li>
+            `).join('')}</ul>` : '<p>No pending documents.</p>'}
+          </div>
+        `;
+
+        document.querySelectorAll('.acknowledge-doc').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const docId = btn.getAttribute('data-doc-id');
+            try {
+              await api(`/api/agreement-docs/${docId}/acknowledge`, { method: 'POST' });
+              await loadPendingAgreements();
+            } catch (err) {
+              alert(`Unable to acknowledge document: ${err.message}`);
+            }
+          });
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('pending') === '1') {
+          const notice = document.createElement('div');
+          notice.style.marginBottom = '16px';
+          notice.style.padding = '12px';
+          notice.style.border = '1px solid #d9534f';
+          notice.style.background = '#f9e6e6';
+          notice.style.color = '#d9534f';
+          notice.textContent = 'You have pending documents that must be acknowledged before you can continue using the site.';
+          container.prepend(notice);
+        }
+      } catch (err) {
+        container.innerHTML = `<p>Error loading documents: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    await loadPendingAgreements();
 
   } catch (err) {
     console.error("❌ PAGE LOAD ERROR:", err);

@@ -41,6 +41,24 @@ async function api(path, opts = {}) {
     return body;
   }
 
+  const ADMIN_VIEW_MODE_KEY = "tmv_admin_view_mode";
+
+  function getAdminViewMode(me) {
+    const role = String(me?.role || "").trim().toLowerCase();
+    if (role !== "admin") return "user";
+    return localStorage.getItem(ADMIN_VIEW_MODE_KEY) === "user" ? "user" : "admin";
+  }
+
+  function isAdminViewingAsUser(me) {
+    return String(me?.role || "").trim().toLowerCase() === "admin" && getAdminViewMode(me) === "user";
+  }
+
+  function canUseAdminControls(me) {
+    const role = String(me?.role || "").trim().toLowerCase();
+    if (role === "admin") return !isAdminViewingAsUser(me);
+    return role === "instructor";
+  }
+
   function setLanguage(lang) {
     localStorage.setItem("lang", lang);
     console.log("setLanguage", lang);
@@ -90,6 +108,7 @@ function renderAuthLinks(me) {
   }
 
   const role = String(me.role || "").trim().toLowerCase();
+  const viewMode = getAdminViewMode(me);
   console.log("renderAuthLinks: normalized role =", role);
 
   let html = `
@@ -98,13 +117,31 @@ function renderAuthLinks(me) {
 
   if (role === "admin") {
     console.log("renderAuthLinks: ADMIN detected");
+    if (viewMode === "admin") {
+      html += `
+        <a href="/admin.html" class="nav-btn">
+          <span data-en="Admin" data-es="Admin">Admin</span>
+        </a>
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+      `;
+    } else {
+      html += `
+        <a href="/adminuser.html" class="nav-btn">
+            <span data-en="Profile" data-es="Perfil"></span>
+        </a>
+      `;
+    }
+
     html += `
-      <a href="/admin.html" class="nav-btn">
-        <span data-en="Admin" data-es="Admin">Admin</span>
-      </a>
-      <a href="/media" class="nav-btn">
-        <span data-en="Media" data-es="Medios"></span>
-      </a>
+      <button type="button" id="admin-view-toggle" class="nav-btn admin-view-toggle">
+        <span
+          data-en="${viewMode === "admin" ? "View as User" : "View as Admin"}"
+          data-es="${viewMode === "admin" ? "Ver como Usuario" : "Ver como Admin"}">
+          ${viewMode === "admin" ? "View as User" : "View as Admin"}
+        </span>
+      </button>
     `;
   } else {
     console.log("renderAuthLinks: NON-ADMIN detected");
@@ -134,6 +171,19 @@ function renderAuthLinks(me) {
         credentials: "include"
       });
 
+      location.reload();
+    });
+  }
+
+  const adminViewToggle = document.getElementById("admin-view-toggle");
+  if (adminViewToggle) {
+    adminViewToggle.addEventListener("click", () => {
+      const nextMode = getAdminViewMode(me) === "admin" ? "user" : "admin";
+      localStorage.setItem(ADMIN_VIEW_MODE_KEY, nextMode);
+      if (nextMode === "user" && document.body?.dataset?.pageType === "admin") {
+        window.location.href = "/";
+        return;
+      }
       location.reload();
     });
   }
@@ -177,6 +227,13 @@ async function initApp() {
     me = null;
   }
 
+  const pageType = document.body?.dataset?.pageType || 'public';
+  if (me && me.pending_agreements_count > 0 && pageType !== 'user') {
+    console.log('Redirecting to agreement acknowledgement because pending documents exist.');
+    window.location.href = '/adminuser.html?pending=1';
+    return;
+  }
+
   // ---------- AUTH NAV ----------
   try {
     console.log("🧩 Rendering auth links...");
@@ -214,7 +271,6 @@ async function initApp() {
    * BEGIN Initialize individual pages
    */
 
-  const pageType = document.body?.dataset?.pageType || "public";
   console.log("🔐 pageType =", pageType);
 
   if (pageType === "user" && !me) {
@@ -224,7 +280,7 @@ async function initApp() {
   }
 
   console.log("Checking if page calling app.js has courseForm")
-  if (document.getElementById("courseForm")) {
+  if (document.getElementById("courseForm") || document.getElementById("workshopForm")) {
     console.log("about to call redirect if not admin user")
     // admin page: must be logged in and admin
     if ((pageType === "admin"|| pageType === "public") && (!me || me.role !== "admin")) {
@@ -261,6 +317,15 @@ async function initApp() {
     loadEventsForDeletion();
   }
 
+  if (document.querySelector("#workshops-list.workshop-list-delete")) {
+    if (pageType === "admin" && (!me || me.role !== "admin")) {
+      console.warn("🚫 admin page but user is not admin → redirecting");
+      window.location.href = "/";
+      return;
+    }
+    loadWorkshopsForDeletion();
+  }
+
   /******************
    * if events page is calling, load feedback for event
    */
@@ -290,6 +355,16 @@ async function initApp() {
   if (document.getElementById("testimonials-list")) {
     console.log("about to call loadTestimonials()");
     loadTestimonials();
+  }
+
+  if (document.getElementById("workshops-list") && !document.querySelector("#workshops-list.workshop-list-delete")) {
+    console.log("about to call loadWorkshops()");
+    loadWorkshops();
+  }
+
+  if (document.getElementById("youtube-slider")) {
+    console.log("about to call loadYoutubeSlider()");
+    loadYoutubeSlider();
   }
     
   /* All pages should init menu */
@@ -614,7 +689,7 @@ async function createEventButton() {
     container.innerHTML = "";
     container.style.display = "none";
 
-    if (role === "admin" || role === "instructor") {
+    if (canUseAdminControls(me)) {
       console.log("AUTHORIZED ROLE:", role);
 
       container.innerHTML = `
@@ -632,6 +707,27 @@ async function createEventButton() {
 /*****************************************************************************
  * END Creates button for event creation and initializes the event container
  ***************************************************************************/
+
+async function createWorkshopButton() {
+  const container = document.getElementById("create-workshop-container");
+  if (!container) return;
+
+  try {
+    const me = await api("/api/me");
+    if (!me) return;
+    const role = (me.role || "").toLowerCase();
+
+    container.innerHTML = "";
+    container.style.display = "none";
+
+    if (canUseAdminControls(me)) {
+      container.innerHTML = `<a class="btn" href="/create-workshop.html">Create workshop</a>`;
+      container.style.display = "block";
+    }
+  } catch (e) {
+    console.log("CreateWorkshopButton error:", e);
+  }
+}
 
 /*****************************************************************************
  * BEGIN Creates button for course creation and initializes the course container
@@ -655,7 +751,7 @@ async function createEventButton() {
       container.innerHTML = "";
       container.style.display = "none";
 
-      if (role === "admin" || role === "instructor") {
+      if (canUseAdminControls(me)) {
         console.log("AUTHORIZED ROLE:", role);
         container.innerHTML = `
           <a class="btn" href="/create-course.html">Create course</a>
@@ -763,6 +859,95 @@ async function loadCourses() {
   }
 }
 
+async function loadWorkshops() {
+  const list = document.getElementById("workshops-list");
+  if (!list || list.classList.contains("workshop-list-delete")) return;
+
+  try {
+    createWorkshopButton();
+    const workshops = await api("/api/workshops");
+
+    if (!workshops || workshops.length === 0) {
+      list.innerHTML = `<li class="list-item"><b>No workshops found.</b></li>`;
+      return;
+    }
+
+    list.innerHTML = workshops.map((w) => {
+      const image = w.image_url ? (String(w.image_url).startsWith("/") || /^https?:\/\//i.test(w.image_url) ? w.image_url : `/static/images/${w.image_url}`) : "";
+      return `
+        <li class="list-item">
+          ${image ? `<a class="workshop-media-link" href="/workshop.html?id=${encodeURIComponent(w.id)}"><img src="${escapeHtml(image)}" alt="${escapeHtml(w.name || 'Workshop image')}"></a>` : ""}
+          <div>
+            <a href="/workshop.html?id=${encodeURIComponent(w.id)}">
+              <strong>${escapeHtml(w.name || "")}</strong>
+            </a>
+            <div class="muted">
+              <span><b>Date:</b> ${formatDate(w.date)}</span><br>
+              <span><b>Location:</b> ${escapeHtml(w.location || "")}</span>
+            </div>
+          </div>
+        </li>
+      `;
+    }).join("");
+  } catch (e) {
+    console.error("ERROR in loadWorkshops:", e);
+    list.innerHTML = `<li class="list-item"><b>Error loading workshops.</b></li>`;
+  }
+}
+
+async function loadYoutubeSlider() {
+  const root = document.getElementById("youtube-slider");
+  if (!root) return;
+
+  try {
+    const videos = await api("/api/youtube-slider");
+    if (!videos || !videos.length) {
+      root.innerHTML = `<p class="muted">No videos available.</p>`;
+      return;
+    }
+
+    let index = 0;
+
+    function render() {
+      const video = videos[index];
+      root.innerHTML = `
+        <div class="youtube-slider-frame">
+          <iframe
+            src="${escapeHtml(video.embed_url)}"
+            title="${escapeHtml(video.title || 'YouTube video')}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="youtube-slider-controls">
+          <button type="button" id="youtube-prev" aria-label="Previous video">&#10094;</button>
+          <strong>${escapeHtml(video.title || '')}</strong>
+          <button type="button" id="youtube-next" aria-label="Next video">&#10095;</button>
+        </div>
+      `;
+
+      const prev = document.getElementById("youtube-prev");
+      const next = document.getElementById("youtube-next");
+      if (prev) prev.disabled = videos.length <= 1;
+      if (next) next.disabled = videos.length <= 1;
+      if (prev) prev.addEventListener("click", () => {
+        index = (index - 1 + videos.length) % videos.length;
+        render();
+      });
+      if (next) next.addEventListener("click", () => {
+        index = (index + 1) % videos.length;
+        render();
+      });
+    }
+
+    render();
+  } catch (err) {
+    console.error("ERROR in loadYoutubeSlider:", err);
+    root.innerHTML = `<p class="muted">Error loading videos.</p>`;
+  }
+}
+
 function formatDate(value) {
   if (!value) return "";
   const d = new Date(value);
@@ -835,6 +1020,10 @@ async function initMenu() {
       console.log("➡ opening menu");
       openMenu();
     }
+  });
+
+  menu.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeMenu);
   });
 }
 
@@ -1039,10 +1228,11 @@ async function loadCoursesForDeletion() {
         </div>
 
         <div style="margin-top: 10px;">
-          <a class="btn" href="/courses/${c.id}">View</a>
+          <a class="btn" href="/course.html?id=${encodeURIComponent(c.id)}">View</a>
+          <a class="btn" href="/create-course.html?id=${encodeURIComponent(c.id)}">Edit</a>
 
           <button class="btn"
-            onclick="deleteCourse('${c.id}', '${c.name}')">
+            onclick="deleteCourse('${c.id}')">
             Delete
           </button>
         </div>
@@ -1054,6 +1244,58 @@ async function loadCoursesForDeletion() {
     list.innerHTML = `<li class="list-item"><b>Error loading courses.</b></li>`;
   }
 }
+
+async function loadWorkshopsForDeletion() {
+  const list = document.getElementById("workshops-list");
+  if (!list) return;
+
+  try {
+    const workshops = await api("/api/workshops");
+    if (!workshops || workshops.length === 0) {
+      list.innerHTML = `<li class="list-item"><b>No workshops found.</b></li>`;
+      return;
+    }
+
+    list.innerHTML = workshops.map(w => `
+      <li class="list-item">
+        <div>
+          <b>${escapeHtml(w.name || "")}</b>
+          <div class="muted">
+            <span><b>ID:</b> ${w.id}</span><br>
+            <span><b>Date:</b> ${formatDate(w.date)}</span><br>
+            <span><b>Presenter:</b> ${escapeHtml(w.presenter || "")}</span>
+          </div>
+        </div>
+        <div style="margin-top: 10px;">
+          <a class="btn" href="/workshop.html?id=${encodeURIComponent(w.id)}">View</a>
+          <a class="btn" href="/create-workshop.html?id=${encodeURIComponent(w.id)}">Edit</a>
+          <button class="btn" onclick="deleteWorkshop('${w.id}')">Delete</button>
+        </div>
+      </li>
+    `).join("");
+  } catch (e) {
+    console.error("Error loading workshops", e);
+    list.innerHTML = `<li class="list-item"><b>Error loading workshops.</b></li>`;
+  }
+}
+
+async function deleteWorkshop(id) {
+  if (!confirm(`Delete workshop ${id}? Feedback will be saved for future display.`)) return;
+  try {
+    const res = await fetch(`/api/workshops/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data && data.error) || "Delete failed");
+    }
+    loadWorkshopsForDeletion();
+  } catch (err) {
+    console.error("Delete failed:", err);
+    alert("Failed to delete workshop.");
+  }
+}
 /*****************************************************************************
  * END load courses for normal deletion
  ***************************************************************************/
@@ -1061,17 +1303,22 @@ async function loadCoursesForDeletion() {
   /*****************************************************************************
    * BEGIN DELETE courses and supporting date func
    ***************************************************************************/
-  async function deleteCourse(id, name) {
-    if (!confirm(`Delete course ${id}: ${name}?`)) return;
+  async function deleteCourse(id) {
+    if (!confirm(`Delete course ${id}? Feedback will be saved for future display.`)) return;
 
       try {
-        await fetch(`/api/courses/${id}`, {
+        const res = await fetch(`/api/courses/${encodeURIComponent(id)}`, {
           method: "DELETE",
           credentials: "include"
         });
-        loadCourses();
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error((data && data.error) || "Delete failed");
+        }
+        loadCoursesForDeletion();
       } catch (err) {
         console.error("Delete failed:", err);
+        alert("Failed to delete course.");
       }
   }
 
@@ -1093,25 +1340,26 @@ function formatDate(dateStr) {
  * BEGIN DELETE  events
  ***************************************************************************/
 
-async function deleteEvent(id, title) {
-  if (!confirm(`Delete event ${id}: ${title}?`)) return;
+async function deleteEvent(id) {
+  if (!confirm(`Delete event ${id}? Feedback will be saved for future display.`)) return;
 
   try {
-    const res = await fetch(`/events/${id}/delete`, {
-      method: "POST"
+    const res = await fetch(`/api/events/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      credentials: "include"
     });
 
     if (!res.ok) {
-      throw new Error("Delete failed");
+      const data = await res.json().catch(() => null);
+      throw new Error((data && data.error) || "Delete failed");
     }
 
-    console.log("EVENT DELETE SUCCESS:", id);
+    console.log("EVENT ARCHIVE SUCCESS:", id);
 
-    // refresh list (match your existing loader)
-    loadEvents();
+    loadEventsForDeletion();
 
   } catch (e) {
-    console.error("EVENT DELETE ERROR:", e);
+    console.error("EVENT ARCHIVE ERROR:", e);
     alert("Failed to delete event.");
   }
 }
@@ -1189,10 +1437,11 @@ async function loadEventsForDeletion() {
           </div>
 
           <div style="margin-top: 10px;">
-            <a class="btn" href="/events/${e.id}">View</a>
+            <a class="btn" href="/event.html?id=${encodeURIComponent(e.id)}">View</a>
+            <a class="btn" href="/create-event.html?id=${encodeURIComponent(e.id)}">Edit</a>
 
             <button class="btn"
-              onclick="deleteEvent('${e.id}', '${e.name}')">
+              onclick="deleteEvent('${e.id}')">
               Delete
             </button>
           </div>
@@ -1283,16 +1532,19 @@ async function loadEvents() {
         console.error(`❌ formatDate FAILED for index ${i}`, e.date, err);
       }
 
+      const image = e.image_url ? (String(e.image_url).startsWith("/") || /^https?:\/\//i.test(e.image_url) ? e.image_url : `/static/images/${e.image_url}`) : "";
+
       return `
         <li class="list-item">
+          ${image ? `<a class="event-media-link" href="/event.html?id=${encodeURIComponent(e.id)}"><img src="${escapeHtml(image)}" alt="${escapeHtml(e.name || 'Event image')}"></a>` : ""}
           <div>
-            <a href="/event.html?id=${e.id}">
-              <strong>${e.name}</strong>
+            <a href="/event.html?id=${encodeURIComponent(e.id)}">
+              <strong>${escapeHtml(e.name || "")}</strong>
             </a>
             <div class="muted">
-              <span><b>ID:</b> ${e.id}</span><br>
-              <span><b>Date:</b> ${formattedDate}</span><br>
-              <span><b>Location:</b> ${e.location || ""}</span>
+              <span><b>ID:</b> ${escapeHtml(e.id || "")}</span><br>
+              <span><b>Date:</b> ${escapeHtml(formattedDate)}</span><br>
+              <span><b>Location:</b> ${escapeHtml(e.location || "")}</span>
             </div>
           </div>
         </li>
@@ -1401,24 +1653,71 @@ async function loadTestimonials() {
   const listEl = document.getElementById("testimonials-list");
   if (!listEl) return;
 
+  function escapeHtmlLocal(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function extractYouTubeEmbed(url) {
+    try {
+      const parsed = new URL(url.trim());
+      const host = parsed.hostname.toLowerCase();
+      const path = parsed.pathname;
+      if (host.includes('youtu.be')) {
+        const id = path.slice(1);
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      if (host.includes('youtube.com')) {
+        if (path.startsWith('/watch')) {
+          const id = parsed.searchParams.get('v');
+          return id ? `https://www.youtube.com/embed/${id}` : null;
+        }
+        if (path.startsWith('/shorts/')) {
+          const id = path.split('/').pop();
+          return id ? `https://www.youtube.com/embed/${id}` : null;
+        }
+        if (path.startsWith('/embed/')) {
+          return url;
+        }
+      }
+    } catch (err) {
+      return null;
+    }
+    return null;
+  }
+
   try {
     const testimonials = await api('/api/testimonials');
     const rows = Array.isArray(testimonials) ? testimonials : [];
 
     if (!rows.length) {
-      listEl.innerHTML = `<li class="list-item"><b>No testimonials yet.</b></li>`;
+      listEl.innerHTML = `<li class="list-item"><b>No approved testimonials yet.</b></li>`;
       return;
     }
 
-    listEl.innerHTML = rows.map((t) => `
-      <li class="list-item">
-        <div>
-          <strong>${escapeHtml(t.name || 'Anonymous')}</strong>
-          <div class="muted">${formatDate(t.created_at)}</div>
-          <p style="margin-top:8px; white-space:pre-wrap;">${escapeHtml(t.testimony || '')}</p>
-        </div>
-      </li>
-    `).join('');
+    listEl.innerHTML = rows.map((t) => {
+      const videoEmbed = t.video_url && t.video_approved === 1 ? extractYouTubeEmbed(t.video_url) : null;
+      return `
+        <li class="list-item">
+          <div>
+            <strong>${escapeHtmlLocal(t.name || 'Anonymous')}</strong>
+            <div class="muted">${formatDate(t.created_at)}</div>
+            ${t.testimony && t.testimony_approved === 1 ? `<p style="margin-top:8px; white-space:pre-wrap;">${escapeHtmlLocal(t.testimony)}</p>` : ''}
+            ${t.video_url && t.video_approved === 1 ? `
+              <div style="margin-top: 1rem;">
+                ${videoEmbed ? `
+                  <div style="position: relative; width: 100%; max-width: 560px; padding-bottom: 56.25%; height: 0;">
+                    <iframe src="${escapeHtmlLocal(videoEmbed)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position: absolute; width: 100%; height: 100%; left: 0; top: 0;"></iframe>
+                  </div>` : `
+                  <p><a href="${escapeHtmlLocal(t.video_url)}" target="_blank" rel="noopener noreferrer">Watch video testimony</a></p>`}
+              </div>` : ''}
+          </div>
+        </li>`;
+    }).join('');
   } catch (err) {
     console.error("❌ loadTestimonials failed:", err);
     listEl.innerHTML = `<li class="list-item"><b>Error loading testimonials.</b></li>`;

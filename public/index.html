@@ -118,6 +118,15 @@
           <!-- ✅ Overlay shown only when index == 1 -->
         <div class="slider-overlay" data-show-on-index="1">
           <div class="overlay-card">
+            <h1 class="section-title nav-gold">
+              <span
+                data-en="Mission and Vision"
+                data-es="Misión y Visión"></span>
+            </h1>
+            <p class="section-description"
+              data-en="The heart of Tu Mejor Versión is healing, faith, and renewed strength for every woman we serve."
+              data-es="El corazón de Tu Mejor Versión es la sanación, la fe y una fortaleza renovada para cada mujer a la que servimos."></p>
+
             <h2 
                 data-en='Mission of "Your Best Version"'
                 data-es='Misión de "Tu Mejor Versión"'></h2>
@@ -134,15 +143,50 @@
           </div>
         </div>
       </section>
+      <section class="section-card workshops-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Current Workshops" data-es="Talleres Actuales"></span>
+        </h1>
+        <p class="section-description"
+          data-en="Join practical gatherings created to support growth, healing, and community connection."
+          data-es="Únete a encuentros prácticos creados para apoyar el crecimiento, la sanación y la conexión comunitaria."></p>
+        <ul class="workshop-list" id="workshops-list">
+          <li>Loading workshops...</li>
+        </ul>
+        <div id="create-workshop-container" style="display:none;"></div>
+      </section>
+
+      <section class="section-card youtube-slider-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Featured Videos" data-es="Videos Destacados"></span>
+        </h1>
+        <p class="section-description"
+          data-en="Watch messages, testimonies, and teaching moments that encourage the journey toward your best version."
+          data-es="Mira mensajes, testimonios y momentos de enseñanza que animan el camino hacia tu mejor versión."></p>
+        <div id="youtube-slider" class="youtube-slider">
+          <p class="muted">Loading videos...</p>
+        </div>
+      </section>
+
       <section class="section-card  events-card">
-        <h2><span data-en="Events" data-es="Eventos"></span></h2>
+        <h1 class="section-title nav-gold">
+          <span data-en="Upcoming Events" data-es="Próximos Eventos"></span>
+        </h1>
+        <p class="section-description"
+          data-en="Find upcoming opportunities to gather, learn, and take the next step with the TMV community."
+          data-es="Encuentra próximas oportunidades para reunirte, aprender y dar el siguiente paso junto a la comunidad TMV."></p>
         <ul class="event-list" id="events-list">
           <li>Loading events...</li>
         </ul>
         <div id="create-event-container" style="display:none;"></div>
       </section>
     <section class="section-card  courses-card">
-      <h2><span data-en="Courses" data-es="Cursos"></span></h2>
+      <h1 class="section-title nav-gold">
+        <span data-en="Courses" data-es="Cursos"></span>
+      </h1>
+      <p class="section-description"
+        data-en="Explore guided learning experiences designed to strengthen confidence, faith, and personal restoration."
+        data-es="Explora experiencias de aprendizaje guiadas para fortalecer la confianza, la fe y la restauración personal."></p>
 
         <ul class="course-list" id="courses-list">
           <li>Loading courses...</li>
@@ -150,6 +194,13 @@
         <div id="create-course-container" style="display:none;"></div>
     </section>
     <section class="section-card book-card">
+      <h1 class="section-title nav-gold">
+        <span data-en="The Book" data-es="El Libro"></span>
+      </h1>
+      <p class="section-description"
+        data-en="A faith-centered resource for reflection, encouragement, and transformation."
+        data-es="Un recurso basado en la fe para la reflexión, el ánimo y la transformación."></p>
+
       <img src="/static/images/AmazonBook.png" alt="Tu Mejor Versión" class="book-cover">
       
       <h2>Tu Mejor Versión: Transformando tu Vida en Bendición</h2>
@@ -176,48 +227,82 @@
       </a>
     </section>
     <section class="section-card TMV-friends-card">
-    <h1 class="nav-gold">        
+    <h1 class="section-title nav-gold">        
       <span 
-        data-en="Gracias a las organizasiones que nos apoyan." 
-        data-es="Thank you to the oraganizations that support us">
+        data-en="Community Partners" 
+        data-es="Aliados Comunitarios">
       </span>
     </h1>
-      <img src="/static/images/SCWE_TMV.png" alt="Tu Mejor Versión" class="book-cover">
-      <h2>Suffolk County Women's Business Enterprise Coalition</h2>
+      <p class="section-description"
+        data-en="Thank you to the organizations that support the mission and work of Tu Mejor Versión."
+        data-es="Gracias a las organizaciones que apoyan la misión y el trabajo de Tu Mejor Versión."></p>
 
-      <a      
-        href="  https://scwbec.org/"
-      >
-        Oprima el link para mas informacion
-      </a>
-      <br>
+      <div class="partner-grid">
+        <article class="partner-item">
+          <a class="partner-media-link" href="https://scwbec.org/">
+            <img src="/static/images/SCWE_TMV.png" alt="Suffolk County Women's Business Enterprise Coalition">
+          </a>
+          <h2>Suffolk County Women's Business Enterprise Coalition</h2>
 
-      <img src="/static/images/HCC_TMV.png" alt="Tu Mejor Versión" class="book-cover">
-      <h2>Hispanic Counseling Center</h2>
+          <a href="https://scwbec.org/">
+            Oprima el link para mas informacion
+          </a>
+        </article>
 
-      <a      
-        href="https://www.hispaniccounseling.org/"
-      >
-        Oprima el link para mas informacion
-      </a>
+        <article class="partner-item">
+          <a class="partner-media-link" href="https://www.hispaniccounseling.org/">
+            <img src="/static/images/HCC_TMV.png" alt="Hispanic Counseling Center">
+          </a>
+          <h2>Hispanic Counseling Center</h2>
 
-      <img src="/static/images/YES+Logo+JPEG+File+110515.webp" alt="Tu Mejor Versión" class="book-cover">
-      <h2>Youth Enrichment Services</h2>
+          <a href="https://www.hispaniccounseling.org/">
+            Oprima el link para mas informacion
+          </a>
+        </article>
 
-      <a      
-        href="https://www.yesnews.org/yes-news"
-      >
-        Oprima el link para mas informacion
-      </a>
+        <article class="partner-item">
+          <a class="partner-media-link" href="https://www.yesnews.org/yes-news">
+            <img src="/static/images/YES+Logo+JPEG+File+110515.webp" alt="Youth Enrichment Services">
+          </a>
+          <h2>Youth Enrichment Services</h2>
+
+          <a href="https://www.yesnews.org/yes-news">
+            Oprima el link para mas informacion
+          </a>
+        </article>
+
+        <article class="partner-item">
+          <a
+            class="partner-media-link"
+            href="https://www.domesticshelters.org/help/ny/central-islip/11722/l-i-against-domestic-violence"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img src="/static/images/liagainstdomesticviolence.jpeg" alt="L.I. Against Domestic Violence">
+          </a>
+          <h2>L.I. Against Domestic Violence</h2>
+
+          <a
+            href="https://www.domesticshelters.org/help/ny/central-islip/11722/l-i-against-domestic-violence"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Oprima el link para mas informacion
+          </a>
+        </article>
+      </div>
     </section>
     <section class="section-card TMV-friends-card">
 
-      <h1 class="nav-gold">        
+      <h1 class="section-title nav-gold">        
         <span 
           data-en="Our YouTube Channel" 
           data-es="Nuestro Canal YouTube">
         </span>
       </h1>
+      <p class="section-description"
+        data-en="Stay connected with TMV videos, updates, and encouragement from our online community."
+        data-es="Mantente conectada con videos, novedades y ánimo de nuestra comunidad en línea."></p>
 
       <!-- YOUTUBE VIDEO CARD -->
       <a
@@ -283,6 +368,13 @@
       } else {
         console.warn("⚠️ loadEvents is not defined");
       }
+
+      if (typeof loadWorkshops === "function") {
+        console.log("Calling loadWorkshops()");
+        loadWorkshops();
+      } else {
+        console.warn("loadWorkshops is not defined");
+      }
     });
 
   } else {
@@ -300,6 +392,13 @@
       loadEvents();
     } else {
       console.warn("⚠️ loadEvents is not defined");
+    }
+
+    if (typeof loadWorkshops === "function") {
+      console.log("Calling loadWorkshops()");
+      loadWorkshops();
+    } else {
+      console.warn("loadWorkshops is not defined");
     }
   }
 

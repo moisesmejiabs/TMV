@@ -32,3 +32,50 @@ function shareCourseOnFacebook(e) {
   }
 }
 
+function shareEventOnFacebook(e) {
+  console.log("🚀 shareEventOnFacebook CALLED");
+
+  try {
+    e.preventDefault();
+
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get("id");
+
+    if (!eventId) {
+      console.error("❌ No event id found in URL");
+      return;
+    }
+
+    const ogUrl = `${window.location.origin}/eventog?id=${encodeURIComponent(eventId)}`;
+    const encodedUrl = encodeURIComponent(ogUrl);
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+
+    window.open(fbUrl, "_blank", "width=600,height=400");
+  } catch (err) {
+    console.error("❌ Error in shareEventOnFacebook:", err);
+  }
+}
+
+function shareWorkshopOnFacebook(e) {
+  console.log("🚀 shareWorkshopOnFacebook CALLED");
+
+  try {
+    e.preventDefault();
+
+    const params = new URLSearchParams(window.location.search);
+    const workshopId = params.get("id");
+
+    if (!workshopId) {
+      console.error("❌ No workshop id found in URL");
+      return;
+    }
+
+    const ogUrl = `${window.location.origin}/workshopog?id=${encodeURIComponent(workshopId)}`;
+    const encodedUrl = encodeURIComponent(ogUrl);
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+
+    window.open(fbUrl, "_blank", "width=600,height=400");
+  } catch (err) {
+    console.error("❌ Error in shareWorkshopOnFacebook:", err);
+  }
+}

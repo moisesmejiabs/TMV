@@ -63,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -89,68 +83,186 @@
   <p><b>Email:</b> <span id="me-email"></span></p>
   </div>
 
-<body>
   <main class="container" style="padding-top:18px;">
-  <h1 id="title">Event</h1>
-  <p id="meta"></p>
-  <div id="about"></div>
-  <p><b>Location:</b> <span id="loc"></span></p>
-  <p><b>Requirements:</b> <span id="req"></span></p>
-  <p><b>Capacity:</b> <span id="cap"></span> · <b>Registered:</b> <span id="count"></span></p>
-  <div id="actions"></div>
-  <div id="admin"></div>
-  <p><a href="/events.html">Back</a></p>
+    <section class="section-card event-detail-card">
+      <h1 id="title" class="nav-gold">Event</h1>
+
+      <div id="event-image-frame" class="event-detail-media" style="display:none;">
+        <img id="event-image" />
+      </div>
+
+      <section class="event-detail-section">
+        <h2 data-en="About This Event" data-es="Sobre Este Evento">About This Event</h2>
+        <p id="about"></p>
+      </section>
+
+      <section class="event-detail-section">
+        <h2 data-en="Event Details" data-es="Detalles del Evento">Event Details</h2>
+        <dl class="event-detail-grid">
+          <div>
+            <dt data-en="Day" data-es="Día">Day</dt>
+            <dd id="event-day"></dd>
+          </div>
+          <div>
+            <dt data-en="Time" data-es="Hora">Time</dt>
+            <dd id="event-time"></dd>
+          </div>
+          <div>
+            <dt data-en="Presenter" data-es="Presentadora">Presenter</dt>
+            <dd id="presenter"></dd>
+          </div>
+          <div>
+            <dt data-en="Location" data-es="Ubicación">Location</dt>
+            <dd id="loc"></dd>
+          </div>
+          <div>
+            <dt data-en="Capacity" data-es="Capacidad">Capacity</dt>
+            <dd><span id="cap"></span> · <span id="count"></span> <span data-en="registered" data-es="registrados">registered</span></dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="event-detail-section">
+        <h2 data-en="Requirements" data-es="Requisitos">Requirements</h2>
+        <p id="req"></p>
+      </section>
+
+      <div id="actions" class="event-actions"></div>
+      <div id="admin"></div>
+
+      <p><a href="/events.html" data-en="Back" data-es="Volver">Back</a></p>
+      <div style="margin-top:10px;">
+        <a
+          href="#"
+          onclick="shareEventOnFacebook(event)"
+          class="fb-share-btn"
+          data-en="Share event on Facebook"
+          data-es="Compartir evento en Facebook"
+        >
+          Compartir evento en Facebook
+        </a>
+      </div>
+    </section>
+
+    <section class="section-card feedback-section">
+      <h1 class="section-title nav-gold" data-en="Leave Feedback" data-es="Dejar Comentarios">Leave Feedback</h1>
+
+      <form id="event-feedback-form" class="feedback-form">
+        <label for="event-feedback-text" data-en="Your feedback" data-es="Tus comentarios">
+          Your feedback
+        </label>
+
+        <div class="emoji-toolbar" id="emoji-toolbar">
+          <button type="button" class="emoji-btn" data-emoji="😀">😀</button>
+          <button type="button" class="emoji-btn" data-emoji="😊">😊</button>
+          <button type="button" class="emoji-btn" data-emoji="🙏">🙏</button>
+          <button type="button" class="emoji-btn" data-emoji="❤️">❤️</button>
+          <button type="button" class="emoji-btn" data-emoji="🎉">🎉</button>
+          <button type="button" class="emoji-btn" data-emoji="👏">👏</button>
+          <button type="button" class="emoji-btn" data-emoji="✨">✨</button>
+          <button type="button" class="emoji-btn" data-emoji="🙌">🙌</button>
+        </div>
+
+        <textarea
+          id="event-feedback-text"
+          name="feedback"
+          rows="5"
+          maxlength="1000"
+          placeholder="Write your feedback here..."
+          data-en-placeholder="Write your feedback here..."
+          data-es-placeholder="Escribe tus comentarios aquí..."
+          required
+        ></textarea>
+
+        <div class="feedback-actions">
+          <button type="submit" class="btn" data-en="Submit Feedback" data-es="Enviar Comentarios">
+            Submit Feedback
+          </button>
+          <span id="event-feedback-status" class="muted"></span>
+        </div>
+      </form>
+
+      <div class="feedback-list-wrap">
+        <h3 data-en="Comments" data-es="Comentarios">Comments</h3>
+        <ul id="event-feedback-list" class="feedback-list">
+          <li class="muted" data-en="No feedback yet." data-es="Aún no hay comentarios.">No feedback yet.</li>
+        </ul>
+      </div>
+    </section>
   </main>
-  <section class="feedback-section card">
-    <h2 data-en="Leave Feedback" data-es="Dejar Comentarios">Leave Feedback</h2>
-
-    <form id="event-feedback-form" class="feedback-form">
-      <label for="event-feedback-text" data-en="Your feedback" data-es="Tus comentarios">
-        Your feedback
-      </label>
-
-      <div class="emoji-toolbar" id="emoji-toolbar">
-        <button type="button" class="emoji-btn" data-emoji="😀">😀</button>
-        <button type="button" class="emoji-btn" data-emoji="😊">😊</button>
-        <button type="button" class="emoji-btn" data-emoji="🙏">🙏</button>
-        <button type="button" class="emoji-btn" data-emoji="❤️">❤️</button>
-        <button type="button" class="emoji-btn" data-emoji="🎉">🎉</button>
-        <button type="button" class="emoji-btn" data-emoji="👏">👏</button>
-        <button type="button" class="emoji-btn" data-emoji="✨">✨</button>
-        <button type="button" class="emoji-btn" data-emoji="🙌">🙌</button>
-      </div>
-
-      <textarea
-        id="event-feedback-text"
-        name="feedback"
-        rows="5"
-        maxlength="1000"
-        placeholder="Write your feedback here..."
-        data-en-placeholder="Write your feedback here..."
-        data-es-placeholder="Escribe tus comentarios aquí..."
-        required
-      ></textarea>
-
-      <div class="feedback-actions">
-        <button type="submit" class="btn" data-en="Submit Feedback" data-es="Enviar Comentarios">
-          Submit Feedback
-        </button>
-        <span id="event-feedback-status" class="muted"></span>
-      </div>
-    </form>
-
-    <div class="feedback-list-wrap">
-      <h3 data-en="Comments" data-es="Comentarios">Comments</h3>
-      <ul id="event-feedback-list" class="feedback-list">
-        <li class="muted" data-en="No feedback yet." data-es="Aún no hay comentarios.">No feedback yet.</li>
-      </ul>
-    </div>
-  </section>
   
   <script src="/static/js/app.js"></script>
+  <script src="/static/js/facebook.js"></script>
 
   <script>
   function q(name){return new URLSearchParams(location.search).get(name)}
+  function imageSrc(value){
+    if(!value) return '';
+    if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+    return `/static/images/${value}`;
+  }
+  function currentLang(){
+    return localStorage.getItem('lang') === 'es' ? 'es' : 'en';
+  }
+  function eventText(en, es){
+    return currentLang() === 'es' ? es : en;
+  }
+  const eventTranslations = {
+    '6': {
+      es: {
+        about: 'Este evento celebra el 4.º aniversario de este programa que ofrece apoyo a nuestra comunidad. Presentaremos a nuestros asistentes temas sobre emprendimiento, salud mental, familia y poesía, junto con presentaciones musicales en vivo.',
+        requirements: '$50 por boleto de adulto (15 años o más)\n$25 por niño'
+      }
+    }
+  };
+  let loadedEvent = null;
+  let loadedEventDate = null;
+  function translatedEventField(field){
+    const lang = currentLang();
+    const eventId = loadedEvent?.id ? String(loadedEvent.id) : q('id');
+    const translatedValue = eventTranslations[eventId]?.[lang]?.[field];
+    return translatedValue || loadedEvent?.[field] || '';
+  }
+  function updateEventCopy(){
+    if (!loadedEvent) return;
+    document.getElementById('about').textContent = translatedEventField('about');
+    document.getElementById('req').textContent = translatedEventField('requirements');
+  }
+  function updateEventDate(){
+    if (!loadedEventDate) return;
+    const locale = currentLang() === 'es' ? 'es-US' : 'en-US';
+    const dateFormatter = new Intl.DateTimeFormat(locale, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'America/New_York'
+    });
+    const timeFormatter = new Intl.DateTimeFormat(locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+      timeZone: 'America/New_York'
+    });
+    document.getElementById('event-day').textContent = dateFormatter.format(loadedEventDate);
+    document.getElementById('event-time').textContent = timeFormatter.format(loadedEventDate);
+  }
+  function applyEventLanguage(){
+    const lang = currentLang();
+    if (typeof updateLanguage === 'function') updateLanguage(lang);
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-en-placeholder][data-es-placeholder]').forEach((el) => {
+      el.placeholder = lang === 'es' ? el.dataset.esPlaceholder : el.dataset.enPlaceholder;
+    });
+  }
+  const baseSetLanguage = window.setLanguage;
+  window.setLanguage = function(lang){
+    if (typeof baseSetLanguage === 'function') baseSetLanguage(lang);
+    else localStorage.setItem('lang', lang);
+    applyEventLanguage();
+    updateEventDate();
+    updateEventCopy();
+  };
   async function api(path, opts={}){
     const r=await fetch(path,{credentials:'include', headers:{...(opts.body?{'content-type':'application/json'}:{})}, ...opts});
     const ct=r.headers.get('content-type')||'';
@@ -161,34 +273,47 @@
   (async()=>{
     const id=q('id');
     const e=await api(`/api/events/${id}`);
+    loadedEvent = e;
+    loadedEventDate = new Date(e.date);
+
     document.title = e.name;
     document.getElementById('title').textContent=e.name;
-    document.getElementById('meta').textContent = `${new Date(e.date).toLocaleString()} · Presenter: ${e.presenter}`;
-    document.getElementById('about').textContent = e.about;
+    updateEventCopy();
+    updateEventDate();
+    document.getElementById('presenter').textContent = e.presenter || '';
     document.getElementById('loc').textContent = e.location;
-    document.getElementById('req').textContent = e.requirements || '';
     document.getElementById('cap').textContent = e.capacity || 0;
     document.getElementById('count').textContent = e.enrolled_count;
 
+    const img = document.getElementById('event-image');
+    const imgFrame = document.getElementById('event-image-frame');
+    if (img && e.image_url) {
+      img.src = imageSrc(e.image_url);
+      img.alt = e.name || 'Event image';
+      if (imgFrame) imgFrame.style.display = 'block';
+    }
+
     const me = await api('/api/me').catch(()=>null);
     let html='';
-    if(!me){ html = '<p><a href="/login.html">Login</a> to register.</p>'; }
+    if(!me){ html = '<p><a href="/login.html" data-en="Login" data-es="Iniciar sesión">Login</a> <span data-en="to register." data-es="para registrarte.">to register.</span></p>'; }
     else {
-      html += e.enrolled ? '<button id="cancel">Cancel Registration</button>' : '<button id="enroll">Register</button>';
-      if(me.role==='admin') html += ' <button id="delete">Delete Event</button>';
+      html += e.enrolled ? '<button id="cancel" data-en="Cancel Registration" data-es="Cancelar Registro">Cancel Registration</button>' : '<button id="enroll" data-en="Register" data-es="Registrarse">Register</button>';
+      if(me.role==='admin') html += ` <a class="btn" href="/create-event.html?id=${encodeURIComponent(id)}" data-en="Edit Event" data-es="Editar Evento">Edit Event</a> <button id="delete" data-en="Delete Event" data-es="Eliminar Evento">Delete Event</button>`;
     }
     document.getElementById('actions').innerHTML = html;
+    applyEventLanguage();
 
     const enrollBtn=document.getElementById('enroll');
     if(enrollBtn) enrollBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/enroll`,{method:'POST'}); location.reload();});
     const cancelBtn=document.getElementById('cancel');
     if(cancelBtn) cancelBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/cancel`,{method:'POST'}); location.reload();});
     const delBtn=document.getElementById('delete');
-    if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm('Delete this event?')){await api(`/api/events/${id}`,{method:'DELETE'}); location.href='/events.html';}});
+    if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm(eventText('Delete this event? Feedback will be saved for future display.', '¿Eliminar este evento? Los comentarios se guardarán para mostrarlos en el futuro.'))){await api(`/api/events/${id}`,{method:'DELETE'}); location.href='/events.html';}});
 
     if(me && me.role==='admin'){
       const users = await api(`/api/events/${id}/registered`);
-      document.getElementById('admin').innerHTML = '<h3>Registered Users</h3>' + (users.length?('<ul>'+users.map(u=>`<li>${u.name} (${u.email})</li>`).join('')+'</ul>'):'<p>No registrations.</p>');
+      document.getElementById('admin').innerHTML = '<h3 data-en="Registered Users" data-es="Usuarios Registrados">Registered Users</h3>' + (users.length?('<ul>'+users.map(u=>`<li>${u.name} (${u.email})</li>`).join('')+'</ul>'):'<p data-en="No registrations." data-es="No hay registros.">No registrations.</p>');
+      applyEventLanguage();
     }
   })().catch(err=>{document.getElementById('about').textContent=err.message;});
   </script>

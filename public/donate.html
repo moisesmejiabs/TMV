@@ -63,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -95,6 +89,16 @@
 
   <main class="container" style="padding-top:18px;max-width:640px;">
   <h1 class="nav-gold">Donate</h1>
+  <div id="donate-image-wrap" style="margin:12px 0 18px; display:none;">
+    <img id="donate-image" alt="Donate" style="max-width:100%; border-radius:10px; display:block;">
+  </div>
+  <form id="donate-image-admin" class="form" style="display:none; margin-bottom:18px;">
+    <label>Donation Page Image<br>
+      <input type="file" name="image" accept="image/*">
+    </label>
+    <button type="submit">Save Image</button>
+    <span id="donate-image-status" class="muted"></span>
+  </form>
   <form id="f">
     <label>Name<br><input name="donor_name" required></label><br><br>
     <label>Email<br><input name="donor_email" type="email" required></label><br><br>
@@ -108,12 +112,71 @@
   </main>
   <script src="/static/js/app.js"></script>
   <script>
+  function imageSrc(value){
+    if(!value) return '';
+    if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+    return `/static/images/${value}`;
+  }
+
   async function api(path, opts={}){
     const r=await fetch(path,{credentials:'include', headers:{'content-type':'application/json', ...(opts.headers||{})}, ...opts});
     const j=await r.json().catch(()=>null);
     if(!r.ok) throw new Error(j?.error || 'Failed');
     return j;
   }
+
+  async function loadDonateImage(){
+    const data = await api('/api/settings/donate-image').catch(() => ({ image_url: '' }));
+    const wrap = document.getElementById('donate-image-wrap');
+    const img = document.getElementById('donate-image');
+    if (data.image_url) {
+      img.src = imageSrc(data.image_url);
+      wrap.style.display = 'block';
+    } else {
+      wrap.style.display = 'none';
+    }
+  }
+
+  (async()=>{
+    await loadDonateImage();
+    const adminForm = document.getElementById('donate-image-admin');
+    const status = document.getElementById('donate-image-status');
+    const me = await api('/api/me').catch(() => null);
+    if (me && me.role === 'admin') {
+      adminForm.style.display = 'block';
+      adminForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const file = adminForm.image?.files?.[0];
+        if (!file) {
+          status.textContent = 'Choose an image first.';
+          return;
+        }
+        try {
+          status.textContent = 'Uploading...';
+          const imageForm = new FormData();
+          imageForm.append('image', file);
+          const uploadRes = await fetch('/api/upload-image', {
+            method: 'POST',
+            credentials: 'include',
+            body: imageForm
+          });
+          const uploadData = await uploadRes.json().catch(() => null);
+          if (!uploadRes.ok) throw new Error((uploadData && uploadData.error) || 'Image upload failed');
+
+          await api('/api/settings/donate-image', {
+            method: 'PATCH',
+            body: JSON.stringify({ image_url: uploadData.url || '' })
+          });
+          adminForm.reset();
+          status.textContent = 'Saved.';
+          await loadDonateImage();
+        } catch (err) {
+          status.textContent = err.message || 'Failed to save image.';
+        }
+      });
+    }
+  })();
+
   document.getElementById('f').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const fd=new FormData(e.target);
