@@ -1,0 +1,20 @@
+.milk-page { margin: 0; min-height: 100vh; background: #f7f1f3; color: #2f2430; }
+.milk-header { padding: 28px clamp(20px, 4vw, 56px); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: radial-gradient(circle at 50% 44%, #cf0b88, #861447 72%, #5b142f); }
+.milk-brand { grid-column: 2; gap: clamp(18px, 3vw, 38px); text-decoration: none; }
+.milk-brand .brand-img { width: auto; height: clamp(70px, 9vw, 126px); border-radius: 0; }
+.milk-brand h1 { margin: 0; text-align: center; }
+.milk-logout { justify-self: end; padding: 12px 18px; border: 0; border-radius: 12px; background: #fff; color: var(--berry); font-weight: 800; }
+.milk-shell { width: min(100% - 32px, 780px); margin: auto; padding: 40px 0 72px; }
+.milk-intro, .milk-card, .milk-success { margin-bottom: 28px; padding: clamp(24px, 6vw, 50px); border-radius: 24px; background: #fff; box-shadow: 0 16px 42px rgba(109,33,64,.12); }
+.milk-eyebrow { color: var(--accent); font-weight: 900; text-transform: uppercase; }
+.milk-intro h1, .milk-card h2, .milk-success h2 { color: var(--berry); }
+.milk-user { padding: 14px; border-radius: 12px; background: #f7edf1; font-weight: 800; }
+.milk-field { display: grid; gap: 10px; padding: 24px 0; border: 0; border-top: 1px solid rgba(109,33,64,.14); }
+.milk-field label, .milk-field legend { color: var(--berry); font-weight: 800; }
+.milk-field input { min-height: 50px; padding: 10px 13px; border: 2px solid #b69ba6; border-radius: 12px; font: inherit; }
+.milk-options { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.milk-options label { padding: 14px; border: 1px solid #cab5be; border-radius: 12px; background: #fff8fa; }
+.milk-other { display: grid; gap: 8px; margin-top: 12px; }
+.milk-message { margin: 16px 0; padding: 14px; border-radius: 12px; background: #fff0f3; color: #7d1533; font-weight: 800; }
+.milk-submit, .milk-success button, .milk-success a { display: inline-block; margin: 8px; padding: 14px 20px; border: 0; border-radius: 12px; background: var(--berry); color: #fff; font-weight: 800; text-decoration: none; }
+@media (max-width: 700px) { .milk-header { grid-template-columns: 1fr; gap: 16px; } .milk-brand, .milk-logout { grid-column: 1; justify-self: center; } .milk-options { grid-template-columns: 1fr; } }

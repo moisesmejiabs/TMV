@@ -1,0 +1,19 @@
+.milk-admin-page { margin: 0; background: #f7f1f3; color: #2f2430; }
+.milk-admin-header { padding: 26px clamp(18px,4vw,50px); display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; text-align: center; background: radial-gradient(circle at 50% 44%, #cf0b88, #861447 72%, #5b142f); color: #fff; }
+.milk-admin-header h1 { margin: 0; color: #f5d190; }
+.milk-admin-header a, .milk-admin-header button { justify-self: start; padding: 12px 16px; border: 0; border-radius: 12px; background: #fff; color: var(--berry); font-weight: 800; text-decoration: none; }
+.milk-admin-header button { justify-self: end; }
+.milk-admin-shell { width: min(100% - 30px, 1500px); margin: auto; padding: 32px 0 70px; }
+.milk-admin-card { margin-bottom: 22px; padding: 24px; border-radius: 20px; background: #fff; box-shadow: 0 12px 30px rgba(109,33,64,.08); }
+.milk-admin-filters { display: grid; grid-template-columns: 2fr 1fr auto auto; align-items: end; gap: 14px; }
+.milk-admin-filters label { display: grid; gap: 7px; color: var(--berry); font-weight: 800; }
+.milk-admin-filters input, .milk-admin-filters select { min-height: 50px; padding: 10px; border: 2px solid #b69ba6; border-radius: 10px; }
+.milk-admin-filters button, .milk-admin-summary button, .milk-admin-summary a { padding: 13px 17px; border: 0; border-radius: 10px; background: var(--berry); color: #fff; font-weight: 800; text-decoration: none; }
+.milk-admin-summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.milk-admin-summary strong { color: var(--berry); font-size: 2rem; }
+.milk-admin-message { margin-bottom: 20px; padding: 16px; background: #fff0f3; color: #7d1533; }
+.milk-admin-table-wrap { overflow-x: auto; }
+.milk-admin-table-wrap table { width: 100%; border-collapse: collapse; }
+.milk-admin-table-wrap th, .milk-admin-table-wrap td { padding: 12px; border-bottom: 1px solid #e5d9de; text-align: left; vertical-align: top; }
+.milk-admin-table-wrap small { display: block; color: #6f5a64; }
+@media (max-width: 850px) { .milk-admin-header { grid-template-columns: 1fr; gap: 15px; } .milk-admin-header a, .milk-admin-header button { justify-self: center; } .milk-admin-filters { grid-template-columns: 1fr; } }

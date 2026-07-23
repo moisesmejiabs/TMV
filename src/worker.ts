@@ -358,6 +358,31 @@ async function ensureApprovalSchema(env: Env) {
     )
   `).run();
 
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS milk_giveaway_registration (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      registered_by INTEGER NOT NULL,
+      full_name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      baby_name TEXT NOT NULL,
+      baby_age_months INTEGER NOT NULL,
+      formula_type TEXT NOT NULL,
+      formula_other TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(registered_by) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_milk_registration_created_at
+    ON milk_giveaway_registration(created_at)
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_milk_registration_registered_by
+    ON milk_giveaway_registration(registered_by)
+  `).run();
+
   const userInfo = await env.DB.prepare('PRAGMA table_info(user)').all() as any;
   const userCols = (userInfo?.results || []).map((row: any) => row.name);
   if (!userCols.includes('testimony_approved')) {
@@ -839,6 +864,81 @@ async function handleYoutubeSlider(request: Request, env: Env, pathname: string)
 /*******************************************************************
  * BEGIN Handle Events  
 ******************************************************************** */
+
+const FORMULA_TYPES = [
+  'Enfamil',
+  'Similac',
+  'Enfamil Gentlease',
+  'Similac Sensitive',
+  'Otra fórmula',
+];
+
+function normalizePhone(value: unknown) {
+  return String(value || '').trim().replace(/[^\d+().\-\s]/g, '');
+}
+
+async function handleMilkGiveaway(request: Request, env: Env, pathname: string) {
+  if (request.method !== 'POST' || pathname !== '/api/milk-registrations') {
+    return null;
+  }
+
+  const user = await requireUser(request, env);
+  if (!user) return unauthorized('Debe iniciar sesión para registrar a una persona.');
+
+  const body = await readJson(request) as any;
+  if (!body) return badRequest('Se esperaba información en formato JSON.');
+
+  const fullName = String(body.full_name || '').trim();
+  const phone = normalizePhone(body.phone);
+  const babyName = String(body.baby_name || '').trim();
+  const babyAgeMonths = Number(body.baby_age_months);
+  const formulaType = String(body.formula_type || '').trim();
+  const formulaOther = String(body.formula_other || '').trim();
+
+  if (fullName.length < 2 || fullName.length > 120) {
+    return badRequest('Escriba el nombre completo de la persona que recibirá la leche.');
+  }
+  if (phone.replace(/\D/g, '').length < 7 || phone.length > 30) {
+    return badRequest('Escriba un número de teléfono válido.');
+  }
+  if (babyName.length < 2 || babyName.length > 120) {
+    return badRequest('Escriba el nombre del bebé.');
+  }
+  if (!Number.isInteger(babyAgeMonths) || babyAgeMonths < 0 || babyAgeMonths > 36) {
+    return badRequest('La edad del bebé debe ser un número de 0 a 36 meses.');
+  }
+  if (!FORMULA_TYPES.includes(formulaType)) {
+    return badRequest('Seleccione un tipo de fórmula de la lista.');
+  }
+  if (
+    formulaType === 'Otra fórmula' &&
+    (formulaOther.length < 2 || formulaOther.length > 120)
+  ) {
+    return badRequest('Escriba el nombre de la fórmula que usa el bebé.');
+  }
+
+  const result = await env.DB.prepare(`
+    INSERT INTO milk_giveaway_registration
+      (registered_by, full_name, phone, baby_name, baby_age_months,
+       formula_type, formula_other, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    user.id,
+    fullName,
+    phone,
+    babyName,
+    babyAgeMonths,
+    formulaType,
+    formulaType === 'Otra fórmula' ? formulaOther : null,
+    isoNow(),
+  ).run();
+
+  return json({
+    ok: true,
+    registration_id: Number(result.meta.last_row_id),
+    message: 'Registro completado.',
+  }, 201);
+}
 
 async function handleEvents(request: Request, env: Env, pathname: string) {
   const url = new URL(request.url);
@@ -2314,6 +2414,100 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
       return json(out.results || []);
     }
 
+    if (
+      request.method === 'GET' &&
+      (
+        pathname === '/api/admin/milk-registrations' ||
+        pathname === '/api/admin/milk-registrations.csv'
+      )
+    ) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const query = String(url.searchParams.get('q') || '').trim().slice(0, 100);
+      const formula = String(url.searchParams.get('formula') || '').trim().slice(0, 120);
+      const queryLike = `%${query}%`;
+      const where = `
+        WHERE (? = '' OR m.formula_type = ?)
+          AND (
+            ? = ''
+            OR m.full_name LIKE ?
+            OR m.phone LIKE ?
+            OR m.baby_name LIKE ?
+          )
+      `;
+      const select = `
+        SELECT
+          m.id,
+          m.created_at,
+          m.full_name,
+          m.phone,
+          m.baby_name,
+          m.baby_age_months,
+          m.formula_type,
+          m.formula_other,
+          u.name AS registered_by_name,
+          u.email AS registered_by_email
+        FROM milk_giveaway_registration m
+        JOIN user u ON u.id = m.registered_by
+        ${where}
+        ORDER BY m.created_at DESC, m.id DESC
+      `;
+      const bindings = [formula, formula, query, queryLike, queryLike, queryLike];
+
+      if (pathname.endsWith('.csv')) {
+        const out = await env.DB.prepare(select).bind(...bindings).all();
+        const rows = (out.results || []) as Record<string, unknown>[];
+        const header = [
+          'id',
+          'created_at',
+          'full_name',
+          'phone',
+          'baby_name',
+          'baby_age_months',
+          'formula_type',
+          'formula_other',
+          'registered_by_name',
+          'registered_by_email',
+        ];
+        const escapeCsv = (value: unknown) => {
+          let cell = String(value ?? '');
+          if (/^[=+\-@]/.test(cell)) cell = `'${cell}`;
+          if (/[",\n\r]/.test(cell)) return `"${cell.replace(/"/g, '""')}"`;
+          return cell;
+        };
+        const lines = [header.join(',')].concat(
+          rows.map((row) => header.map((key) => escapeCsv(row[key])).join(',')),
+        );
+        const date = new Date().toISOString().slice(0, 10);
+
+        return new Response('\uFEFF' + lines.join('\r\n'), {
+          status: 200,
+          headers: {
+            'content-type': 'text/csv; charset=utf-8',
+            'content-disposition': `attachment; filename="registros_leche_${date}.csv"`,
+            'cache-control': 'no-store',
+            'x-content-type-options': 'nosniff',
+          },
+        });
+      }
+
+      const [rows, count] = await Promise.all([
+        env.DB.prepare(select + ' LIMIT 1000').bind(...bindings).all(),
+        env.DB.prepare(`
+          SELECT COUNT(*) AS total
+          FROM milk_giveaway_registration m
+          ${where}
+        `).bind(...bindings).first() as Promise<any>,
+      ]);
+
+      return json({
+        registrations: rows.results || [],
+        total: Number(count?.total || 0),
+        limited: Number(count?.total || 0) > 1000,
+      });
+    }
+
     if (request.method === 'GET' && pathname === '/api/admin/agreement-docs') {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
@@ -3084,6 +3278,23 @@ export default {
     console.log("   full URL:", url.toString());
     console.log("   search:", url.search);
 
+    if (
+      (request.method === 'GET' || request.method === 'HEAD') &&
+      (pathname === '/milk-giveaway' || pathname === '/milk-giveaway.html')
+    ) {
+      const user = await requireUser(request, env);
+      if (!user) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: '/login?next=%2Fmilk-giveaway',
+            'cache-control': 'no-store',
+          },
+        });
+      }
+      return env.ASSETS.fetch(request);
+    }
+
     // API routes + special course page route
     if (
       pathname.startsWith('/api') ||
@@ -3099,6 +3310,7 @@ export default {
         handleAuth,
         handleAgreementDocs,
         handleMe,
+        handleMilkGiveaway,
         handleSettings,
         handleYoutubeSlider,
         handleEvents,

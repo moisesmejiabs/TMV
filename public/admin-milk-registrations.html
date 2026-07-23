@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Registros de leche | Admin | Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/milk-admin.css">
+</head>
+<body class="milk-admin-page">
+  <header class="milk-admin-header">
+    <a href="/admin.html" class="milk-admin-back">← Volver a Admin</a>
+    <div>
+      <h1>Registros para entrega de leche</h1>
+      <p>Tu Mejor Versión</p>
+    </div>
+    <button id="logoutButton" type="button">Cerrar sesión</button>
+  </header>
+  <main class="milk-admin-shell">
+    <section class="milk-admin-card">
+      <h2>Buscar y filtrar</h2>
+      <form id="filterForm" class="milk-admin-filters">
+        <label>Buscar
+          <input id="searchInput" type="search" maxlength="100" placeholder="Nombre, teléfono o bebé">
+        </label>
+        <label>Tipo de fórmula
+          <select id="formulaFilter">
+            <option value="">Todas las fórmulas</option>
+            <option>Enfamil</option>
+            <option>Similac</option>
+            <option>Enfamil Gentlease</option>
+            <option>Similac Sensitive</option>
+            <option>Otra fórmula</option>
+          </select>
+        </label>
+        <button type="submit">Aplicar filtros</button>
+        <button id="clearFilters" type="button">Limpiar</button>
+      </form>
+    </section>
+    <section class="milk-admin-summary milk-admin-card">
+      <div>Total encontrado: <strong id="registrationCount">—</strong></div>
+      <div>
+        <button id="refreshButton" type="button">Actualizar</button>
+        <a id="csvDownload" href="/api/admin/milk-registrations.csv">Descargar CSV</a>
+      </div>
+    </section>
+    <div id="adminMessage" class="milk-admin-message" role="alert" hidden></div>
+    <section class="milk-admin-card milk-admin-table-wrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Persona</th><th>Teléfono</th><th>Bebé</th><th>Edad</th><th>Fórmula</th><th>Registrado por</th><th>ID</th></tr></thead>
+        <tbody id="registrationRows"><tr><td colspan="8">Cargando registros…</td></tr></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="/static/js/milk-admin.js"></script>
+</body>
+</html>

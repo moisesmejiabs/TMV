@@ -100,6 +100,10 @@
     if(!r.ok) throw new Error(body?.error || 'Login failed');
     return body;
   }
+  function destinationAfterLogin() {
+    const next = new URLSearchParams(location.search).get('next');
+    return next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
+  }
   document.getElementById('f').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -137,7 +141,7 @@
             });
             const completeBody = await completeResp.json().catch(()=>null);
             if (!completeResp.ok) throw new Error(completeBody?.error || 'Failed to complete login');
-            location.href = '/';
+            location.href = destinationAfterLogin();
           } catch (err) {
             msgEl.textContent = err.message || 'Acknowledgement failed';
           }
@@ -145,7 +149,7 @@
 
       } else {
         // normal success — the server should have set a session cookie
-        location.href = '/';
+        location.href = destinationAfterLogin();
       }
     }catch(err){
       document.getElementById('msg').textContent = err.message;

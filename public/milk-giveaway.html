@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Registro para entrega de leche | Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/milk-giveaway.css">
+</head>
+<body class="milk-page">
+  <header class="milk-header">
+    <a class="milk-brand brand" href="/" aria-label="Tu Mejor Versión — Inicio">
+      <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img flipped">
+      <h1 class="nav-gold">Tu<br>Mejor<br>Versión</h1>
+      <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img">
+    </a>
+    <button id="logoutButton" class="milk-logout" type="button">Cerrar sesión</button>
+  </header>
+
+  <main class="milk-shell">
+    <section class="milk-intro">
+      <p class="milk-eyebrow">Programa comunitario</p>
+      <h1>Registro para entrega de leche</h1>
+      <p>Complete un formulario por cada bebé que recibirá fórmula.</p>
+      <p id="userGreeting" class="milk-user">Verificando su sesión…</p>
+    </section>
+
+    <section id="formSection" class="milk-card" hidden>
+      <h2>Información de registro</h2>
+      <p class="milk-required">Todos los campos marcados con <span>*</span> son obligatorios.</p>
+      <form id="milkRegistrationForm">
+        <div class="milk-field">
+          <label for="fullName">Nombre completo de la persona que recibirá la leche <span>*</span></label>
+          <input id="fullName" name="full_name" type="text" minlength="2" maxlength="120" autocomplete="name" required>
+        </div>
+        <div class="milk-field">
+          <label for="phone">Número de teléfono <span>*</span></label>
+          <input id="phone" name="phone" type="tel" minlength="7" maxlength="30" autocomplete="tel" required>
+        </div>
+        <div class="milk-field">
+          <label for="babyName">Nombre del bebé <span>*</span></label>
+          <input id="babyName" name="baby_name" type="text" minlength="2" maxlength="120" required>
+        </div>
+        <div class="milk-field">
+          <label for="babyAgeMonths">Edad del bebé en meses <span>*</span></label>
+          <input id="babyAgeMonths" name="baby_age_months" type="number" min="0" max="36" step="1" required>
+        </div>
+        <fieldset class="milk-field">
+          <legend>Tipo de fórmula <span>*</span></legend>
+          <div class="milk-options">
+            <label><input type="radio" name="formula_type" value="Enfamil" required> Enfamil</label>
+            <label><input type="radio" name="formula_type" value="Similac"> Similac</label>
+            <label><input type="radio" name="formula_type" value="Enfamil Gentlease"> Enfamil Gentlease</label>
+            <label><input type="radio" name="formula_type" value="Similac Sensitive"> Similac Sensitive</label>
+            <label><input type="radio" name="formula_type" value="Otra fórmula"> Otra fórmula</label>
+          </div>
+          <div id="otherFormulaField" class="milk-other" hidden>
+            <label for="formulaOther">Nombre de la fórmula</label>
+            <input id="formulaOther" name="formula_other" type="text" maxlength="120">
+          </div>
+        </fieldset>
+        <div id="formMessage" class="milk-message" role="alert" hidden></div>
+        <button id="submitButton" class="milk-submit" type="submit">Enviar registro</button>
+      </form>
+    </section>
+
+    <section id="successSection" class="milk-success" tabindex="-1" hidden>
+      <h2>Registro completado</h2>
+      <p id="confirmationNumber"></p>
+      <button id="anotherRegistration" type="button">Registrar a otra persona</button>
+      <a href="/">Volver al inicio</a>
+    </section>
+  </main>
+  <script src="/static/js/milk-giveaway.js"></script>
+</body>
+</html>

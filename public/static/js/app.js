@@ -112,7 +112,9 @@ function renderAuthLinks(me) {
   console.log("renderAuthLinks: normalized role =", role);
 
   let html = `
- 
+    <a href="/milk-giveaway" class="nav-btn">
+      <span data-en="Milk registration" data-es="Registro de leche">Milk registration</span>
+    </a>
   `;
 
   if (role === "admin") {
@@ -963,15 +965,6 @@ function formatDate(value) {
   });
 }
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
  /*****************************************************************************
  * END load course create list of courses in course container
  ***************************************************************************/
@@ -1035,18 +1028,6 @@ async function initMenu() {
  * BEGIN Supporting API from Index.html for Events and authentication
  ***************************************************************************/
  
-  async function api(path, opts={}){
-    console.log("/API Entry",path, opts)
-    const r = await fetch(path, {credentials:'include', ...opts});
-    const ct = r.headers.get('content-type')||'';
-    const body = ct.includes('application/json') ? await r.json().catch(()=>null) : await r.text().catch(()=>null);
-    if(!r.ok){
-      const msg = (body && body.error) ? body.error : (typeof body === 'string' ? body : 'Request failed');
-      throw new Error(msg);
-    }
-    return body;
-  }
-
   function setAuthNav(me){
     const el = document.getElementById('nav-auth');
     if(!me){
@@ -1060,11 +1041,6 @@ async function initMenu() {
       await api('/api/auth/logout', {method:'POST'});
       location.reload();
     });
-  }
-
-  function listCards(items, toHref, titleKey){
-    if(!items.length) return '<p>No items.</p>';
-    return '<ul>' + items.map(x=>`<li><a href="${toHref(x)}">${x[titleKey]}</a></li>`).join('') + '</ul>';
   }
 
  async function initIndex() {
