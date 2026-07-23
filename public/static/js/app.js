@@ -1152,6 +1152,23 @@ async function loadEventsForDeletion() {
         console.error(`❌ formatDate FAILED for index ${i}`, e.date, err);
       }
 
+      if (!document.body.classList.contains("events-listing-page")) {
+        return `
+          <li class="list-item">
+            <div>
+              <a href="/event.html?id=${safeId}">
+                <strong>${safeName}</strong>
+              </a>
+              <div class="muted">
+                <span><b>ID:</b> ${escapeHtml(e.id)}</span><br>
+                <span><b>Date:</b> ${safeDate}</span><br>
+                <span><b>Location:</b> ${safeLocation}</span>
+              </div>
+            </div>
+          </li>
+        `;
+      }
+
       return `
         <li class="list-item">
           <div>
@@ -1258,16 +1275,32 @@ async function loadEvents() {
         console.error(`❌ formatDate FAILED for index ${i}`, e.date, err);
       }
 
+      const safeId = encodeURIComponent(e.id);
+      const safeName = escapeHtml(e.name || "");
+      const safeDate = escapeHtml(formattedDate);
+      const safeLocation = escapeHtml(e.location || "");
+      const safeDescription = escapeHtml(e.about || "");
+      const safeImageUrl = e.image_url ? escapeHtml(e.image_url) : "";
+      const thumbnail = safeImageUrl ? `
+        <a class="event-thumbnail" href="/event.html?id=${safeId}" aria-label="View ${safeName}">
+          <img src="${safeImageUrl}" alt="${safeName} event image" loading="lazy">
+        </a>
+      ` : "";
+
       return `
         <li class="list-item">
-          <div>
-            <a href="/event.html?id=${e.id}">
-              <strong>${e.name}</strong>
-            </a>
-            <div class="muted">
-              <span><b>ID:</b> ${e.id}</span><br>
-              <span><b>Date:</b> ${formattedDate}</span><br>
-              <span><b>Location:</b> ${e.location || ""}</span>
+          <div class="event-summary${safeImageUrl ? "" : " no-image"}">
+            ${thumbnail}
+            <div class="event-summary-details">
+              <a href="/event.html?id=${safeId}">
+                <strong>${safeName}</strong>
+              </a>
+              <div class="muted">
+                <span><b>ID:</b> ${escapeHtml(e.id)}</span><br>
+                <span><b>Date:</b> ${safeDate}</span><br>
+                <span><b>Location:</b> ${safeLocation}</span>
+                ${safeDescription ? `<div class="event-description"><b>Description:</b> ${safeDescription}</div>` : ""}
+              </div>
             </div>
           </div>
         </li>
