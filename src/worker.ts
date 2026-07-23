@@ -1157,6 +1157,99 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
       return json({ ok: true });
     }
 
+    if (
+      request.method === 'GET' &&
+      (pathname === '/api/admin/milk-registrations' ||
+       pathname === '/api/admin/milk-registrations.csv')
+    ) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const url = new URL(request.url);
+      const query = String(url.searchParams.get('q') || '').trim().slice(0, 100);
+      const formula = String(url.searchParams.get('formula') || '').trim().slice(0, 120);
+      const queryLike = `%${query}%`;
+      const where = `
+        WHERE (? = '' OR m.formula_type = ?)
+          AND (
+            ? = ''
+            OR m.full_name LIKE ?
+            OR m.phone LIKE ?
+            OR m.baby_name LIKE ?
+          )
+      `;
+      const select = `
+        SELECT
+          m.id,
+          m.created_at,
+          m.full_name,
+          m.phone,
+          m.baby_name,
+          m.baby_age_months,
+          m.formula_type,
+          m.formula_other,
+          u.name AS registered_by_name,
+          u.email AS registered_by_email
+        FROM milk_giveaway_registration m
+        JOIN user u ON u.id = m.registered_by
+        ${where}
+        ORDER BY m.created_at DESC, m.id DESC
+      `;
+      const bindings = [formula, formula, query, queryLike, queryLike, queryLike];
+
+      if (pathname.endsWith('.csv')) {
+        const out = await env.DB.prepare(select).bind(...bindings).all();
+        const rows = out.results || [];
+        const header = [
+          'id',
+          'created_at',
+          'full_name',
+          'phone',
+          'baby_name',
+          'baby_age_months',
+          'formula_type',
+          'formula_other',
+          'registered_by_name',
+          'registered_by_email',
+        ];
+        const escapeCsv = (value: any) => {
+          let cell = String(value ?? '');
+          // Prevent recipient-entered values from becoming formulas in spreadsheets.
+          if (/^[=+\-@]/.test(cell)) cell = `'${cell}`;
+          if (/[",\n\r]/.test(cell)) return `"${cell.replace(/"/g, '""')}"`;
+          return cell;
+        };
+        const lines = [header.join(',')].concat(
+          rows.map((row: any) => header.map((key) => escapeCsv(row[key])).join(','))
+        );
+        const date = new Date().toISOString().slice(0, 10);
+        return new Response('\uFEFF' + lines.join('\r\n'), {
+          status: 200,
+          headers: {
+            'content-type': 'text/csv; charset=utf-8',
+            'content-disposition': `attachment; filename="registros_leche_${date}.csv"`,
+            'cache-control': 'no-store',
+            'x-content-type-options': 'nosniff',
+          },
+        });
+      }
+
+      const [rows, count] = await Promise.all([
+        env.DB.prepare(select + ' LIMIT 1000').bind(...bindings).all(),
+        env.DB.prepare(`
+          SELECT COUNT(*) AS total
+          FROM milk_giveaway_registration m
+          ${where}
+        `).bind(...bindings).first() as Promise<any>,
+      ]);
+
+      return json({
+        registrations: rows.results || [],
+        total: Number(count?.total || 0),
+        limited: Number(count?.total || 0) > 1000,
+      });
+    }
+
     if (request.method === 'GET' && pathname === '/api/admin/event-feedback') {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;

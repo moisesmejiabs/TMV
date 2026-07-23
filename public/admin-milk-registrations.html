@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Registros de leche | Admin | Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/milk-admin.css">
+</head>
+<body class="milk-admin-page">
+  <header class="milk-admin-header">
+    <a href="/admin.html" class="milk-admin-back">← Volver a Admin</a>
+    <div>
+      <span class="milk-admin-kicker">Tu Mejor Versión</span>
+      <h1>Registros para entrega de leche</h1>
+    </div>
+    <button id="logoutButton" class="milk-admin-logout" type="button">Cerrar sesión</button>
+  </header>
+
+  <main class="milk-admin-shell">
+    <section class="milk-admin-toolbar" aria-labelledby="filtersTitle">
+      <div>
+        <h2 id="filtersTitle">Buscar y filtrar</h2>
+        <p>Busque por persona, teléfono o nombre del bebé.</p>
+      </div>
+      <form id="filterForm" class="milk-admin-filters" role="search">
+        <label>
+          Buscar
+          <input id="searchInput" type="search" maxlength="100"
+                 placeholder="Nombre, teléfono o bebé">
+        </label>
+        <label>
+          Tipo de fórmula
+          <select id="formulaFilter">
+            <option value="">Todas las fórmulas</option>
+            <option>Enfamil</option>
+            <option>Similac</option>
+            <option>Enfamil Gentlease</option>
+            <option>Similac Sensitive</option>
+            <option>Otra fórmula</option>
+          </select>
+        </label>
+        <button type="submit">Aplicar filtros</button>
+        <button id="clearFilters" class="secondary" type="button">Limpiar</button>
+      </form>
+    </section>
+
+    <section class="milk-admin-summary" aria-live="polite">
+      <div>
+        <span>Total encontrado</span>
+        <strong id="registrationCount">—</strong>
+      </div>
+      <div class="milk-admin-actions">
+        <button id="refreshButton" class="secondary" type="button">Actualizar</button>
+        <a id="csvDownload" class="download" href="/api/admin/milk-registrations.csv">
+          Descargar CSV
+        </a>
+      </div>
+    </section>
+
+    <div id="adminMessage" class="milk-admin-message" role="alert" hidden></div>
+
+    <section class="milk-admin-table-card" aria-labelledby="tableTitle">
+      <h2 id="tableTitle" class="sr-only">Lista de registros</h2>
+      <div class="milk-admin-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Persona</th>
+              <th>Teléfono</th>
+              <th>Bebé</th>
+              <th>Edad</th>
+              <th>Fórmula</th>
+              <th>Registrado por</th>
+              <th>ID</th>
+            </tr>
+          </thead>
+          <tbody id="registrationRows">
+            <tr><td colspan="8" class="empty">Cargando registros…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/js/milk-admin.js"></script>
+</body>
+</html>
