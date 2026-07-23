@@ -703,10 +703,46 @@ async function loadCourses() {
         const safeName = escapeHtml(name);
         const safeDate = escapeHtml(formattedDate);
         const safePresenter = escapeHtml(presenter);
+        const safeId = encodeURIComponent(id);
+        const safeLocation = escapeHtml(c.location || "");
+        const safeDescription = escapeHtml(c.about || "");
+        const safeImageUrl = c.image_url ? escapeHtml(c.image_url) : "";
+
+        if (document.body.classList.contains("courses-listing-page")) {
+          const thumbnail = safeImageUrl ? `
+            <a class="course-thumbnail" href="/course.html?id=${safeId}" aria-label="View ${safeName}">
+              <img src="${safeImageUrl}" alt="${safeName} course image" loading="lazy">
+            </a>
+          ` : `
+            <div class="course-thumbnail course-thumbnail-placeholder" aria-label="No course image">
+              <span>No image</span>
+            </div>
+          `;
+
+          html += `
+            <li class="course-item">
+              <div class="course-summary">
+                ${thumbnail}
+                <div class="course-summary-details">
+                  <a href="/course.html?id=${safeId}">
+                    <strong>${safeName}</strong>
+                  </a>
+                  <div class="course-meta">
+                    <span><b>Date:</b> ${safeDate}</span><br>
+                    <span><b>Presenter:</b> ${safePresenter}</span><br>
+                    <span><b>Location:</b> ${safeLocation}</span>
+                    ${safeDescription ? `<div class="course-description"><b>Description:</b> ${safeDescription}</div>` : ""}
+                  </div>
+                </div>
+              </div>
+            </li>
+          `;
+          return;
+        }
 
         html += `
           <li class="course-item">
-            <a href="/course.html?id=${id}">
+            <a href="/course.html?id=${safeId}">
               <strong>${safeName}</strong>
             </a>
             <div class="course-meta">

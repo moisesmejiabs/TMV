@@ -753,7 +753,7 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
 
   if (request.method === 'GET' && pathname === '/api/courses') {
     const limit = Math.min(Number(url.searchParams.get('limit') || '0') || 0, 50);
-    const sql = 'SELECT id,name,date,presenter,about,location,requirements,capacity,created_by,created_at FROM course ORDER BY created_at DESC' + (limit ? ' LIMIT ?' : '');
+    const sql = 'SELECT id,name,date,presenter,about,location,requirements,capacity,image_url,created_by,created_at FROM course ORDER BY created_at DESC' + (limit ? ' LIMIT ?' : '');
     const stmt = env.DB.prepare(sql);
     const out = limit ? await stmt.bind(limit).all() : await stmt.all();
     return json(out.results || []);
