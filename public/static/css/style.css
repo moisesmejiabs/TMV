@@ -100,13 +100,10 @@ a{
   justify-content: center;
   gap: 1.5rem;
   width: 100%;
-  aspect-ratio: 12 / 5;
-  height: auto;
-  margin: 0 auto;
+  height: 420px;
   overflow: hidden;
   border-radius: 24px;
   position: relative;
-  background: #681555;
   box-shadow: var(--shadow-strong);
 }
 
@@ -132,8 +129,7 @@ a{
 .brand-index-img{
   width: 100%;
   height: 100%;
-  object-fit: none;
-  object-position: center;
+  object-fit: cover;
   display: block;
 }
 
@@ -655,9 +651,6 @@ article{
   .brand h1.nav-gold{
     font-size: 2.15rem;
   }
-  .brand-index-img{
-    object-fit: cover;
-  }
   .image-slider{
     width: 80%;
     height: 420px;
@@ -700,9 +693,7 @@ article{
 
   .brand-index{
     gap: 1rem;
-    width: 100%;
-    aspect-ratio: 12 / 7;
-    height: auto;
+    height: 160px;
     border-radius: 16px;
   }
 
@@ -714,7 +705,6 @@ article{
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
   }
 
   .table{
