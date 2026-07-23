@@ -19,6 +19,5 @@ database_id = "31323ca1-ff6e-4f95-8119-5e5b85dc9c27"
 binding = "R2"
 bucket_name = "tumejorversion-assets"
 
-[vars]
-# Generate a long random secret: openssl rand -base64 48
-JWT_SECRET = "WjL6DDiicScSqA1+4Dh+E8gFH0ISTc5ByfioNnXfi+9MaRzKdhKBOhJd8NbDT+co"
+# JWT_SECRET must be stored as a Cloudflare Worker secret, not in this file.
+# Configure it with: npx wrangler secret put JWT_SECRET
