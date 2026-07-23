@@ -18,11 +18,12 @@
         <span 
           data-en="Tu<br>Mejor<br>Version" 
           data-es="Tu<br>Mejor<br>Versión">
+          Tu<br>Mejor<br>Versión
         </span>
       </h1> 
       <img src="/static/images/TuMejorVersionBird.png"
           alt="Logo"
-          class="brand-img flipped">
+          class="brand-img">
 
       <!-- Right side: Auth controls -->
       <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
@@ -94,6 +95,16 @@
     <p><a href="/">Home</a> · <a href="/register.html">Register</a></p>
   </main>
   <script>
+  function setLanguage(lang) {
+    document.documentElement.lang = lang;
+    localStorage.setItem('lang', lang);
+    document.querySelectorAll('[data-en][data-es]').forEach((element) => {
+      element.innerHTML = lang === 'es' ? element.dataset.es : element.dataset.en;
+    });
+  }
+
+  setLanguage(localStorage.getItem('lang') || 'es');
+
   async function api(path, opts={}){
     const r = await fetch(path, {credentials:'include', headers:{'content-type':'application/json', ...(opts.headers||{})}, ...opts});
     const body = await r.json().catch(()=>null);
