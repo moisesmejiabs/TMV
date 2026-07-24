@@ -330,9 +330,17 @@
 
     const me = await api('/api/me').catch(()=>null);
     let html='';
-    if(!me){ html = '<p><a href="/login.html" data-en="Login" data-es="Iniciar sesión">Login</a> <span data-en="to register." data-es="para registrarte.">to register.</span></p>'; }
+    if(!me){
+      html = e.uses_external_participants
+        ? '<p data-en="Participation for this event is managed by the administrator." data-es="La participación para este evento es administrada por el administrador.">Participation for this event is managed by the administrator.</p>'
+        : '<p><a href="/login.html" data-en="Login" data-es="Iniciar sesión">Login</a> <span data-en="to register." data-es="para registrarte.">to register.</span></p>';
+    }
     else {
-      html += e.enrolled ? '<button id="cancel" data-en="Cancel Registration" data-es="Cancelar Registro">Cancel Registration</button>' : '<button id="enroll" data-en="Register" data-es="Registrarse">Register</button>';
+      if (e.uses_external_participants) {
+        html += '<p data-en="Participation for this event is managed by the administrator." data-es="La participación para este evento es administrada por el administrador.">Participation for this event is managed by the administrator.</p>';
+      } else {
+        html += e.enrolled ? '<button id="cancel" data-en="Cancel Registration" data-es="Cancelar Registro">Cancel Registration</button>' : '<button id="enroll" data-en="Register" data-es="Registrarse">Register</button>';
+      }
       if(me.role==='admin') html += ` <a class="btn" href="/create-event.html?id=${encodeURIComponent(id)}" data-en="Edit Event" data-es="Editar Evento">Edit Event</a> <button id="delete" data-en="Delete Event" data-es="Eliminar Evento">Delete Event</button>`;
     }
     document.getElementById('actions').innerHTML = html;

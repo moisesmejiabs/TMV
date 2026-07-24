@@ -33,6 +33,13 @@ from the signed-in session. It does not accept a browser-supplied user ID.
 
 ## List expansion and snapshots
 
+Event Builder starts in the traditional self-registration mode. Administrators
+must select **This event will use an administrator-managed external participant
+list** to reveal assignment controls. In that mode, new self-registration is
+disabled and attendance is managed through the saved event snapshot. Turning
+the mode off while editing clears assigned participant snapshots and returns
+the event to self-registration.
+
 The Event Builder accepts reusable-list IDs, individual participant IDs, and
 ad-hoc participant details. It also offers authentication accounts in a
 separate Registered Users group. The server validates IDs, expands current

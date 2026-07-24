@@ -122,8 +122,14 @@
     <input type="file" name="image" accept="image/*">
   </label>
 
-  <fieldset>
-    <legend>Participants</legend>
+  <label class="participant-mode-toggle">
+    <input id="uses-external-participants" type="checkbox">
+    This event will use an administrator-managed external participant list
+  </label>
+  <p>Leave unchecked for the traditional event flow where registered users register themselves.</p>
+
+  <fieldset id="participant-assignment-fields" hidden>
+    <legend>External and Assigned Participants</legend>
     <p><a href="/admin-participants.html">Manage participants and reusable lists</a></p>
     <label>Reusable participant lists</label>
     <div id="event-participant-lists" class="participant-picker" aria-live="polite"></div>
@@ -144,6 +150,7 @@
 <style>
 .participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #ddd;border-radius:.5rem;padding:.5rem;margin:.4rem 0 1rem}
 .participant-picker label{display:block;padding:.35rem;overflow-wrap:anywhere}.ad-hoc-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin:.5rem 0}
+.participant-mode-toggle{display:flex;gap:.6rem;align-items:center;margin-top:1rem}.participant-mode-toggle input{width:auto}
 @media(max-width:650px){.ad-hoc-row{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}}
 </style>
 <script>
@@ -159,6 +166,14 @@ console.log("🔍 event form element:", formEl);
 function eventEscape(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+function updateParticipantMode() {
+  const enabled = document.getElementById("uses-external-participants").checked;
+  document.getElementById("participant-assignment-fields").hidden = !enabled;
+}
+
+document.getElementById("uses-external-participants").addEventListener("change", updateParticipantMode);
+updateParticipantMode();
 
 function renderEventParticipants(query = "") {
   const normalized = query.trim().toLowerCase();
@@ -242,6 +257,8 @@ async function loadEventForEdit() {
   formEl.elements.capacity.value = event.capacity || 0;
   formEl.elements.about.value = event.about || "";
   formEl.elements.requirements.value = event.requirements || "";
+  document.getElementById("uses-external-participants").checked = Boolean(event.uses_external_participants);
+  updateParticipantMode();
   const existingResponse = await fetch(`/api/admin/events/${encodeURIComponent(editEventId)}/participants`, {credentials:"include"});
   const existing = await existingResponse.json().catch(() => []);
   if (!existingResponse.ok) throw new Error(existing.error || "Failed to load event participants");
@@ -292,6 +309,7 @@ if (!formEl) {
         imageUrl = uploadData.url || "";
       }
 
+      const usesExternalParticipants = document.getElementById("uses-external-participants").checked;
       const payload = {
         name: form.elements.name.value.trim(),
         date: localInputToIso(form.elements.date.value),
@@ -301,14 +319,15 @@ if (!formEl) {
         about: form.elements.about.value.trim(),
         requirements: form.elements.requirements.value.trim(),
         image_url: imageUrl,
-        participant_list_ids: [...document.querySelectorAll("[data-list-id]:checked")].map(input => Number(input.value)),
-        registered_user_ids: [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)),
-        participant_ids: eventParticipants.filter(person => person.selected).map(person => Number(person.id)),
-        ad_hoc_participants: [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
+        uses_external_participants: usesExternalParticipants,
+        participant_list_ids: usesExternalParticipants ? [...document.querySelectorAll("[data-list-id]:checked")].map(input => Number(input.value)) : [],
+        registered_user_ids: usesExternalParticipants ? [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)) : [],
+        participant_ids: usesExternalParticipants ? eventParticipants.filter(person => person.selected).map(person => Number(person.id)) : [],
+        ad_hoc_participants: usesExternalParticipants ? [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
           name: row.querySelector("[data-adhoc-name]").value.trim(),
           phone: row.querySelector("[data-adhoc-phone]").value.trim(),
           address: row.querySelector("[data-adhoc-address]").value.trim()
-        })).filter(person => person.name)
+        })).filter(person => person.name) : []
       };
 
       console.log("📦 Event payload:", payload);

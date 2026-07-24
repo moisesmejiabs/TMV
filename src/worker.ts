@@ -1337,7 +1337,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
   if (request.method === 'GET' && pathname === '/api/events') {
     const limit = Math.min(Number(url.searchParams.get('limit') || '0') || 0, 50);
     const sql =
-      'SELECT id,name,date,presenter,about,location,requirements,image_url,archived,capacity,created_by,created_at FROM event WHERE COALESCE(archived, 0) = 0 ORDER BY created_at DESC' +
+      'SELECT id,name,date,presenter,about,location,requirements,image_url,archived,capacity,uses_external_participants,created_by,created_at FROM event WHERE COALESCE(archived, 0) = 0 ORDER BY created_at DESC' +
       (limit ? ' LIMIT ?' : '');
     const stmt = env.DB.prepare(sql);
     const out = limit ? await stmt.bind(limit).all() : await stmt.all();
@@ -1501,17 +1501,19 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     const imageUrl = body.image_url ? String(body.image_url).trim() : '';
     const date = toIso(body.date);
     const capacity = Math.max(0, Number(body.capacity || 0) || 0);
+    const usesExternalParticipants = body.uses_external_participants ? 1 : 0;
 
     if (!name || !presenter || !about || !location || !date) {
       return badRequest('Missing required fields');
     }
 
     const replacesParticipants =
+      (body as any).uses_external_participants !== undefined ||
       Array.isArray((body as any).participant_ids) ||
       Array.isArray((body as any).participant_list_ids) ||
       Array.isArray((body as any).registered_user_ids) ||
       Array.isArray((body as any).ad_hoc_participants);
-    const resolved = replacesParticipants
+    const resolved = replacesParticipants && usesExternalParticipants
       ? await resolveEventParticipants(env, body)
       : { error: null, rows: [] };
     if (resolved.error) return badRequest(resolved.error);
@@ -1519,9 +1521,10 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     const update = env.DB.prepare(`
       UPDATE event
       SET name = ?, date = ?, presenter = ?, about = ?, location = ?, requirements = ?,
-          image_url = COALESCE(NULLIF(?, ''), image_url), capacity = ?
+          image_url = COALESCE(NULLIF(?, ''), image_url), capacity = ?,
+          uses_external_participants = ?
       WHERE id = ?
-    `).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, id);
+    `).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, usesExternalParticipants, id);
     const result = replacesParticipants
       ? (await env.DB.batch([
           update,
@@ -1600,8 +1603,11 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     if (!u) return unauthorized();
 
     const id = Number(mEnroll[1]);
-    const e = await env.DB.prepare('SELECT id,capacity FROM event WHERE id = ?').bind(id).first() as any;
+    const e = await env.DB.prepare('SELECT id,capacity,uses_external_participants FROM event WHERE id = ?').bind(id).first() as any;
     if (!e) return notFound();
+    if (Number(e.uses_external_participants || 0) === 1) {
+      return badRequest('This event uses an administrator-managed participant list');
+    }
 
     if (Number(e.capacity || 0) > 0) {
       const countRow = await env.DB.prepare(
@@ -1785,16 +1791,19 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     const imageUrl = body.image_url ? String(body.image_url).trim() : null;
     const date = toIso(body.date);
     const capacity = Math.max(0, Number(body.capacity || 0) || 0);
+    const usesExternalParticipants = body.uses_external_participants ? 1 : 0;
 
     if (!name || !presenter || !about || !location || !date) {
       return badRequest('Missing required fields');
     }
 
-    const resolved = await resolveEventParticipants(env, body);
+    const resolved = usesExternalParticipants
+      ? await resolveEventParticipants(env, body)
+      : { error: null, rows: [] };
     if (resolved.error) return badRequest(resolved.error);
 
     const res = await env.DB.prepare(
-      'INSERT INTO event (name,date,presenter,about,location,requirements,image_url,capacity,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
+      'INSERT INTO event (name,date,presenter,about,location,requirements,image_url,capacity,uses_external_participants,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
     ).bind(
       name,
       date,
@@ -1804,6 +1813,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       requirements,
       imageUrl,
       capacity,
+      usesExternalParticipants,
       admin.user!.id,
       isoNow()
     ).run();
