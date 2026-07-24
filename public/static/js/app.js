@@ -207,6 +207,19 @@ function renderAuthLinks(me) {
     `).join("");
   }
 
+function positionCurrentUserBesideLanguage(meEl) {
+  if (!meEl) return;
+
+  const languageToggle = document.querySelector(".lang-toggle");
+  const languageRow = languageToggle?.parentElement;
+  if (!languageToggle || !languageRow) return;
+
+  languageRow.classList.add("language-user-row");
+  meEl.classList.remove("section-card");
+  meEl.classList.add("current-user-compact");
+  languageRow.appendChild(meEl);
+}
+
 async function initApp() {
   console.log("🚀 initApp START");
 
@@ -245,8 +258,18 @@ async function initApp() {
   }
 
   // ---------- ME DISPLAY ----------
-  const meEl = document.getElementById("me");
+  let meEl = document.getElementById("me");
   console.log("🔍 #me element:", meEl);
+
+  if (!meEl && me && document.querySelector(".lang-toggle")) {
+    meEl = document.createElement("aside");
+    meEl.id = "me";
+    meEl.innerHTML = `
+      <h3>Current User</h3>
+      <p><b>Name:</b> <span id="me-name"></span></p>
+      <p><b>Email:</b> <span id="me-email"></span></p>
+    `;
+  }
 
   if (meEl) {
     if (me) {
@@ -257,6 +280,8 @@ async function initApp() {
     } else {
       meEl.innerHTML = '<h3>Unregistered</h3>';
     }
+
+    positionCurrentUserBesideLanguage(meEl);
   }
 
   
