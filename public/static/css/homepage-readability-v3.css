@@ -22,3 +22,14 @@
 .home-page main .fb-share-btn{
   font-size: 1.1875rem;
 }
+
+/* Keep El Libro aligned with every other homepage section. */
+.home-page .book-card{
+  padding: 42px 34px;
+}
+
+@media (max-width: 600px){
+  .home-page .book-card{
+    padding: 26px 18px;
+  }
+}
