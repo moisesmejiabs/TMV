@@ -71,6 +71,10 @@
   white-space: pre-line;
 }
 
+.top > .brand h1.nav-gold span{
+  font-family: inherit;
+}
+
 .top > .brand > #nav-auth{ display: none !important; }
 
 @media (max-width: 900px){
