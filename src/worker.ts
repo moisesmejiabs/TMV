@@ -877,6 +877,381 @@ function normalizePhone(value: unknown) {
   return String(value || '').trim().replace(/[^\d+().\-\s]/g, '');
 }
 
+function phoneDigits(value: unknown) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function integerIds(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+}
+
+function sqliteConflict(error: unknown) {
+  return String((error as any)?.message || error || '').toLowerCase().includes('unique');
+}
+
+async function participantRows(env: Env, scope: string | null, query: string) {
+  const params: any[] = [];
+  let membership = '';
+  if (scope === 'unlisted') {
+    membership = `AND NOT EXISTS (
+      SELECT 1 FROM participant_list_member x WHERE x.participant_id = p.id
+    )`;
+  } else if (scope && /^\d+$/.test(scope)) {
+    membership = `AND EXISTS (
+      SELECT 1 FROM participant_list_member x
+      WHERE x.participant_id = p.id AND x.participant_list_id = ?
+    )`;
+    params.push(Number(scope));
+  }
+
+  const trimmed = query.trim().slice(0, 100);
+  let search = '';
+  if (trimmed) {
+    const digits = phoneDigits(trimmed);
+    if (digits) {
+      search = `AND (
+        LOWER(p.name) LIKE ?
+        OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+          COALESCE(p.phone, ''), ' ', ''), '-', ''), '(', ''), ')', ''), '.', ''), '+', '')
+          LIKE ?
+      )`;
+      params.push(`%${trimmed.toLowerCase()}%`, `%${digits}%`);
+    } else {
+      search = 'AND LOWER(p.name) LIKE ?';
+      params.push(`%${trimmed.toLowerCase()}%`);
+    }
+  }
+
+  return env.DB.prepare(`
+    SELECT p.id,p.user_id,p.name,p.phone,p.address,p.created_at,p.updated_at,
+      GROUP_CONCAT(pl.name, ', ') AS list_names
+    FROM participant p
+    LEFT JOIN participant_list_member plm ON plm.participant_id = p.id
+    LEFT JOIN participant_list pl ON pl.id = plm.participant_list_id
+    WHERE 1 = 1 ${membership} ${search}
+    GROUP BY p.id
+    ORDER BY LOWER(p.name), p.id
+  `).bind(...params).all();
+}
+
+async function handleParticipants(request: Request, env: Env, pathname: string) {
+  const url = new URL(request.url);
+
+  if (request.method === 'GET' && pathname === '/api/admin/participants') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const out = await participantRows(
+      env,
+      url.searchParams.get('scope'),
+      url.searchParams.get('q') || ''
+    );
+    return json({ participants: out.results || [], count: (out.results || []).length });
+  }
+
+  if (request.method === 'POST' && pathname === '/api/admin/participants') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Expected JSON');
+    const name = String(body.name || '').trim();
+    const phone = normalizePhone(body.phone);
+    const address = String(body.address || '').trim();
+    const userId = body.user_id ? Number(body.user_id) : null;
+    const listId = body.list_id ? Number(body.list_id) : null;
+    if (!name) return badRequest('Participant name is required');
+    if (userId && !Number.isInteger(userId)) return badRequest('Invalid user id');
+    if (userId) {
+      const account = await env.DB.prepare('SELECT id FROM user WHERE id = ?').bind(userId).first();
+      if (!account) return badRequest('Unknown user id');
+    }
+    if (listId) {
+      const list = await env.DB.prepare('SELECT id FROM participant_list WHERE id = ?').bind(listId).first();
+      if (!list) return badRequest('Unknown participant list');
+    }
+    try {
+      const now = isoNow();
+      const result = await env.DB.prepare(`
+        INSERT INTO participant (user_id,name,phone,address,created_by,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?)
+      `).bind(userId, name, phone || null, address || null, admin.user!.id, now, now).run();
+      const participantId = Number(result.meta.last_row_id);
+      if (listId) {
+        try {
+          await env.DB.prepare(`
+            INSERT INTO participant_list_member (participant_list_id,participant_id,created_at)
+            VALUES (?,?,?)
+          `).bind(listId, participantId, now).run();
+        } catch (error) {
+          return json({
+            ok: true,
+            id: participantId,
+            warning: 'Participant was created, but list assignment failed'
+          }, 201);
+        }
+      }
+      return json({ ok: true, id: participantId }, 201);
+    } catch (error) {
+      if (sqliteConflict(error)) return json({ error: 'That account already has a participant profile' }, 409);
+      throw error;
+    }
+  }
+
+  const participantMatch = pathname.match(/^\/api\/admin\/participants\/(\d+)$/);
+  if (request.method === 'PATCH' && participantMatch) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Expected JSON');
+    const id = Number(participantMatch[1]);
+    const name = String(body.name || '').trim();
+    const phone = normalizePhone(body.phone);
+    const address = String(body.address || '').trim();
+    const userId = body.user_id ? Number(body.user_id) : null;
+    if (!name) return badRequest('Participant name is required');
+    if (userId) {
+      const account = await env.DB.prepare('SELECT id FROM user WHERE id = ?').bind(userId).first();
+      if (!account) return badRequest('Unknown user id');
+    }
+    try {
+      const result = await env.DB.prepare(`
+        UPDATE participant SET user_id = ?,name = ?,phone = ?,address = ?,updated_at = ?
+        WHERE id = ?
+      `).bind(userId, name, phone || null, address || null, isoNow(), id).run();
+      if (!result.meta?.changes) return notFound('Participant not found');
+      return json({ ok: true });
+    } catch (error) {
+      if (sqliteConflict(error)) return json({ error: 'That account already has a participant profile' }, 409);
+      throw error;
+    }
+  }
+
+  if (request.method === 'DELETE' && participantMatch) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const result = await env.DB.prepare('DELETE FROM participant WHERE id = ?')
+      .bind(Number(participantMatch[1])).run();
+    if (!result.meta?.changes) return notFound('Participant not found');
+    return json({ ok: true });
+  }
+
+  if (request.method === 'GET' && pathname === '/api/admin/participant-lists') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const lists = await env.DB.prepare(`
+      SELECT pl.id,pl.name,pl.created_at,pl.updated_at,COUNT(plm.participant_id) AS member_count
+      FROM participant_list pl
+      LEFT JOIN participant_list_member plm ON plm.participant_list_id = pl.id
+      GROUP BY pl.id ORDER BY LOWER(pl.name)
+    `).all();
+    const members = await env.DB.prepare(`
+      SELECT plm.participant_list_id,p.id,p.name,p.phone
+      FROM participant_list_member plm JOIN participant p ON p.id = plm.participant_id
+      ORDER BY LOWER(p.name)
+    `).all();
+    const byList = new Map<number, any[]>();
+    for (const member of (members.results || []) as any[]) {
+      const id = Number(member.participant_list_id);
+      if (!byList.has(id)) byList.set(id, []);
+      byList.get(id)!.push({ id: member.id, name: member.name, phone: member.phone });
+    }
+    return json((lists.results || []).map((list: any) => ({
+      ...list,
+      member_count: Number(list.member_count),
+      members: byList.get(Number(list.id)) || []
+    })));
+  }
+
+  if (request.method === 'POST' && pathname === '/api/admin/participant-lists') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Expected JSON');
+    const name = String(body.name || '').trim();
+    const memberIds = integerIds(body.participant_ids);
+    if (!name) return badRequest('List name is required');
+    if (memberIds.length) {
+      const placeholders = memberIds.map(() => '?').join(',');
+      const known = await env.DB.prepare(`SELECT COUNT(*) AS count FROM participant WHERE id IN (${placeholders})`)
+        .bind(...memberIds).first() as any;
+      if (Number(known?.count) !== memberIds.length) return badRequest('List contains an unknown participant');
+    }
+    try {
+      const now = isoNow();
+      const created = await env.DB.prepare(`
+        INSERT INTO participant_list (name,created_by,created_at,updated_at) VALUES (?,?,?,?)
+      `).bind(name, admin.user!.id, now, now).run();
+      const id = Number(created.meta.last_row_id);
+      if (memberIds.length) {
+        await env.DB.batch(memberIds.map((participantId) => env.DB.prepare(`
+          INSERT INTO participant_list_member (participant_list_id,participant_id,created_at)
+          VALUES (?,?,?)
+        `).bind(id, participantId, now)));
+      }
+      return json({ ok: true, id }, 201);
+    } catch (error) {
+      if (sqliteConflict(error)) return json({ error: 'A list with that name already exists' }, 409);
+      throw error;
+    }
+  }
+
+  const listMatch = pathname.match(/^\/api\/admin\/participant-lists\/(\d+)$/);
+  if (request.method === 'PUT' && listMatch) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Expected JSON');
+    const id = Number(listMatch[1]);
+    const name = String(body.name || '').trim();
+    const memberIds = integerIds(body.participant_ids);
+    if (!name) return badRequest('List name is required');
+    if (memberIds.length) {
+      const placeholders = memberIds.map(() => '?').join(',');
+      const known = await env.DB.prepare(`SELECT COUNT(*) AS count FROM participant WHERE id IN (${placeholders})`)
+        .bind(...memberIds).first() as any;
+      if (Number(known?.count) !== memberIds.length) return badRequest('List contains an unknown participant');
+    }
+    const existing = await env.DB.prepare('SELECT id FROM participant_list WHERE id = ?').bind(id).first();
+    if (!existing) return notFound('Participant list not found');
+    const now = isoNow();
+    try {
+      await env.DB.batch([
+        env.DB.prepare('UPDATE participant_list SET name = ?,updated_at = ? WHERE id = ?').bind(name, now, id),
+        env.DB.prepare('DELETE FROM participant_list_member WHERE participant_list_id = ?').bind(id),
+        ...memberIds.map((participantId) => env.DB.prepare(`
+          INSERT INTO participant_list_member (participant_list_id,participant_id,created_at)
+          VALUES (?,?,?)
+        `).bind(id, participantId, now))
+      ]);
+      return json({ ok: true });
+    } catch (error) {
+      if (sqliteConflict(error)) return json({ error: 'A list with that name already exists' }, 409);
+      throw error;
+    }
+  }
+
+  if (request.method === 'DELETE' && listMatch) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const result = await env.DB.prepare('DELETE FROM participant_list WHERE id = ?')
+      .bind(Number(listMatch[1])).run();
+    if (!result.meta?.changes) return notFound('Participant list not found');
+    return json({ ok: true });
+  }
+
+  if (request.method === 'GET' && pathname === '/api/user/events') {
+    const user = await requireUser(request, env);
+    if (!user) return unauthorized();
+    const out = await env.DB.prepare(`
+      SELECT DISTINCT e.id,e.name,e.date,e.presenter,e.about,e.location,e.requirements,e.image_url,
+        e.archived,e.capacity,e.created_at
+      FROM event e
+      LEFT JOIN event_participant ep ON ep.event_id = e.id AND ep.user_id = ?
+      LEFT JOIN event_enrollment ee ON ee.event_id = e.id AND ee.user_id = ? AND ee.status = 'registered'
+      WHERE COALESCE(e.archived, 0) = 0 AND (ep.id IS NOT NULL OR ee.id IS NOT NULL)
+      ORDER BY e.date DESC
+    `).bind(user.id, user.id).all();
+    return json(out.results || []);
+  }
+
+  const eventParticipantsMatch = pathname.match(/^\/api\/admin\/events\/(\d+)\/participants$/);
+  if (request.method === 'GET' && eventParticipantsMatch) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const out = await env.DB.prepare(`
+      SELECT id,participant_id,user_id,participant_type,name,phone,address
+      FROM event_participant WHERE event_id = ? ORDER BY LOWER(name),id
+    `).bind(Number(eventParticipantsMatch[1])).all();
+    return json(out.results || []);
+  }
+
+  return null;
+}
+
+async function resolveEventParticipants(env: Env, body: any) {
+  const directIds = integerIds(body.participant_ids);
+  const listIds = integerIds(body.participant_list_ids);
+  const registeredIds = new Set<number>(directIds);
+
+  if (listIds.length) {
+    const placeholders = listIds.map(() => '?').join(',');
+    const knownLists = await env.DB.prepare(
+      `SELECT COUNT(*) AS count FROM participant_list WHERE id IN (${placeholders})`
+    ).bind(...listIds).first() as any;
+    if (Number(knownLists?.count) !== listIds.length) {
+      return { error: 'Unknown participant list', rows: [] as any[] };
+    }
+    const expanded = await env.DB.prepare(
+      `SELECT participant_id FROM participant_list_member WHERE participant_list_id IN (${placeholders})`
+    ).bind(...listIds).all();
+    for (const row of (expanded.results || []) as any[]) registeredIds.add(Number(row.participant_id));
+  }
+
+  const rows: any[] = [];
+  if (registeredIds.size) {
+    const ids = [...registeredIds];
+    const placeholders = ids.map(() => '?').join(',');
+    const participants = await env.DB.prepare(`
+      SELECT id,user_id,name,phone,address FROM participant WHERE id IN (${placeholders})
+    `).bind(...ids).all();
+    if ((participants.results || []).length !== ids.length) {
+      return { error: 'Unknown participant', rows: [] as any[] };
+    }
+    for (const participant of (participants.results || []) as any[]) {
+      rows.push({
+        participant_id: Number(participant.id),
+        user_id: participant.user_id ? Number(participant.user_id) : null,
+        participant_type: 'registered',
+        name: String(participant.name),
+        phone: participant.phone || null,
+        address: participant.address || null
+      });
+    }
+  }
+
+  // Ad-hoc policy: case-insensitive trimmed name plus phone digits. An ad-hoc
+  // entry matching a selected registered participant's name/phone is omitted.
+  const seen = new Set(rows.map((row) =>
+    `${row.name.trim().toLowerCase()}|${phoneDigits(row.phone)}`
+  ));
+  for (const value of Array.isArray(body.ad_hoc_participants) ? body.ad_hoc_participants : []) {
+    const name = String(value?.name || '').trim();
+    const phone = normalizePhone(value?.phone);
+    const address = String(value?.address || '').trim();
+    if (!name) continue;
+    const key = `${name.toLowerCase()}|${phoneDigits(phone)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push({
+      participant_id: null,
+      user_id: null,
+      participant_type: 'ad_hoc',
+      name,
+      phone: phone || null,
+      address: address || null
+    });
+  }
+  return { error: null, rows };
+}
+
+function eventParticipantStatements(env: Env, eventId: number, rows: any[]) {
+  const now = isoNow();
+  return rows.map((row) => env.DB.prepare(`
+    INSERT INTO event_participant
+      (event_id,participant_id,user_id,participant_type,name,phone,address,created_at)
+    VALUES (?,?,?,?,?,?,?,?)
+  `).bind(
+    eventId,
+    row.participant_id,
+    row.user_id,
+    row.participant_type,
+    row.name,
+    row.phone,
+    row.address,
+    now
+  ));
+}
+
 async function handleMilkGiveaway(request: Request, env: Env, pathname: string) {
   if (request.method !== 'POST' || pathname !== '/api/milk-registrations') {
     return null;
@@ -1115,12 +1490,28 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       return badRequest('Missing required fields');
     }
 
-    const result = await env.DB.prepare(`
+    const replacesParticipants =
+      Array.isArray((body as any).participant_ids) ||
+      Array.isArray((body as any).participant_list_ids) ||
+      Array.isArray((body as any).ad_hoc_participants);
+    const resolved = replacesParticipants
+      ? await resolveEventParticipants(env, body)
+      : { error: null, rows: [] };
+    if (resolved.error) return badRequest(resolved.error);
+
+    const update = env.DB.prepare(`
       UPDATE event
       SET name = ?, date = ?, presenter = ?, about = ?, location = ?, requirements = ?,
           image_url = COALESCE(NULLIF(?, ''), image_url), capacity = ?
       WHERE id = ?
-    `).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, id).run();
+    `).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, id);
+    const result = replacesParticipants
+      ? (await env.DB.batch([
+          update,
+          env.DB.prepare('DELETE FROM event_participant WHERE event_id = ?').bind(id),
+          ...eventParticipantStatements(env, id, resolved.rows)
+        ]))[0]
+      : await update.run();
 
     if (!result.meta || result.meta.changes === 0) return notFound('Event not found');
     return json({ ok: true, id });
@@ -1363,9 +1754,8 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
   }
 
   if (request.method === 'POST' && pathname === '/api/events') {
-    const u = await requireUser(request, env);
-    if (!u) return unauthorized();
-    if (!(u.role === 'admin' || u.role === 'instructor')) return forbidden();
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
 
     const body = await readJson(request);
     if (!body) return badRequest('Expected JSON');
@@ -1383,6 +1773,9 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       return badRequest('Missing required fields');
     }
 
+    const resolved = await resolveEventParticipants(env, body);
+    if (resolved.error) return badRequest(resolved.error);
+
     const res = await env.DB.prepare(
       'INSERT INTO event (name,date,presenter,about,location,requirements,image_url,capacity,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
     ).bind(
@@ -1394,11 +1787,15 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       requirements,
       imageUrl,
       capacity,
-      u.id,
+      admin.user!.id,
       isoNow()
     ).run();
 
-    return json({ id: res.meta.last_row_id });
+    const eventId = Number(res.meta.last_row_id);
+    if (resolved.rows.length) {
+      await env.DB.batch(eventParticipantStatements(env, eventId, resolved.rows));
+    }
+    return json({ id: eventId });
   }
 
   const mDel = pathname.match(/^\/api\/events\/(\d+)$/);
@@ -3278,6 +3675,49 @@ export default {
     console.log("   full URL:", url.toString());
     console.log("   search:", url.search);
 
+    const adminPages = new Set([
+      '/admin',
+      '/admin.html',
+      '/admin-milk-registrations',
+      '/admin-milk-registrations.html',
+      '/admin-participants',
+      '/admin-participants.html',
+      '/create-event',
+      '/create-event.html',
+      '/event_delete',
+      '/event_delete.html'
+    ]);
+    if ((request.method === 'GET' || request.method === 'HEAD') && adminPages.has(pathname)) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: admin.user ? '/adminuser.html' : `/login.html?next=${encodeURIComponent(pathname)}`,
+            'cache-control': 'no-store'
+          }
+        });
+      }
+      return env.ASSETS.fetch(request);
+    }
+
+    if (
+      (request.method === 'GET' || request.method === 'HEAD') &&
+      (pathname === '/adminuser' || pathname === '/adminuser.html')
+    ) {
+      const user = await requireUser(request, env);
+      if (!user) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: '/login.html?next=%2Fadminuser.html',
+            'cache-control': 'no-store'
+          }
+        });
+      }
+      return env.ASSETS.fetch(request);
+    }
+
     if (
       (request.method === 'GET' || request.method === 'HEAD') &&
       (pathname === '/milk-giveaway' || pathname === '/milk-giveaway.html')
@@ -3313,6 +3753,7 @@ export default {
         handleMilkGiveaway,
         handleSettings,
         handleYoutubeSlider,
+        handleParticipants,
         handleEvents,
         handleCourses,
         handleWorkshops,

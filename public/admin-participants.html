@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Participant Management · Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724">
+  <style>
+    .admin-nav,.control-row,.actions{display:flex;gap:.65rem;flex-wrap:wrap;align-items:end}.admin-nav{margin:1rem 0}.control-row>*{flex:1 1 13rem}
+    .scroll-list{max-height:18rem;overflow:auto;overscroll-behavior:contain;border:1px solid #ddd;border-radius:.5rem;padding:.4rem;touch-action:pan-y}
+    .participant-row,.saved-list{display:flex;gap:.6rem;justify-content:space-between;align-items:start;padding:.65rem;border-bottom:1px solid #eee}
+    .participant-row span,.saved-list span{overflow-wrap:anywhere}.member-picker label{display:block;padding:.35rem}.muted{color:#666}.status{min-height:1.5rem}
+    form{margin-top:.75rem}button{min-height:2.5rem}input,select,textarea{width:100%;box-sizing:border-box}@media(max-width:600px){.participant-row,.saved-list{flex-direction:column}}
+  </style>
+</head>
+<body data-page-type="admin"><main class="container">
+  <h1>Participant Management</h1>
+  <nav class="admin-nav" aria-label="Administration"><a class="btn" href="/admin.html">Dashboard</a><a class="btn" href="/create-event.html">Event Builder</a><a class="btn" href="/adminuser.html">User View</a></nav>
+  <section class="section-card"><h2>Participant Directory</h2>
+    <div class="control-row"><label>Scope<select id="directory-scope"></select></label><label>Search name or phone<input id="participant-search" type="search" placeholder="Name or partial phone number"></label></div>
+    <p id="participant-count" class="muted" aria-live="polite"></p><p class="muted">Swipe or scroll inside the list to see more participants.</p>
+    <div id="participant-results" class="scroll-list" aria-live="polite"></div>
+  </section>
+  <section class="section-card"><h2 id="participant-form-title">Add Participant</h2>
+    <form id="participant-form"><input id="participant-id" type="hidden"><div class="control-row">
+      <label>Scope<select id="participant-form-scope"></select></label><label>Name<input id="participant-name" required maxlength="120"></label>
+      <label>Phone<input id="participant-phone" type="tel" maxlength="30"></label><label>Address<input id="participant-address" maxlength="300"></label>
+      <label>Authentication account (optional)<select id="participant-account"><option value="">No linked account</option></select></label>
+    </div><div class="actions"><button type="submit">Save Participant</button><button id="cancel-participant-edit" type="button" hidden>Cancel Edit</button></div></form>
+    <p id="participant-status" class="status" aria-live="polite"></p>
+  </section>
+  <section class="section-card"><h2 id="list-form-title">Create Participant List</h2>
+    <form id="list-form"><input id="list-id" type="hidden"><div class="control-row"><label>List name<input id="list-name" required maxlength="120"></label><label>Choose people from<select id="list-source-scope"></select></label></div>
+      <p id="member-count" class="muted" aria-live="polite"></p><div id="member-picker" class="scroll-list member-picker"></div>
+      <div class="actions"><button type="submit">Save List</button><button id="cancel-list-edit" type="button" hidden>Cancel Edit</button></div>
+    </form><p id="list-status" class="status" aria-live="polite"></p>
+  </section>
+  <section class="section-card"><h2>Saved Participant Lists</h2><div id="saved-lists" class="scroll-list" aria-live="polite"></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let participants=[],lists=[],accounts=[];
+const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,options={}){const response=await fetch(path,{credentials:'include',headers:{...(options.body?{'content-type':'application/json'}:{})},...options});const data=await response.json().catch(()=>null);if(!response.ok)throw new Error(data?.error||'Request failed');return data}
+function scopeOptions(){return `<option value="all">All users</option><option value="unlisted">Users not in a list</option>`+lists.map(list=>`<option value="${list.id}">${escapeHtml(list.name)} (${list.member_count})</option>`).join('')}
+function refreshScopes(){for(const id of['directory-scope','participant-form-scope','list-source-scope']){const select=$(id),value=select.value||'all';select.innerHTML=scopeOptions();select.value=[...select.options].some(o=>o.value===value)?value:'all'}}
+async function loadLists(){lists=await api('/api/admin/participant-lists');refreshScopes();$('saved-lists').innerHTML=lists.length?lists.map(list=>`<div class="saved-list"><span><strong>${escapeHtml(list.name)}</strong> (${list.member_count})<br><small>${list.members.map(member=>escapeHtml(member.name)).join(', ')||'No members'}</small></span><span class="actions"><button type="button" data-edit-list="${list.id}">Edit</button><button type="button" data-delete-list="${list.id}">Delete</button></span></div>`).join(''):'<p>No saved lists yet.</p>'}
+async function loadParticipants(){const scope=$('directory-scope').value||'all',q=$('participant-search').value.trim(),data=await api(`/api/admin/participants?scope=${encodeURIComponent(scope)}&q=${encodeURIComponent(q)}`);participants=data.participants;$('participant-count').textContent=`${data.count} participant${data.count===1?'':'s'}`;$('participant-results').innerHTML=participants.length?participants.map(person=>`<div class="participant-row"><span><strong>${escapeHtml(person.name)}</strong><br><small>${escapeHtml(person.phone||'No phone')} · ${escapeHtml(person.address||'No address')}<br>${escapeHtml(person.list_names||'Not in a list')}</small></span><span class="actions"><button type="button" data-edit-person="${person.id}">Modify</button><button type="button" data-delete-person="${person.id}">Delete</button></span></div>`).join(''):'<p>No matching participants.</p>'}
+async function loadMemberPicker(selected=[]){const data=await api(`/api/admin/participants?scope=${encodeURIComponent($('list-source-scope').value||'all')}`),set=new Set(selected.map(Number));$('member-picker').innerHTML=data.participants.length?data.participants.map(person=>`<label><input type="checkbox" value="${person.id}" ${set.has(Number(person.id))?'checked':''}> ${escapeHtml(person.name)} <small>${escapeHtml(person.phone||'')}</small></label>`).join(''):'<p>No participants in this scope.</p>';updateMemberCount()}
+function updateMemberCount(){const count=document.querySelectorAll('#member-picker input:checked').length;$('member-count').textContent=`${count} member${count===1?'':'s'} selected`}
+function resetParticipantForm(){$('participant-form').reset();$('participant-id').value='';$('participant-form-title').textContent='Add Participant';$('cancel-participant-edit').hidden=true;refreshScopes()}
+function resetListForm(){$('list-form').reset();$('list-id').value='';$('list-form-title').textContent='Create Participant List';$('cancel-list-edit').hidden=true;refreshScopes();loadMemberPicker()}
+document.addEventListener('DOMContentLoaded',async()=>{try{const me=await api('/api/me');if(me.role!=='admin')return location.replace('/adminuser.html');accounts=await api('/api/admin/users');$('participant-account').innerHTML+=accounts.map(a=>`<option value="${a.id}">${escapeHtml(a.name)} (${escapeHtml(a.email)})</option>`).join('');await loadLists();await loadParticipants();await loadMemberPicker()}catch(error){location.replace('/login.html')}});
+let searchTimer;$('participant-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(loadParticipants,180)});$('directory-scope').addEventListener('change',loadParticipants);$('list-source-scope').addEventListener('change',()=>loadMemberPicker());$('member-picker').addEventListener('change',updateMemberCount);$('cancel-participant-edit').addEventListener('click',resetParticipantForm);$('cancel-list-edit').addEventListener('click',resetListForm);
+$('participant-form').addEventListener('submit',async event=>{event.preventDefault();const id=$('participant-id').value,scope=$('participant-form-scope').value,payload={name:$('participant-name').value.trim(),phone:$('participant-phone').value.trim(),address:$('participant-address').value.trim(),user_id:$('participant-account').value||null,list_id:!id&&/^\d+$/.test(scope)?Number(scope):null};try{const result=await api(id?`/api/admin/participants/${id}`:'/api/admin/participants',{method:id?'PATCH':'POST',body:JSON.stringify(payload)});$('participant-status').textContent=result.warning||'Participant saved.';resetParticipantForm();await loadLists();await loadParticipants();await loadMemberPicker()}catch(error){$('participant-status').textContent=error.message}});
+$('participant-results').addEventListener('click',async event=>{const edit=event.target.closest('[data-edit-person]'),remove=event.target.closest('[data-delete-person]');if(edit){const person=participants.find(p=>Number(p.id)===Number(edit.dataset.editPerson));if(!person)return;$('participant-id').value=person.id;$('participant-name').value=person.name;$('participant-phone').value=person.phone||'';$('participant-address').value=person.address||'';$('participant-account').value=person.user_id||'';$('participant-form-title').textContent='Modify Participant';$('cancel-participant-edit').hidden=false;scrollTo({top:$('participant-form').offsetTop,behavior:'smooth'})}if(remove&&confirm('Delete this participant? Existing event snapshots will remain unchanged.')){try{await api(`/api/admin/participants/${remove.dataset.deletePerson}`,{method:'DELETE'});await loadLists();await loadParticipants();await loadMemberPicker()}catch(error){$('participant-status').textContent=error.message}}});
+$('list-form').addEventListener('submit',async event=>{event.preventDefault();const id=$('list-id').value,payload={name:$('list-name').value.trim(),participant_ids:[...document.querySelectorAll('#member-picker input:checked')].map(i=>Number(i.value))};try{await api(id?`/api/admin/participant-lists/${id}`:'/api/admin/participant-lists',{method:id?'PUT':'POST',body:JSON.stringify(payload)});$('list-status').textContent='Participant list saved.';await loadLists();resetListForm();await loadParticipants()}catch(error){$('list-status').textContent=error.message}});
+$('saved-lists').addEventListener('click',async event=>{const edit=event.target.closest('[data-edit-list]'),remove=event.target.closest('[data-delete-list]');if(edit){const list=lists.find(l=>Number(l.id)===Number(edit.dataset.editList));if(!list)return;$('list-id').value=list.id;$('list-name').value=list.name;$('list-source-scope').value='all';$('list-form-title').textContent='Edit Participant List';$('cancel-list-edit').hidden=false;await loadMemberPicker(list.members.map(m=>m.id));scrollTo({top:$('list-form').offsetTop,behavior:'smooth'})}if(remove&&confirm('Delete this reusable list? Participants and existing events will not be deleted.')){try{await api(`/api/admin/participant-lists/${remove.dataset.deleteList}`,{method:'DELETE'});await loadLists();await loadParticipants();await loadMemberPicker()}catch(error){$('list-status').textContent=error.message}}});
+</script></body></html>

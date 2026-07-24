@@ -122,15 +122,87 @@
     <input type="file" name="image" accept="image/*">
   </label>
 
+  <fieldset>
+    <legend>Participants</legend>
+    <p><a href="/admin-participants.html">Manage participants and reusable lists</a></p>
+    <label>Reusable participant lists</label>
+    <div id="event-participant-lists" class="participant-picker" aria-live="polite"></div>
+    <label>Individual registered participants</label>
+    <input id="event-participant-search" type="search" placeholder="Search name or phone">
+    <p id="event-participant-count" aria-live="polite"></p>
+    <div id="event-participants" class="participant-picker" aria-live="polite"></div>
+    <div id="ad-hoc-participants"></div>
+    <button id="add-ad-hoc" type="button">Add Ad-hoc Participant</button>
+  </fieldset>
+
   <button type="submit">Create Event</button>
 </form>
 
+<style>
+.participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #ddd;border-radius:.5rem;padding:.5rem;margin:.4rem 0 1rem}
+.participant-picker label{display:block;padding:.35rem;overflow-wrap:anywhere}.ad-hoc-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin:.5rem 0}
+@media(max-width:650px){.ad-hoc-row{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}}
+</style>
 <script>
 console.log("🚀 eventForm script loaded");
 
 const formEl = document.getElementById("eventForm");
 const editEventId = new URLSearchParams(window.location.search).get("id");
+let eventParticipants = [];
+let eventLists = [];
 console.log("🔍 event form element:", formEl);
+
+function eventEscape(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderEventParticipants(query = "") {
+  const normalized = query.trim().toLowerCase();
+  const digits = query.replace(/\D/g, "");
+  const visible = eventParticipants.filter(person =>
+    !normalized || person.name.toLowerCase().includes(normalized) ||
+    (digits && String(person.phone || '').replace(/\D/g, '').includes(digits))
+  );
+  document.getElementById("event-participant-count").textContent = `${visible.length} participant${visible.length === 1 ? "" : "s"}`;
+  document.getElementById("event-participants").innerHTML = visible.map(person => `
+    <label><input type="checkbox" value="${person.id}" data-participant-id
+      ${person.selected ? "checked" : ""}> ${eventEscape(person.name)} <small>${eventEscape(person.phone || "")}</small></label>
+  `).join("") || "<p>No matching participants.</p>";
+}
+
+function addAdHocRow(person = {}) {
+  const row = document.createElement("div");
+  row.className = "ad-hoc-row";
+  row.innerHTML = `<label>Name<input data-adhoc-name required value="${eventEscape(person.name || "")}"></label>
+    <label>Phone<input data-adhoc-phone type="tel" value="${eventEscape(person.phone || "")}"></label>
+    <label>Address<input data-adhoc-address value="${eventEscape(person.address || "")}"></label>
+    <button type="button" data-remove-adhoc>Remove</button>`;
+  document.getElementById("ad-hoc-participants").appendChild(row);
+}
+
+async function loadParticipantChoices() {
+  const [participantData, lists] = await Promise.all([
+    fetch("/api/admin/participants", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d}),
+    fetch("/api/admin/participant-lists", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d})
+  ]);
+  eventParticipants = participantData.participants;
+  eventLists = lists;
+  document.getElementById("event-participant-lists").innerHTML = lists.map(list =>
+    `<label><input type="checkbox" value="${list.id}" data-list-id> ${eventEscape(list.name)} (${list.member_count})</label>`
+  ).join("") || "<p>No saved participant lists.</p>";
+  renderEventParticipants();
+}
+
+document.getElementById("event-participant-search").addEventListener("input", event => renderEventParticipants(event.target.value));
+document.getElementById("event-participants").addEventListener("change", event => {
+  if (!event.target.matches("[data-participant-id]")) return;
+  const person = eventParticipants.find(item => Number(item.id) === Number(event.target.value));
+  if (person) person.selected = event.target.checked;
+});
+document.getElementById("add-ad-hoc").addEventListener("click", () => addAdHocRow());
+document.getElementById("ad-hoc-participants").addEventListener("click", event => {
+  if (event.target.matches("[data-remove-adhoc]")) event.target.closest(".ad-hoc-row").remove();
+});
 
 function toDatetimeLocal(value) {
   if (!value) return "";
@@ -161,9 +233,21 @@ async function loadEventForEdit() {
   formEl.elements.capacity.value = event.capacity || 0;
   formEl.elements.about.value = event.about || "";
   formEl.elements.requirements.value = event.requirements || "";
+  const existingResponse = await fetch(`/api/admin/events/${encodeURIComponent(editEventId)}/participants`, {credentials:"include"});
+  const existing = await existingResponse.json().catch(() => []);
+  if (!existingResponse.ok) throw new Error(existing.error || "Failed to load event participants");
+  for (const person of existing) {
+    if (person.participant_type === "registered" && person.participant_id) {
+      const match = eventParticipants.find(item => Number(item.id) === Number(person.participant_id));
+      if (match) match.selected = true;
+    } else {
+      addAdHocRow(person);
+    }
+  }
+  renderEventParticipants(document.getElementById("event-participant-search").value);
 }
 
-loadEventForEdit().catch((err) => {
+loadParticipantChoices().then(loadEventForEdit).catch((err) => {
   console.error("Failed to load event for edit:", err);
   alert(err.message || "Failed to load event.");
 });
@@ -204,7 +288,14 @@ if (!formEl) {
         capacity: Number(form.elements.capacity.value || 0),
         about: form.elements.about.value.trim(),
         requirements: form.elements.requirements.value.trim(),
-        image_url: imageUrl
+        image_url: imageUrl,
+        participant_list_ids: [...document.querySelectorAll("[data-list-id]:checked")].map(input => Number(input.value)),
+        participant_ids: eventParticipants.filter(person => person.selected).map(person => Number(person.id)),
+        ad_hoc_participants: [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
+          name: row.querySelector("[data-adhoc-name]").value.trim(),
+          phone: row.querySelector("[data-adhoc-phone]").value.trim(),
+          address: row.querySelector("[data-adhoc-address]").value.trim()
+        })).filter(person => person.name)
       };
 
       console.log("📦 Event payload:", payload);

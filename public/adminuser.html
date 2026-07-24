@@ -204,6 +204,11 @@
     <h2>Pending Agreement Documents</h2>
     <div id="pending-agreements"></div>
   </section>
+  <section class="section-card">
+    <h2>My Events</h2>
+    <p>Only events associated with your signed-in account are shown.</p>
+    <div id="my-events" aria-live="polite"></div>
+  </section>
 
 </body> 
 </main>
@@ -487,6 +492,13 @@
     }
 
     await loadPendingAgreements();
+
+    const myEvents = await api('/api/user/events');
+    const myEventsContainer = document.getElementById('my-events');
+    myEventsContainer.innerHTML = myEvents.length ? `<ul>${myEvents.map((event) => `
+      <li><a href="/event.html?id=${encodeURIComponent(event.id)}">${escapeHtml(event.name)}</a>
+      — ${escapeHtml(new Date(event.date).toLocaleString())}</li>
+    `).join('')}</ul>` : '<p>No associated events yet.</p>';
 
   } catch (err) {
     console.error("❌ PAGE LOAD ERROR:", err);

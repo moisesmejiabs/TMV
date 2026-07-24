@@ -51,3 +51,7 @@ Change this immediately by creating a new admin user flow (recommended) or editi
 - Password hashing uses PBKDF2 (WebCrypto) instead of Werkzeug.
 - Receipts are generated with `pdf-lib` and stored in R2.
 - `/uploads/<...>` are served from R2 (public read in MVP).
+
+Participant directory, reusable-list, event-snapshot, role, and migration
+details are in
+[`Documentation/ParticipantLists.md`](Documentation/ParticipantLists.md).
