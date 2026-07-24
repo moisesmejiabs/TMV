@@ -550,6 +550,20 @@ h1{
   border-radius: 0;
 }
 
+/* Homepage workshops use the same full-image presentation as workshop details. */
+.workshops-card .workshop-media-link{
+  aspect-ratio: auto;
+  overflow: visible;
+  background: transparent;
+}
+
+.workshops-card .workshop-media-link img{
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
 .event-detail-card{
   display: grid;
   gap: 24px;
