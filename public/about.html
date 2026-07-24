@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    .about-testimonial-image {
+      display: block;
+      width: min(100%, 452px);
+      height: 665px;
+      object-fit: contain;
+      border-radius: 16px;
+      background: rgba(109, 33, 64, 0.08);
+    }
+
+    @media (max-width: 600px) {
+      .about-testimonial-image {
+        height: auto;
+        aspect-ratio: 452 / 665;
+      }
+    }
+  </style>
 </head>
 <body data-page-type="admin">
   <header class="top">
@@ -138,7 +155,7 @@
           <img
             src="/static/images/Moises2.jpeg"
             alt="Tu Mejor Versión"
-            style="max-width:100%; border-radius:10px;"
+            class="about-testimonial-image"
           />
           <p>
             Desde el inicio, lo mencionado sobre el grupo sonaba interesante. Me pareció muy relevante el enfoque en cómo la salud mental puede afectar los emprendimientos; es algo bastante creíble y que muchas personas experimentan.
