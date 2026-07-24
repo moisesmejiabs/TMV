@@ -1115,6 +1115,8 @@ h1{
 }
 
 .youtube-slider-card .youtube-slider {
+  width: calc(100% - 40px);
+  margin-inline-start: 40px;
   display: grid;
   grid-template-columns: minmax(0, 452px) minmax(260px, 1fr);
   gap: clamp(24px, 4vw, 48px);
@@ -1165,6 +1167,7 @@ h1{
 
 @media (max-width: 850px) {
   .youtube-slider-card .youtube-slider {
+    width: calc(100% - 40px);
     grid-template-columns: 1fr;
   }
 
