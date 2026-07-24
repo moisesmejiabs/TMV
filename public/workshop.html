@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workshop</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
+</head>
+<body>
+  <main class="container" style="padding-top:18px;">
+    <h1 id="title">Workshop</h1>
+    <img id="workshop-image" style="max-width:100%; border-radius:10px; margin:10px 0; display:none;" />
+    <p id="meta"></p>
+    <div id="about"></div>
+    <p><b>Location:</b> <span id="loc"></span></p>
+    <p><b>Requirements:</b> <span id="req"></span></p>
+    <p><b>Capacity:</b> <span id="cap"></span></p>
+    <div id="actions"></div>
+    <p><a href="/">Back</a></p>
+    <div style="margin-top:10px;">
+      <a href="#" onclick="shareWorkshopOnFacebook(event)" class="fb-share-btn">
+        Compartir taller en Facebook
+      </a>
+    </div>
+  </main>
+
+  <section class="feedback-section card">
+    <h2>Leave Feedback</h2>
+    <form id="workshop-feedback-form" class="feedback-form">
+      <label for="workshop-feedback-text">Your feedback</label>
+      <textarea id="workshop-feedback-text" name="feedback" rows="5" maxlength="1000" placeholder="Write your feedback here..." required></textarea>
+      <div class="feedback-actions">
+        <button type="submit" class="btn">Submit Feedback</button>
+        <span id="workshop-feedback-status" class="muted"></span>
+      </div>
+    </form>
+    <div class="feedback-list-wrap">
+      <h3>Comments</h3>
+      <ul id="workshop-feedback-list" class="feedback-list">
+        <li class="muted">No feedback yet.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="/static/js/language-user-row.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/facebook.js"></script>
+  <script>
+  function q(name){return new URLSearchParams(location.search).get(name)}
+  function imageSrc(value){
+    if(!value) return '';
+    if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+    return `/static/images/${value}`;
+  }
+  async function workshopApi(path, opts={}){
+    const r=await fetch(path,{credentials:'include', headers:{...(opts.body?{'content-type':'application/json'}:{})}, ...opts});
+    const ct=r.headers.get('content-type')||'';
+    const b=ct.includes('application/json')?await r.json().catch(()=>null):await r.text().catch(()=>null);
+    if(!r.ok) throw new Error((b&&b.error)||'Request failed');
+    return b;
+  }
+  function escapeLocal(str){
+    return String(str || '').replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+  }
+  async function loadWorkshopFeedback(id){
+    const list = document.getElementById('workshop-feedback-list');
+    const rows = await workshopApi(`/api/workshops/${id}/feedback`).catch(() => []);
+    if (!rows.length) {
+      list.innerHTML = '<li class="muted">No feedback yet.</li>';
+      return;
+    }
+    list.innerHTML = rows.map((f) => `
+      <li>
+        <strong>${escapeLocal(f.name || 'User')}</strong>
+        <div class="muted">${new Date(f.created_at).toLocaleDateString()}</div>
+        <p>${escapeLocal(f.feedback)}</p>
+      </li>
+    `).join('');
+  }
+  (async()=>{
+    const id=q('id');
+    const w=await workshopApi(`/api/workshops/${id}`);
+    document.title = w.name;
+    document.getElementById('title').textContent=w.name;
+    document.getElementById('meta').textContent = `${new Date(w.date).toLocaleString()} · Presenter: ${w.presenter}`;
+    document.getElementById('about').textContent = w.about;
+    document.getElementById('loc').textContent = w.location;
+    document.getElementById('req').textContent = w.requirements || '';
+    document.getElementById('cap').textContent = w.capacity || 0;
+    const img = document.getElementById('workshop-image');
+    if (img && w.image_url) {
+      img.src = imageSrc(w.image_url);
+      img.alt = w.name || 'Workshop image';
+      img.style.display = 'block';
+    }
+
+    const me = await workshopApi('/api/me').catch(()=>null);
+    if (!me) document.getElementById('actions').innerHTML = '<p><a href="/login.html">Login</a> to leave feedback.</p>';
+    if (me && me.role === 'admin') {
+      document.getElementById('actions').innerHTML = `<a class="btn" href="/create-workshop.html?id=${encodeURIComponent(id)}">Edit Workshop</a> <button id="delete-workshop">Delete Workshop</button>`;
+      document.getElementById('delete-workshop').addEventListener('click', async () => {
+        if (!confirm('Delete this workshop? Feedback will be saved for future display.')) return;
+        await workshopApi(`/api/workshops/${id}`, { method: 'DELETE' });
+        location.href = '/';
+      });
+    }
+
+    await loadWorkshopFeedback(id);
+    const form = document.getElementById('workshop-feedback-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('workshop-feedback-status');
+      try {
+        await workshopApi(`/api/workshops/${id}/feedback`, {
+          method: 'POST',
+          body: JSON.stringify({ feedback: form.feedback.value.trim() })
+        });
+        form.reset();
+        status.textContent = 'Submitted for approval.';
+      } catch (err) {
+        status.textContent = err.message;
+      }
+    });
+  })().catch(err=>{document.getElementById('about').textContent=err.message;});
+  </script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tu Mejor Versión</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
+  <style>
+    .about-testimonial-image {
+      display: block;
+      width: min(100%, 452px);
+      height: 665px;
+      object-fit: contain;
+      border-radius: 16px;
+      background: rgba(109, 33, 64, 0.08);
+    }
+
+    @media (max-width: 600px) {
+      .about-testimonial-image {
+        height: auto;
+        aspect-ratio: 452 / 665;
+      }
+    }
+  </style>
+</head>
+<body data-page-type="admin">
+  <header class="top">
+    <div class="brand" style="text-align: center;">
+
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+      
+      <h1 class="nav-gold">
+        <span 
+          data-en="Tu<br>Mejor<br>Version" 
+          data-es="Tu<br>Mejor<br>Versión">
+        </span>
+      </h1> 
+      <img src="/static/images/TuMejorVersionBird.png"
+          alt="Logo"
+          class="brand-img flipped">
+
+      <!-- Right side: Auth controls -->
+      <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
+
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <!-- 🌐 Language toggle buttons -->
+      <span class="lang-toggle">
+        <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
+        <span class="lang-sep">|</span>
+        <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
+      </span>
+    </div>
+    
+    <div class="nav-container">
+      <!-- Hamburger Button -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Overlay Menu -->
+      <nav id="mobile-menu" class="mobile-menu">
+
+        <a href="/" class="nav-btn">
+          <span data-en="Home" data-es="Inicio"></span>
+        </a>
+
+        <a href="/courses" class="nav-btn">
+          <span data-en="Courses" data-es="Cursos"></span>
+        </a>
+
+        <a href="/events" class="nav-btn">
+          <span data-en="Events" data-es="Eventos"></span>
+        </a>
+
+        <a href="/donate" class="nav-btn">
+          <span data-en="Donate" data-es="Donar"></span>
+        </a>        <a href="/forum" class="nav-btn">
+          <span data-en="Forum" data-es="Foro"></span>
+        </a>
+
+        <a href="/about" class="nav-btn">
+          <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
+        <div id="auth-links" class="auth-links"></div>
+
+      </nav>
+    </div>>
+  </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
+    <body>
+      <h1 class="nav-gold"><span data-en="About Us" data-es="Sobre Nosotros"></span></h1>
+            <section class="section-card  mission-card">
+            <!-- ✅ Overlay shown only when index == 1 -->
+            <div class="slider-overlay" data-show-on-index="1">
+            <div class="overlay-card">
+                <h2 
+                    data-en='Mission of "Your Best Version"'
+                    data-es='Misión de "Tu Mejor Versión"'></h2>
+
+                <p data-en="To empower women who have experienced mistreatment and abuse that have left them vulnerable, guiding them toward emotional healing and spiritual strengthening. Our mission is to offer the means to cultivate self-esteem and overcome depression, providing a faith-based support system so that each woman can discover and embrace her best self, becoming the linchpin of her family and positively impacting her community."
+                data-es="Empoderar a las mujeres que han experimentado maltrato y abuso que las han dejado vulnerables, guiándolas hacia la sanación emocional y el fortalecimiento espiritual. Nuestra misión es ofrecer los medios para cultivar la autoestima y superar la depresión, brindando un sistema de apoyo basado en la fe para que cada mujer pueda descubrir y abrazar su mejor versión, convirtiéndose en el pilar de su familia e impactando positivamente a su comunidad."></p>
+
+                <h2 
+                    data-en='Vision of "Your Best Version"'
+                    data-es='Visión de "Tu Mejor Versión"'></h2>
+
+                <p data-en='We envision "Your Best Version" as a shining beacon of hope and renewal. We imagine a safe space where every woman, regardless of her past, finds the spiritual strength to heal and thrive. We aspire to build a strong community, imbued with faith and spirituality, that inspires these women to transcend their scars, leading them to live full and empowered lives so they can take charge of their own destiny.'
+                data-es='Visualizamos "Tu Mejor Versión" como un faro brillante de esperanza y renovación. Imaginamos un espacio seguro donde cada mujer, sin importar su pasado, encuentre la fortaleza espiritual para sanar y prosperar. Aspiramos a construir una comunidad fuerte, impregnada de fe y espiritualidad, que inspire a estas mujeres a trascender sus heridas, llevándolas a vivir vidas plenas y empoderadas para que puedan tomar el control de su propio destino.'></p>
+            </div>
+            </div>
+        </section>
+        <section class="section-card mission-card">
+         <h1 class="nav-gold"><span data-en="Introduction" data-es="Introduccion"></span></h1>
+
+        <a
+            href="https://youtu.be/EAgBPagVBos"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="yt-card"
+        >
+            <div class="yt-thumb">
+            <img
+                src="https://img.youtube.com/vi/EAgBPagVBos/hqdefault.jpg"
+                alt="Video Introducción a Tu Mejor Versión"
+            >
+            <div class="yt-play">▶</div>
+            </div>
+
+            <div class="yt-info">
+            <h3>Video Introducción a Tu Mejor Versión</h3>           
+            </div>
+        </a>
+        </section>
+        <section class="section-card mission-card">
+        <!-- TESTIMONIO -->
+        <div class="testimonial">
+          <h2 class="nav-gold">Mi experiencia con “Tu Mejor Versión”</h2>
+          <img
+            src="/static/images/Moises2.jpeg"
+            alt="Tu Mejor Versión"
+            class="about-testimonial-image"
+          />
+          <p>
+            Desde el inicio, lo mencionado sobre el grupo sonaba interesante. Me pareció muy relevante el enfoque en cómo la salud mental puede afectar los emprendimientos; es algo bastante creíble y que muchas personas experimentan.
+          </p>
+
+          <p>
+            Asistí a las dos primeras sesiones y encontré la información muy interesante. Una de las cosas que observé fue el gran entusiasmo de las participantes del programa. En ese momento, no lograba entender completamente el porqué, pero me llamó la atención.
+          </p>
+
+          <p>
+            En la tercera reunión, logré comprender que las emociones vienen a través de todo lo que hacemos y pensamos. Estas emociones pueden elevarse a niveles muy altos y provocar que una persona se sienta mal, irritable, triste o incluso demasiado eufórica. Son estas emociones las que se deben aprender a controlar, evitando que lleguen a niveles extremos.
+          </p>
+
+          <p>
+            Para lograrlo, es importante tener ejercicios o rutinas que ayuden a reducirlas, como hacer ejercicio, pintar, cantar, meditar o rezar. Al desarrollar este entendimiento, la persona comienza a reconocer cuándo sus emociones están aumentando y puede elegir detenerse por su propio bienestar.
+          </p>
+
+          <p>
+            Las personas que están comenzando en este proceso pueden fallar al principio y volver a dejarse llevar por sus emociones. Sin embargo, con el tiempo y la práctica, pueden retomar el control.
+          </p>
+
+          <p>
+            Por eso, este grupo de apoyo es esencial para quienes desean aprender a manejar sus emociones. En este espacio se aprende a identificarlas, reconocer cuándo se están elevando, entender cuándo hay situaciones de abuso emocional, y desarrollar herramientas para prevenir que lleguen a niveles muy altos.
+          </p>
+
+          <p>
+            Además, el grupo ofrece una visión completa gracias a la colaboración con diferentes organizaciones, brindando apoyo integral a sus participantes.
+          </p>
+        </div>
+
+      </section>
+
+    </body>  
+</main>
+<script src="/static/js/app.js"></script>
+</script>
+</body></html>

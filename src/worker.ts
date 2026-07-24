@@ -2,6 +2,7 @@ export interface Env {
   DB: D1Database;
   R2: R2Bucket;
   JWT_SECRET: string;
+  SMS_GATEWAY_TOKEN?: string;
   ASSETS: Fetcher;
 }
 
@@ -28,6 +29,18 @@ function text(data: string, status = 200, headers: Record<string, string> = {}) 
       ...headers,
     },
   });
+}
+
+// =========================
+// GLOBAL HELPERS
+// =========================
+function escapeHtml(value: any): string {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function badRequest(message: string) {
@@ -175,11 +188,74 @@ function isoNow() {
   return new Date().toISOString();
 }
 
+async function constantTimeSecretMatches(provided: string, expected: string) {
+  const encoder = new TextEncoder();
+  const [providedDigest, expectedDigest] = await Promise.all([
+    crypto.subtle.digest('SHA-256', encoder.encode(provided)),
+    crypto.subtle.digest('SHA-256', encoder.encode(expected)),
+  ]);
+  const left = new Uint8Array(providedDigest);
+  const right = new Uint8Array(expectedDigest);
+  let difference = left.length ^ right.length;
+  for (let index = 0; index < Math.min(left.length, right.length); index++) {
+    difference |= left[index] ^ right[index];
+  }
+  return difference === 0;
+}
+
+async function requireSmsGateway(request: Request, env: Env) {
+  const expected = String(env.SMS_GATEWAY_TOKEN || '');
+  const authorization = request.headers.get('authorization') || '';
+  const provided = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+  if (!expected || !provided || !(await constantTimeSecretMatches(provided, expected))) {
+    return unauthorized('Invalid gateway credential');
+  }
+  return null;
+}
+
+function validE164Phone(value: unknown) {
+  const phone = String(value || '').trim();
+  return /^\+[1-9]\d{7,14}$/.test(phone) ? phone : null;
+}
+
 function toIso(dt: any) {
   if (!dt) return null;
   const d = new Date(dt);
   if (isNaN(d.getTime())) return null;
   return d.toISOString();
+}
+
+function absoluteImageUrl(origin: string, imageUrl: any, fallback = '/static/images/nuevos_comiensos.png') {
+  const raw = String(imageUrl || '').trim();
+  if (!raw) return `${origin}${fallback}`;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('/')) return `${origin}${raw}`;
+  return `${origin}/static/images/${raw}`;
+}
+
+function youtubeEmbedUrl(input: any) {
+  const raw = String(input || '').trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.toLowerCase();
+    let id = '';
+
+    if (host.includes('youtu.be')) {
+      id = parsed.pathname.replace(/^\/+/, '').split('/')[0] || '';
+    } else if (host.includes('youtube.com')) {
+      if (parsed.pathname.startsWith('/watch')) {
+        id = parsed.searchParams.get('v') || '';
+      } else if (parsed.pathname.startsWith('/shorts/') || parsed.pathname.startsWith('/embed/')) {
+        id = parsed.pathname.split('/').filter(Boolean).pop() || '';
+      }
+    }
+
+    if (!/^[a-zA-Z0-9_-]{6,}$/.test(id)) return null;
+    return `https://www.youtube.com/embed/${id}`;
+  } catch {
+    return null;
+  }
 }
 
 async function ensureDefaultAdmin(env: Env) {
@@ -198,7 +274,191 @@ async function ensureDefaultAdmin(env: Env) {
   ).bind(email, name, salt, iterations, hash, role, isoNow()).run();
 }
 
+async function ensureApprovalSchema(env: Env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS course_feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      feedback TEXT NOT NULL,
+      approved INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(course_id) REFERENCES course(id),
+      FOREIGN KEY(user_id) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS event_feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      feedback TEXT NOT NULL,
+      approved INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(event_id) REFERENCES event(id),
+      FOREIGN KEY(user_id) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS workshop (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      date TEXT NOT NULL,
+      presenter TEXT NOT NULL,
+      about TEXT NOT NULL,
+      location TEXT NOT NULL,
+      requirements TEXT,
+      image_url TEXT,
+      archived INTEGER NOT NULL DEFAULT 0,
+      capacity INTEGER NOT NULL DEFAULT 0,
+      created_by INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(created_by) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS workshop_feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workshop_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      feedback TEXT NOT NULL,
+      approved INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(workshop_id) REFERENCES workshop(id),
+      FOREIGN KEY(user_id) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS agreement_doc (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      author TEXT NOT NULL,
+      r2_key TEXT NOT NULL,
+      original_name TEXT NOT NULL,
+      mimetype TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_by INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(created_by) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS user_agreement_acknowledgement (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      agreement_doc_id INTEGER NOT NULL,
+      accepted_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES user(id),
+      FOREIGN KEY(agreement_doc_id) REFERENCES agreement_doc(id),
+      UNIQUE(user_id, agreement_doc_id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS app_setting (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_by INTEGER,
+      updated_at TEXT,
+      FOREIGN KEY(updated_by) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS youtube_slider_video (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      youtube_url TEXT NOT NULL,
+      embed_url TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_by INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(created_by) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS milk_giveaway_registration (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      registered_by INTEGER NOT NULL,
+      full_name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      baby_name TEXT NOT NULL,
+      baby_age_months INTEGER NOT NULL,
+      formula_type TEXT NOT NULL,
+      formula_other TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(registered_by) REFERENCES user(id)
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_milk_registration_created_at
+    ON milk_giveaway_registration(created_at)
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_milk_registration_registered_by
+    ON milk_giveaway_registration(registered_by)
+  `).run();
+
+  const userInfo = await env.DB.prepare('PRAGMA table_info(user)').all() as any;
+  const userCols = (userInfo?.results || []).map((row: any) => row.name);
+  if (!userCols.includes('testimony_approved')) {
+    await env.DB.prepare('ALTER TABLE user ADD COLUMN testimony_approved INTEGER NOT NULL DEFAULT 0').run();
+  }
+  if (!userCols.includes('video_url')) {
+    await env.DB.prepare('ALTER TABLE user ADD COLUMN video_url TEXT').run();
+  }
+  if (!userCols.includes('video_approved')) {
+    await env.DB.prepare('ALTER TABLE user ADD COLUMN video_approved INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  const courseInfo = await env.DB.prepare('PRAGMA table_info(course_feedback)').all() as any;
+  const courseCols = (courseInfo?.results || []).map((row: any) => row.name);
+  if (!courseCols.includes('approved')) {
+    await env.DB.prepare('ALTER TABLE course_feedback ADD COLUMN approved INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  const eventInfo = await env.DB.prepare('PRAGMA table_info(event_feedback)').all() as any;
+  const eventCols = (eventInfo?.results || []).map((row: any) => row.name);
+  if (!eventCols.includes('approved')) {
+    await env.DB.prepare('ALTER TABLE event_feedback ADD COLUMN approved INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  const baseEventInfo = await env.DB.prepare('PRAGMA table_info(event)').all() as any;
+  const baseEventCols = (baseEventInfo?.results || []).map((row: any) => row.name);
+  if (!baseEventCols.includes('image_url')) {
+    await env.DB.prepare('ALTER TABLE event ADD COLUMN image_url TEXT').run();
+  }
+  if (!baseEventCols.includes('archived')) {
+    await env.DB.prepare('ALTER TABLE event ADD COLUMN archived INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  const baseCourseInfo = await env.DB.prepare('PRAGMA table_info(course)').all() as any;
+  const baseCourseCols = (baseCourseInfo?.results || []).map((row: any) => row.name);
+  if (!baseCourseCols.includes('image_url')) {
+    await env.DB.prepare('ALTER TABLE course ADD COLUMN image_url TEXT').run();
+  }
+  if (!baseCourseCols.includes('archived')) {
+    await env.DB.prepare('ALTER TABLE course ADD COLUMN archived INTEGER NOT NULL DEFAULT 0').run();
+  }
+}
+
 async function handleAuth(request: Request, env: Env, pathname: string) {
+  
   if (request.method === 'POST' && pathname === '/api/auth/register') {
     const body = await readJson(request);
     if (!body) return badRequest('Expected JSON');
@@ -211,6 +471,15 @@ async function handleAuth(request: Request, env: Env, pathname: string) {
     const existing = await env.DB.prepare('SELECT id FROM user WHERE email = ?').bind(email).first();
     if (existing) return badRequest('Email already registered');
 
+    const activeDocsRes = await env.DB.prepare('SELECT id FROM agreement_doc WHERE active = 1').all();
+    const activeDocs = (activeDocsRes.results || []) as Array<{id:number}>;
+    if (activeDocs.length > 0) {
+      const acceptedIds = Array.isArray(body.agreement_doc_ids) ? body.agreement_doc_ids.map((v: any) => String(v)) : [];
+      if (acceptedIds.length !== activeDocs.length) return badRequest('You must acknowledge and agree to all required documents.');
+      const requiredIds = activeDocs.map((d) => String(d.id));
+      if (!acceptedIds.every((id) => requiredIds.includes(id))) return badRequest('Invalid document acknowledgement.');
+    }
+
     const iterations = 100_000;
     const salt = randomSaltB64(16);
     const hash = await pbkdf2Hash(password, salt, iterations);
@@ -220,6 +489,12 @@ async function handleAuth(request: Request, env: Env, pathname: string) {
     ).bind(email, name, salt, iterations, hash, 'user', isoNow()).run();
 
     const uid = Number(res.meta.last_row_id);
+    for (const doc of activeDocs) {
+      await env.DB.prepare(
+        'INSERT INTO user_agreement_acknowledgement (user_id,agreement_doc_id,accepted_at) VALUES (?,?,?)'
+      ).bind(uid, doc.id, isoNow()).run();
+    }
+
     const token = await jwtSign(env.JWT_SECRET, { uid }, 60 * 60 * 24 * 14);
     return json(
       { ok: true },
@@ -243,12 +518,42 @@ async function handleAuth(request: Request, env: Env, pathname: string) {
     const computed = await pbkdf2Hash(password, u.password_salt, Number(u.password_iterations));
     if (computed !== u.password_hash) return unauthorized('Invalid login');
 
+    const pendingRows = await env.DB.prepare(
+      'SELECT d.id,d.title FROM agreement_doc d LEFT JOIN user_agreement_acknowledgement a ON a.agreement_doc_id = d.id AND a.user_id = ? WHERE d.active = 1 AND a.id IS NULL'
+    ).bind(u.id).all() as any;
+    const pending = (pendingRows.results || []).map((r: any) => ({ id: r.id, title: r.title, download_url: `/api/agreement-docs/${r.id}/pdf` }));
+
+    // If there are pending docs and user is not admin, require acknowledgement first.
+    if (pending.length > 0 && String(u.role || '').toLowerCase() !== 'admin') {
+      // issue a short-lived ack token (no session cookie)
+      const ackToken = await jwtSign(env.JWT_SECRET, { uid: u.id, type: 'ack' }, 60);
+      return json({ ok: false, ack_required: true, ack_token: ackToken, pending }, 200);
+    }
+
+    // No pending docs (or admin) → proceed to create normal session
     const token = await jwtSign(env.JWT_SECRET, { uid: u.id }, 60 * 60 * 24 * 14);
-    return json(
-      { ok: true },
-      200,
-      { 'set-cookie': setCookie('tmv_session', token, { maxAgeSeconds: 60 * 60 * 24 * 14 }) }
-    );
+    return json({ ok: true }, 200, { 'set-cookie': setCookie('tmv_session', token, { maxAgeSeconds: 60 * 60 * 24 * 14 }) });
+  }
+
+  if (request.method === 'POST' && pathname === '/api/auth/login/complete') {
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
+    const ackToken = String(body.ack_token || '').trim();
+    if (!ackToken) return badRequest('ack_token required');
+
+    const payload = await jwtVerify(env.JWT_SECRET, ackToken);
+    if (!payload || payload.type !== 'ack' || !payload.uid) return unauthorized('Invalid or expired ack token');
+
+    const uid = Number(payload.uid);
+    // ensure no pending docs remain for the user
+    const pendingRow = await env.DB.prepare(
+      'SELECT COUNT(1) as pending FROM agreement_doc d LEFT JOIN user_agreement_acknowledgement a ON a.agreement_doc_id = d.id AND a.user_id = ? WHERE d.active = 1 AND a.id IS NULL'
+    ).bind(uid).first() as any;
+    const pendingCount = Number(pendingRow?.pending || 0);
+    if (pendingCount > 0) return badRequest('Pending documents remain');
+
+    const token = await jwtSign(env.JWT_SECRET, { uid }, 60 * 60 * 24 * 14);
+    return json({ ok: true }, 200, { 'set-cookie': setCookie('tmv_session', token, { maxAgeSeconds: 60 * 60 * 24 * 14 }) });
   }
 
   if (request.method === 'POST' && pathname === '/api/auth/logout') {
@@ -262,8 +567,96 @@ async function handleAuth(request: Request, env: Env, pathname: string) {
   return null;
 }
 
+async function handleAgreementDocs(request: Request, env: Env, pathname: string) {
+  const url = new URL(request.url);
+
+  if (request.method === 'GET' && pathname === '/api/agreement-docs') {
+    const u = await requireUser(request, env);
+    const out = await env.DB.prepare(
+      'SELECT id,title,author,created_at FROM agreement_doc WHERE active = 1 ORDER BY created_at DESC'
+    ).all();
+
+    const ackSet = new Set<number>();
+    if (u) {
+      const ackRows = await env.DB.prepare(
+        'SELECT agreement_doc_id FROM user_agreement_acknowledgement WHERE user_id = ?'
+      ).bind(u.id).all();
+      for (const row of (ackRows.results || []) as any[]) {
+        ackSet.add(Number(row.agreement_doc_id));
+      }
+    }
+
+    const docs = (out.results || []).map((doc: any) => ({
+      id: doc.id,
+      title: doc.title,
+      author: doc.author,
+      created_at: doc.created_at,
+      download_url: `/api/agreement-docs/${doc.id}/pdf`,
+      acknowledged: u ? ackSet.has(Number(doc.id)) : false
+    }));
+    return json(docs);
+  }
+
+  const mAcknowledge = pathname.match(/^\/api\/agreement-docs\/(\d+)\/acknowledge$/);
+  if (request.method === 'POST' && mAcknowledge) {
+    // allow acknowledgement via normal session OR short-lived ack token
+    let u = await requireUser(request, env);
+
+    if (!u) {
+      // try ack token from Authorization: Bearer <token>
+      const auth = (request.headers.get('authorization') || '').trim();
+      if (auth.toLowerCase().startsWith('bearer ')) {
+        const token = auth.slice(7).trim();
+        const payload = await jwtVerify(env.JWT_SECRET, token);
+        if (payload && payload.type === 'ack' && payload.uid) {
+          u = { id: Number(payload.uid) } as any;
+        }
+      }
+    }
+
+    if (!u) return unauthorized();
+
+    const docId = Number(mAcknowledge[1]);
+    if (!docId) return badRequest('Invalid document id');
+
+    const doc = await env.DB.prepare('SELECT id FROM agreement_doc WHERE id = ? AND active = 1').bind(docId).first() as any;
+    if (!doc) return notFound();
+
+    await env.DB.prepare(
+      'INSERT OR IGNORE INTO user_agreement_acknowledgement (user_id,agreement_doc_id,accepted_at) VALUES (?,?,?)'
+    ).bind(u.id, docId, isoNow()).run();
+
+    return json({ ok: true });
+  }
+
+  const mPdf = pathname.match(/^\/api\/agreement-docs\/(\d+)\/pdf$/);
+  if (request.method === 'GET' && mPdf) {
+    const docId = Number(mPdf[1]);
+    const row = await env.DB.prepare('SELECT r2_key, original_name, mimetype FROM agreement_doc WHERE id = ? AND active = 1').bind(docId).first() as any;
+    if (!row) return notFound();
+    const obj = await env.R2.get(String(row.r2_key));
+    if (!obj) return notFound();
+    return new Response(obj.body, {
+      status: 200,
+      headers: {
+        'content-type': row.mimetype || 'application/pdf',
+        'content-disposition': `inline; filename="${row.original_name.replace(/"/g, '')}"`,
+        'cache-control': 'public, max-age=3600'
+      }
+    });
+  }
+
+  return null;
+}
+
 async function handleApi(request, env) {
   const url = new URL(request.url);
+
+  console.log("🌍 TOP ROUTER request");
+  console.log("   method:", request.method);
+  console.log("   pathname:", pathname);
+  console.log("   full URL:", url.toString());
+  console.log("   search:", url.search);
 
   if (url.pathname === "/api/me" && request.method === "GET") {
     try {
@@ -302,84 +695,198 @@ async function handleApi(request, env) {
 }
 
 async function handleMe(request: Request, env: Env, pathname: string) {
+  console.log("🚀 handleMe CALLED:", request.method, pathname);
+
   if (request.method === 'GET' && pathname === '/api/me') {
+    console.log("✅ GET /api/me MATCHED");
+
     const u = await requireUser(request, env);
     if (!u) return unauthorized();
-    return json(u);
+
+    const fullUser = await env.DB.prepare(`
+      SELECT
+        id,
+        email,
+        name,
+        role,
+        created_at,
+        first_name,
+        last_name,
+        image_url,
+        testimony,
+        testimony_approved,
+        video_url,
+        video_approved
+      FROM user
+      WHERE id = ?
+    `).bind(u.id).first();
+
+    console.log("📦 fullUser:", fullUser);
+
+    if (!fullUser) return unauthorized();
+
+    const pendingCountRow = await env.DB.prepare(`
+      SELECT COUNT(1) AS pending
+      FROM agreement_doc d
+      LEFT JOIN user_agreement_acknowledgement a
+        ON a.agreement_doc_id = d.id AND a.user_id = ?
+      WHERE d.active = 1 AND a.id IS NULL
+    `).bind(u.id).first() as any;
+    const pending_agreements_count = Number(pendingCountRow?.pending || 0);
+
+    return json({
+      ...fullUser,
+      pending_agreements_count,
+      has_pending_agreements: pending_agreements_count > 0
+    });
   }
+
+  if (request.method === 'PATCH' && pathname === '/api/me') {
+    console.log("✅ PATCH /api/me MATCHED");
+
+    const u = await requireUser(request, env);
+    if (!u) return unauthorized();
+
+    const currentUser = await env.DB.prepare('SELECT testimony, video_url FROM user WHERE id = ?').bind(u.id).first() as any;
+    const body = await request.json() as any;
+    console.log("📦 PATCH body:", body);
+
+    let updateFields = [];
+    let updateValues = [];
+
+    if (body.username !== undefined) {
+      updateFields.push('name = ?');
+      updateValues.push(body.username || '');
+    }
+    if (body.first_name !== undefined) {
+      updateFields.push('first_name = ?');
+      updateValues.push(body.first_name || '');
+    }
+    if (body.last_name !== undefined) {
+      updateFields.push('last_name = ?');
+      updateValues.push(body.last_name || '');
+    }
+    if (body.email !== undefined) {
+      updateFields.push('email = ?');
+      updateValues.push(body.email || '');
+    }
+    if (body.testimony !== undefined) {
+      const newTestimony = String(body.testimony || '').trim();
+      const oldTestimony = String(currentUser?.testimony || '').trim();
+      updateFields.push('testimony = ?');
+      updateValues.push(newTestimony);
+      if (newTestimony !== oldTestimony) {
+        updateFields.push('testimony_approved = ?');
+        updateValues.push(0);
+      }
+    }
+    if (body.video_url !== undefined) {
+      const newVideoUrl = String(body.video_url || '').trim();
+      const oldVideoUrl = String(currentUser?.video_url || '').trim();
+      updateFields.push('video_url = ?');
+      updateValues.push(newVideoUrl);
+      if (newVideoUrl !== oldVideoUrl) {
+        updateFields.push('video_approved = ?');
+        updateValues.push(0);
+      }
+    }
+
+    if (body.password) {
+      if (body.password.length < 8) return badRequest('Password must be at least 8 characters');
+      const salt = randomSaltB64();
+      const iterations = 100000;
+      const hash = await pbkdf2Hash(body.password, salt, iterations);
+      updateFields.push('password_salt = ?, password_iterations = ?, password_hash = ?');
+      updateValues.push(salt, iterations, hash);
+    }
+
+    if (updateFields.length === 0) return json({ ok: true });
+
+    const sql = `UPDATE user SET ${updateFields.join(', ')} WHERE id = ?`;
+    updateValues.push(u.id);
+
+    await env.DB.prepare(sql).bind(...updateValues).run();
+
+    return json({ ok: true });
+  }
+
   return null;
 }
 
-/*******************************************************************
- * Baby formula giveaway registrations
- ******************************************************************** */
+async function handleSettings(request: Request, env: Env, pathname: string) {
+  if (request.method === 'GET' && pathname === '/api/settings/donate-image') {
+    const row = await env.DB.prepare(
+      'SELECT value FROM app_setting WHERE key = ?'
+    ).bind('donate_image_url').first() as any;
 
-const FORMULA_TYPES = [
-  'Enfamil',
-  'Similac',
-  'Enfamil Gentlease',
-  'Similac Sensitive',
-  'Otra fórmula',
-] as const;
+    return json({ image_url: row?.value || '' });
+  }
 
-function normalizePhone(value: unknown) {
-  return String(value || '').trim().replace(/[^\d+().\-\s]/g, '');
+  if (request.method === 'PATCH' && pathname === '/api/settings/donate-image') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
+
+    const imageUrl = String(body.image_url || '').trim();
+    await env.DB.prepare(`
+      INSERT INTO app_setting (key, value, updated_by, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_by = excluded.updated_by,
+        updated_at = excluded.updated_at
+    `).bind('donate_image_url', imageUrl, admin.user!.id, isoNow()).run();
+
+    return json({ ok: true, image_url: imageUrl });
+  }
+
+  return null;
 }
 
-async function handleMilkGiveaway(request: Request, env: Env, pathname: string) {
-  if (request.method === 'POST' && pathname === '/api/milk-registrations') {
-    const user = await requireUser(request, env);
-    if (!user) return unauthorized('Debe iniciar sesión para registrar a una persona.');
+async function handleYoutubeSlider(request: Request, env: Env, pathname: string) {
+  if (request.method === 'GET' && pathname === '/api/youtube-slider') {
+    const out = await env.DB.prepare(`
+      SELECT id, title, youtube_url, embed_url, sort_order, created_at
+      FROM youtube_slider_video
+      WHERE active = 1
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+    return json(out.results || []);
+  }
 
-    const body = await readJson(request) as any;
-    if (!body) return badRequest('Se esperaba información en formato JSON.');
+  if (request.method === 'POST' && pathname === '/api/admin/youtube-slider') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
 
-    const fullName = String(body.full_name || '').trim();
-    const phone = normalizePhone(body.phone);
-    const babyName = String(body.baby_name || '').trim();
-    const babyAgeMonths = Number(body.baby_age_months);
-    const formulaType = String(body.formula_type || '').trim();
-    const formulaOther = String(body.formula_other || '').trim();
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
 
-    if (fullName.length < 2 || fullName.length > 120) {
-      return badRequest('Escriba el nombre completo de la persona que recibirá la leche.');
-    }
-    if (phone.replace(/\D/g, '').length < 7 || phone.length > 30) {
-      return badRequest('Escriba un número de teléfono válido.');
-    }
-    if (babyName.length < 2 || babyName.length > 120) {
-      return badRequest('Escriba el nombre del bebé.');
-    }
-    if (!Number.isInteger(babyAgeMonths) || babyAgeMonths < 0 || babyAgeMonths > 36) {
-      return badRequest('La edad del bebé debe ser un número de 0 a 36 meses.');
-    }
-    if (!FORMULA_TYPES.includes(formulaType as typeof FORMULA_TYPES[number])) {
-      return badRequest('Seleccione un tipo de fórmula de la lista.');
-    }
-    if (formulaType === 'Otra fórmula' && (formulaOther.length < 2 || formulaOther.length > 120)) {
-      return badRequest('Escriba el nombre de la fórmula que usa el bebé.');
-    }
+    const title = String(body.title || '').trim();
+    const youtubeUrl = String(body.youtube_url || '').trim();
+    const embedUrl = youtubeEmbedUrl(youtubeUrl);
+    const sortOrder = Math.max(0, Number(body.sort_order || 0) || 0);
 
-    const result = await env.DB.prepare(
-      `INSERT INTO milk_giveaway_registration
-       (registered_by, full_name, phone, baby_name, baby_age_months, formula_type, formula_other, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(
-      user.id,
-      fullName,
-      phone,
-      babyName,
-      babyAgeMonths,
-      formulaType,
-      formulaType === 'Otra fórmula' ? formulaOther : null,
-      isoNow()
-    ).run();
+    if (!title || !youtubeUrl) return badRequest('Title and YouTube URL are required');
+    if (!embedUrl) return badRequest('Invalid YouTube URL');
 
-    return json({
-      ok: true,
-      registration_id: Number(result.meta.last_row_id),
-      message: 'Registro completado.',
-    }, 201);
+    const res = await env.DB.prepare(`
+      INSERT INTO youtube_slider_video (title, youtube_url, embed_url, active, sort_order, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(title, youtubeUrl, embedUrl, 1, sortOrder, admin.user!.id, isoNow()).run();
+
+    return json({ ok: true, id: res.meta.last_row_id });
+  }
+
+  const mDelete = pathname.match(/^\/api\/admin\/youtube-slider\/(\d+)$/);
+  if (request.method === 'DELETE' && mDelete) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const id = Number(mDelete[1]);
+    await env.DB.prepare('UPDATE youtube_slider_video SET active = 0 WHERE id = ?').bind(id).run();
+    return json({ ok: true });
   }
 
   return null;
@@ -389,13 +896,88 @@ async function handleMilkGiveaway(request: Request, env: Env, pathname: string) 
  * BEGIN Handle Events  
 ******************************************************************** */
 
+const FORMULA_TYPES = [
+  'Enfamil',
+  'Similac',
+  'Enfamil Gentlease',
+  'Similac Sensitive',
+  'Otra fórmula',
+];
+
+function normalizePhone(value: unknown) {
+  return String(value || '').trim().replace(/[^\d+().\-\s]/g, '');
+}
+
+async function handleMilkGiveaway(request: Request, env: Env, pathname: string) {
+  if (request.method !== 'POST' || pathname !== '/api/milk-registrations') {
+    return null;
+  }
+
+  const user = await requireUser(request, env);
+  if (!user) return unauthorized('Debe iniciar sesión para registrar a una persona.');
+
+  const body = await readJson(request) as any;
+  if (!body) return badRequest('Se esperaba información en formato JSON.');
+
+  const fullName = String(body.full_name || '').trim();
+  const phone = normalizePhone(body.phone);
+  const babyName = String(body.baby_name || '').trim();
+  const babyAgeMonths = Number(body.baby_age_months);
+  const formulaType = String(body.formula_type || '').trim();
+  const formulaOther = String(body.formula_other || '').trim();
+
+  if (fullName.length < 2 || fullName.length > 120) {
+    return badRequest('Escriba el nombre completo de la persona que recibirá la leche.');
+  }
+  if (phone.replace(/\D/g, '').length < 7 || phone.length > 30) {
+    return badRequest('Escriba un número de teléfono válido.');
+  }
+  if (babyName.length < 2 || babyName.length > 120) {
+    return badRequest('Escriba el nombre del bebé.');
+  }
+  if (!Number.isInteger(babyAgeMonths) || babyAgeMonths < 0 || babyAgeMonths > 36) {
+    return badRequest('La edad del bebé debe ser un número de 0 a 36 meses.');
+  }
+  if (!FORMULA_TYPES.includes(formulaType)) {
+    return badRequest('Seleccione un tipo de fórmula de la lista.');
+  }
+  if (
+    formulaType === 'Otra fórmula' &&
+    (formulaOther.length < 2 || formulaOther.length > 120)
+  ) {
+    return badRequest('Escriba el nombre de la fórmula que usa el bebé.');
+  }
+
+  const result = await env.DB.prepare(`
+    INSERT INTO milk_giveaway_registration
+      (registered_by, full_name, phone, baby_name, baby_age_months,
+       formula_type, formula_other, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    user.id,
+    fullName,
+    phone,
+    babyName,
+    babyAgeMonths,
+    formulaType,
+    formulaType === 'Otra fórmula' ? formulaOther : null,
+    isoNow(),
+  ).run();
+
+  return json({
+    ok: true,
+    registration_id: Number(result.meta.last_row_id),
+    message: 'Registro completado.',
+  }, 201);
+}
+
 async function handleEvents(request: Request, env: Env, pathname: string) {
   const url = new URL(request.url);
 
   if (request.method === 'GET' && pathname === '/api/events') {
     const limit = Math.min(Number(url.searchParams.get('limit') || '0') || 0, 50);
     const sql =
-      'SELECT id,name,date,presenter,about,location,requirements,capacity,image_url,created_by,created_at FROM event ORDER BY created_at DESC' +
+      'SELECT id,name,date,presenter,about,location,requirements,image_url,archived,capacity,created_by,created_at FROM event WHERE COALESCE(archived, 0) = 0 ORDER BY created_at DESC' +
       (limit ? ' LIMIT ?' : '');
     const stmt = env.DB.prepare(sql);
     const out = limit ? await stmt.bind(limit).all() : await stmt.all();
@@ -543,6 +1125,98 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     return json({ ...e, enrolled_count, enrolled });
   }
 
+  if (request.method === 'PATCH' && m) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const id = Number(m[1]);
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
+
+    const name = String(body.name || '').trim();
+    const presenter = String(body.presenter || '').trim();
+    const about = String(body.about || '').trim();
+    const location = String(body.location || '').trim();
+    const requirements = body.requirements ? String(body.requirements).trim() : null;
+    const imageUrl = body.image_url ? String(body.image_url).trim() : '';
+    const date = toIso(body.date);
+    const capacity = Math.max(0, Number(body.capacity || 0) || 0);
+
+    if (!name || !presenter || !about || !location || !date) {
+      return badRequest('Missing required fields');
+    }
+
+    const result = await env.DB.prepare(`
+      UPDATE event
+      SET name = ?, date = ?, presenter = ?, about = ?, location = ?, requirements = ?,
+          image_url = COALESCE(NULLIF(?, ''), image_url), capacity = ?
+      WHERE id = ?
+    `).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, id).run();
+
+    if (!result.meta || result.meta.changes === 0) return notFound('Event not found');
+    return json({ ok: true, id });
+  }
+
+  if (request.method === 'GET' && pathname === '/eventog') {
+    const id = Number(url.searchParams.get("id"));
+    if (!id || Number.isNaN(id)) {
+      return new Response("Missing event id", {
+        status: 400,
+        headers: {
+          "content-type": "text/plain; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    const e = await env.DB.prepare('SELECT * FROM event WHERE id = ?').bind(id).first() as any;
+    if (!e) return new Response("Event not found", { status: 404 });
+
+    const title = escapeHtml(e.name || "Tu Mejor Versión");
+    const description = escapeHtml(
+      [
+        e.date ? `Fecha: ${e.date}` : "",
+        e.location ? `Lugar: ${e.location}` : "",
+        e.presenter ? `Presentador: ${e.presenter}` : "",
+        e.about ? String(e.about).replace(/\s+/g, " ").trim() : ""
+      ]
+        .filter(Boolean)
+        .join(" · ")
+        .slice(0, 240)
+    );
+    const ogImage = absoluteImageUrl(url.origin, e.image_url);
+    const realEventUrl = `${url.origin}/event.html?id=${id}`;
+    const ogUrl = `${url.origin}/eventog?id=${id}`;
+
+    const html = `<!doctype html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+      <meta property="og:type" content="website">
+      <meta property="og:title" content="${title}">
+      <meta property="og:description" content="${description}">
+      <meta property="og:image" content="${ogImage}">
+      <meta property="og:url" content="${ogUrl}">
+      <meta property="og:site_name" content="Tu Mejor Versión">
+      <meta name="description" content="${description}">
+      <link rel="canonical" href="${ogUrl}">
+      <script>window.location.replace("${realEventUrl}");</script>
+    </head>
+    <body>
+      <p>Redirigiendo al evento...</p>
+      <p><a href="${realEventUrl}">Abrir evento</a></p>
+    </body>
+    </html>`;
+
+    return new Response(html, {
+      headers: {
+        "content-type": "text/html; charset=UTF-8",
+        "cache-control": "no-store"
+      }
+    });
+  }
+
   const mEnroll = pathname.match(/^\/api\/events\/(\d+)\/enroll$/);
   if (request.method === 'POST' && mEnroll) {
     const u = await requireUser(request, env);
@@ -612,6 +1286,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
   }
 
   const mFeedback = pathname.match(/^\/api\/events\/(\d+)\/feedback$/);
+  const mEventFeedbackApprove = pathname.match(/^\/api\/event-feedback\/(\d+)\/approve$/);
 
   // Get feedback for one event
   if (request.method === 'GET' && mFeedback) {
@@ -624,10 +1299,12 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
         ef.user_id,
         ef.name,
         ef.feedback,
+        ef.approved,
         ef.created_at,
         ef.updated_at
       FROM event_feedback ef
       WHERE ef.event_id = ?
+        AND ef.approved = 1
       ORDER BY ef.created_at DESC
     `).bind(eventId).all();
 
@@ -656,13 +1333,14 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     const displayName = String(u.name || u.email || 'User').trim();
 
     const res = await env.DB.prepare(`
-      INSERT INTO event_feedback (event_id, user_id, name, feedback, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO event_feedback (event_id, user_id, name, feedback, approved, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(
       eventId,
       u.id,
       u.name || u.email || 'User',
       feedback,
+      0,
       isoNow(),
       isoNow()
     ).run();
@@ -672,6 +1350,28 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       id: res.meta.last_row_id,
       name: displayName
     });
+  }
+
+  // Approve event feedback (admin only)
+  if (request.method === 'PATCH' && mEventFeedbackApprove) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const feedbackId = Number(mEventFeedbackApprove[1]);
+    const body = await readJson(request);
+    const approved = body && typeof body.approved !== 'undefined' ? (body.approved ? 1 : 0) : 1;
+
+    const result = await env.DB.prepare(`
+      UPDATE event_feedback
+      SET approved = ?, updated_at = ?
+      WHERE id = ?
+    `).bind(approved, isoNow(), feedbackId).run();
+
+    if (!result.meta || result.meta.changes === 0) {
+      return notFound('Feedback not found');
+    }
+
+    return json({ ok: true });
   }
 
   // Admin delete feedback
@@ -706,6 +1406,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     const about = String(body.about || '').trim();
     const location = String(body.location || '').trim();
     const requirements = body.requirements ? String(body.requirements).trim() : null;
+    const imageUrl = body.image_url ? String(body.image_url).trim() : null;
     const date = toIso(body.date);
     const capacity = Math.max(0, Number(body.capacity || 0) || 0);
 
@@ -714,7 +1415,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     }
 
     const res = await env.DB.prepare(
-      'INSERT INTO event (name,date,presenter,about,location,requirements,capacity,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?)'
+      'INSERT INTO event (name,date,presenter,about,location,requirements,image_url,capacity,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
     ).bind(
       name,
       date,
@@ -722,6 +1423,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       about,
       location,
       requirements,
+      imageUrl,
       capacity,
       u.id,
       isoNow()
@@ -736,10 +1438,9 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     if (admin.error) return admin.error;
 
     const id = Number(mDel[1]);
-    await env.DB.prepare('DELETE FROM event_enrollment WHERE event_id = ?').bind(id).run();
-    await env.DB.prepare('DELETE FROM event WHERE id = ?').bind(id).run();
+    await env.DB.prepare('UPDATE event SET archived = 1 WHERE id = ?').bind(id).run();
 
-    return json({ ok: true });
+    return json({ ok: true, archived: true });
   }
 
   return null;
@@ -747,32 +1448,570 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
 /*******************************************************************
  * END Handle Events  
 ******************************************************************** */
-
-async function handleCourses(request: Request, env: Env, pathname: string) {
+async function handleWorkshops(request: Request, env: Env, pathname: string) {
   const url = new URL(request.url);
 
-  if (request.method === 'GET' && pathname === '/api/courses') {
+  if (request.method === 'GET' && pathname === '/api/workshops') {
     const limit = Math.min(Number(url.searchParams.get('limit') || '0') || 0, 50);
-    const sql = 'SELECT id,name,date,presenter,about,location,requirements,capacity,image_url,created_by,created_at FROM course ORDER BY created_at DESC' + (limit ? ' LIMIT ?' : '');
+    const sql =
+      'SELECT id,name,date,presenter,about,location,requirements,image_url,archived,capacity,created_by,created_at FROM workshop WHERE COALESCE(archived, 0) = 0 ORDER BY created_at DESC' +
+      (limit ? ' LIMIT ?' : '');
     const stmt = env.DB.prepare(sql);
     const out = limit ? await stmt.bind(limit).all() : await stmt.all();
     return json(out.results || []);
   }
 
-  const m = pathname.match(/^\/api\/courses\/(\d+)$/);
+  if (request.method === 'GET' && pathname === '/workshopog') {
+    const id = Number(url.searchParams.get("id"));
+    if (!id || Number.isNaN(id)) {
+      return new Response("Missing workshop id", {
+        status: 400,
+        headers: {
+          "content-type": "text/plain; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    const w = await env.DB.prepare('SELECT * FROM workshop WHERE id = ?').bind(id).first() as any;
+    if (!w) return new Response("Workshop not found", { status: 404 });
+
+    const title = escapeHtml(w.name || "Tu Mejor Versión");
+    const description = escapeHtml(
+      [
+        w.date ? `Fecha: ${w.date}` : "",
+        w.location ? `Lugar: ${w.location}` : "",
+        w.presenter ? `Presentador: ${w.presenter}` : "",
+        w.about ? String(w.about).replace(/\s+/g, " ").trim() : ""
+      ]
+        .filter(Boolean)
+        .join(" · ")
+        .slice(0, 240)
+    );
+    const ogImage = absoluteImageUrl(url.origin, w.image_url);
+    const realWorkshopUrl = `${url.origin}/workshop.html?id=${id}`;
+    const ogUrl = `${url.origin}/workshopog?id=${id}`;
+    const userAgent = request.headers.get("user-agent") || "";
+    const isPreviewBot = /facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|discordbot/i.test(userAgent);
+
+    if (!isPreviewBot) {
+      return Response.redirect(realWorkshopUrl, 302);
+    }
+
+    const html = `<!doctype html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+      <meta property="og:type" content="website">
+      <meta property="og:title" content="${title}">
+      <meta property="og:description" content="${description}">
+      <meta property="og:image" content="${ogImage}">
+      <meta property="og:url" content="${ogUrl}">
+      <meta property="og:site_name" content="Tu Mejor Versión">
+      <meta name="description" content="${description}">
+      <link rel="canonical" href="${ogUrl}">
+      <script>window.location.replace("${realWorkshopUrl}");</script>
+    </head>
+    <body>
+      <p>Redirigiendo al taller...</p>
+      <p><a href="${realWorkshopUrl}">Abrir taller</a></p>
+    </body>
+    </html>`;
+
+    return new Response(html, {
+      headers: {
+        "content-type": "text/html; charset=UTF-8",
+        "cache-control": "no-store"
+      }
+    });
+  }
+
+  const m = pathname.match(/^\/api\/workshops\/(\d+)$/);
   if (request.method === 'GET' && m) {
     const id = Number(m[1]);
-    const c = await env.DB.prepare('SELECT * FROM course WHERE id = ?').bind(id).first() as any;
-    if (!c) return notFound();
-    const countRow = await env.DB.prepare('SELECT COUNT(1) as c FROM enrollment WHERE course_id = ? AND status = ?').bind(id, 'registered').first() as any;
-    const enrolled_count = Number(countRow?.c || 0);
-    let enrolled = false;
-    const u = await requireUser(request, env);
-    if (u) {
-      const row = await env.DB.prepare('SELECT 1 as x FROM enrollment WHERE user_id = ? AND course_id = ? AND status = ?').bind(u.id, id, 'registered').first();
-      enrolled = !!row;
+    const w = await env.DB.prepare('SELECT * FROM workshop WHERE id = ?').bind(id).first() as any;
+    if (!w) return notFound();
+
+    return json(w);
+  }
+
+  if (request.method === 'PATCH' && m) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const id = Number(m[1]);
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
+
+    const name = String(body.name || '').trim();
+    const presenter = String(body.presenter || '').trim();
+    const about = String(body.about || '').trim();
+    const location = String(body.location || '').trim();
+    const requirements = body.requirements ? String(body.requirements).trim() : null;
+    const imageUrl = body.image_url ? String(body.image_url).trim() : '';
+    const date = toIso(body.date);
+    const capacity = Math.max(0, Number(body.capacity || 0) || 0);
+
+    if (!name || !presenter || !about || !location || !date) {
+      return badRequest('Missing required fields');
     }
-    return json({ ...c, enrolled_count, enrolled });
+
+    const result = await env.DB.prepare(`
+      UPDATE workshop
+      SET name = ?, date = ?, presenter = ?, about = ?, location = ?, requirements = ?,
+          image_url = COALESCE(NULLIF(?, ''), image_url), capacity = ?
+      WHERE id = ?
+    `).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, id).run();
+
+    if (!result.meta || result.meta.changes === 0) return notFound('Workshop not found');
+    return json({ ok: true, id });
+  }
+
+  if (request.method === 'POST' && pathname === '/api/workshops') {
+    const u = await requireUser(request, env);
+    if (!u) return unauthorized();
+    if (!(u.role === 'admin' || u.role === 'instructor')) return forbidden();
+
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
+
+    const name = String(body.name || '').trim();
+    const presenter = String(body.presenter || '').trim();
+    const about = String(body.about || '').trim();
+    const location = String(body.location || '').trim();
+    const requirements = body.requirements ? String(body.requirements).trim() : null;
+    const imageUrl = body.image_url ? String(body.image_url).trim() : null;
+    const date = toIso(body.date);
+    const capacity = Math.max(0, Number(body.capacity || 0) || 0);
+
+    if (!name || !presenter || !about || !location || !date) {
+      return badRequest('Missing required fields');
+    }
+
+    const res = await env.DB.prepare(
+      'INSERT INTO workshop (name,date,presenter,about,location,requirements,image_url,capacity,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
+    ).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, u.id, isoNow()).run();
+
+    return json({ id: res.meta.last_row_id });
+  }
+
+  if (request.method === 'DELETE' && m) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const id = Number(m[1]);
+    await env.DB.prepare('UPDATE workshop SET archived = 1 WHERE id = ?').bind(id).run();
+    return json({ ok: true, archived: true });
+  }
+
+  const mFeedback = pathname.match(/^\/api\/workshops\/(\d+)\/feedback$/);
+  if (request.method === 'GET' && mFeedback) {
+    const workshopId = Number(mFeedback[1]);
+    const out = await env.DB.prepare(`
+      SELECT id, workshop_id, user_id, name, feedback, approved, created_at, updated_at
+      FROM workshop_feedback
+      WHERE workshop_id = ?
+        AND approved = 1
+      ORDER BY created_at DESC
+    `).bind(workshopId).all();
+    return json(out.results || []);
+  }
+
+  if (request.method === 'POST' && mFeedback) {
+    const u = await requireUser(request, env);
+    if (!u) return unauthorized();
+    const workshopId = Number(mFeedback[1]);
+    const w = await env.DB.prepare('SELECT id FROM workshop WHERE id = ?').bind(workshopId).first();
+    if (!w) return notFound('Workshop not found');
+
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
+    const feedback = String(body.feedback || '').trim();
+    if (!feedback) return badRequest('Feedback is required');
+
+    const displayName = String(u.name || u.email || 'User').trim();
+    const res = await env.DB.prepare(`
+      INSERT INTO workshop_feedback (workshop_id, user_id, name, feedback, approved, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(workshopId, u.id, displayName, feedback, 0, isoNow(), isoNow()).run();
+
+    return json({ ok: true, id: res.meta.last_row_id, name: displayName });
+  }
+
+  const mFeedbackById = pathname.match(/^\/api\/workshop-feedback\/(\d+)$/);
+  const mFeedbackApprove = pathname.match(/^\/api\/workshop-feedback\/(\d+)\/approve$/);
+
+  if (request.method === 'PATCH' && mFeedbackApprove) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const feedbackId = Number(mFeedbackApprove[1]);
+    const body = await readJson(request);
+    const approved = body && typeof body.approved !== 'undefined' ? (body.approved ? 1 : 0) : 1;
+    const result = await env.DB.prepare(`
+      UPDATE workshop_feedback
+      SET approved = ?, updated_at = ?
+      WHERE id = ?
+    `).bind(approved, isoNow(), feedbackId).run();
+    if (!result.meta || result.meta.changes === 0) return notFound('Feedback not found');
+    return json({ ok: true });
+  }
+
+  if (request.method === 'DELETE' && mFeedbackById) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const feedbackId = Number(mFeedbackById[1]);
+    const result = await env.DB.prepare('DELETE FROM workshop_feedback WHERE id = ?').bind(feedbackId).run();
+    if (!result.meta || result.meta.changes === 0) return notFound('Feedback not found');
+    return json({ ok: true });
+  }
+
+  if (request.method === 'GET' && pathname === '/api/admin/workshop-feedback') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const pendingOnly = url.searchParams.get('pending') === 'true';
+    const out = await env.DB.prepare(`
+      SELECT
+        wf.id,
+        wf.workshop_id,
+        w.name AS workshop_name,
+        wf.user_id,
+        wf.name,
+        wf.feedback,
+        wf.approved,
+        wf.created_at,
+        wf.updated_at
+      FROM workshop_feedback wf
+      JOIN workshop w ON w.id = wf.workshop_id
+      ${pendingOnly ? 'WHERE wf.approved = 0' : ''}
+      ORDER BY wf.created_at DESC
+    `).all();
+    return json(out.results || []);
+  }
+
+  return null;
+}
+
+async function handleCourses(request: Request, env: Env, pathname: string) {
+  const url = new URL(request.url);
+
+  // 🔥 GLOBAL ENTRY LOG (MOST IMPORTANT)
+  console.log("🚨 handleCourses CALLED");
+  console.log("   method:", request.method);
+  console.log("   pathname:", pathname);
+  console.log("   full URL:", url.toString());
+  console.log("   search:", url.search);
+
+  // 🔍 DEBUG CONDITIONS
+  console.log("🔎 Checking route conditions...");
+  console.log("   matches /api/courses:", pathname === '/api/courses');
+  console.log("   matches /course:", pathname === '/course');
+
+  // =========================
+  // API: GET /api/courses
+  // =========================
+  if (request.method === 'GET' && pathname === '/api/courses') {
+    console.log("✅ MATCHED: /api/courses");
+
+    const limit = Math.min(Number(url.searchParams.get('limit') || '0') || 0, 50);
+    console.log("🔢 limit:", limit);
+
+    const sql =
+      'SELECT id,name,date,presenter,about,location,requirements,image_url,archived,capacity,created_by,created_at FROM course WHERE COALESCE(archived, 0) = 0 ORDER BY created_at DESC' +
+      (limit ? ' LIMIT ?' : '');
+
+    console.log("🗄️ SQL:", sql);
+
+    const stmt = env.DB.prepare(sql);
+    const out = limit ? await stmt.bind(limit).all() : await stmt.all();
+
+    console.log("📦 results count:", (out.results || []).length);
+
+    return json(out.results || []);
+  }
+
+  // =========================
+  // PAGE: GET /course?id=...
+  // =========================
+  // =========================
+  // FB OG PAGE: GET /courseog?id=...
+  // =========================
+  if (request.method === 'GET' && pathname === '/courseog') {
+    console.log("🚀 MATCHED: /courseog route");
+    console.log("🌐 Full URL:", url.toString());
+
+    const idParam = url.searchParams.get("id");
+    console.log("🔍 Raw id param:", idParam);
+
+    const id = Number(idParam);
+    console.log("🔢 Parsed id:", id);
+
+    if (!id || Number.isNaN(id)) {
+      console.error("❌ Invalid or missing course id");
+      return new Response("Missing course id", {
+        status: 400,
+        headers: {
+          "content-type": "text/plain; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    console.log("🗄️ Querying DB for course id:", id);
+
+    let c: any;
+    try {
+      c = await env.DB
+        .prepare('SELECT * FROM course WHERE id = ?')
+        .bind(id)
+        .first();
+
+      console.log("📦 DB result:", c);
+    } catch (err) {
+      console.error("❌ DB query failed:", err);
+      return new Response("DB error", { status: 500 });
+    }
+
+    if (!c) {
+      console.error("❌ Course not found for id:", id);
+      return new Response("Course not found", { status: 404 });
+    }
+
+    const title = escapeHtml(c.name || "Tu Mejor Versión");
+    const c_date = c.date;
+    const description = escapeHtml(
+      [
+        c.date ? `Fecha: ${c.date}` : "",
+        c.location ? `Lugar: ${c.location}` : "",
+        c.presenter ? `Presentador: ${c.presenter}` : "",
+        c.about ? String(c.about).replace(/\s+/g, " ").trim() : ""
+      ]
+        .filter(Boolean)
+        .join(" · ")
+        .slice(0, 240)
+    );
+
+    const ogImage = absoluteImageUrl(url.origin, c.image_url);
+
+    //const ogImage = `${url.origin}/static/images/${c.image_url}`;
+    const realCourseUrl = `${url.origin}/course?id=${id}`;
+    const ogUrl = `${url.origin}/courseog?id=${id}`;
+
+    console.log("🧠 Building OG-only page:");
+    console.log("   title:", title);
+    console.log("   date:", c_date);
+    console.log("   description:", description);
+    console.log("   ogImage:", ogImage);
+    console.log("   ogUrl:", ogUrl);
+    console.log("   realCourseUrl:", realCourseUrl);
+
+    const html = `<!doctype html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+
+      <!-- OG_DEBUG_COURSEOG_HANDLER -->
+      <meta property="og:type" content="website">
+      <meta property="og:title" content="${title}">
+      <meta property="og:description" content="${description}">
+      <meta property="og:image" content="${ogImage}">
+      <meta property="og:url" content="${ogUrl}">
+      <meta property="og:site_name" content="Tu Mejor Versión">
+
+      <meta name="description" content="${description}">
+      <link rel="canonical" href="${ogUrl}">
+
+      <script>
+        window.location.replace("${realCourseUrl}");
+      </script>
+    </head>
+    <body>
+      <p>Redirigiendo al curso...</p>
+      <p><a href="${realCourseUrl}">Abrir curso</a></p>
+    </body>
+    </html>`;
+
+    console.log("✅ OG-only HTML generated");
+    console.log("📄 HTML preview:", html.slice(0, 300));
+    console.log("📤 Returning /courseog HTML response for course id:", id);
+
+    return new Response(html, {
+      headers: {
+        "content-type": "text/html; charset=UTF-8",
+        "cache-control": "no-store"
+      }
+    });
+  }
+
+
+ /*************
+   * END FB Course handler and return met
+   */
+
+  /*************
+   * BEGIN app Course handler and return met
+   */
+
+  const m = pathname.match(/^\/api\/courses\/(\d+)$/);
+
+  if (request.method === 'GET' && m) {
+    console.log("🚀 /api/courses/:id route HIT");
+    console.log("🌐 Full URL:", request.url);
+    console.log("📍 Pathname:", pathname);
+
+    const id = Number(m[1]);
+    console.log("🔢 Parsed course id:", id);
+
+    // =========================
+    // DB: Fetch course
+    // =========================
+    console.log("🗄️ Querying course table...");
+
+    let c: any;
+    try {
+      c = await env.DB
+        .prepare('SELECT * FROM course WHERE id = ?')
+        .bind(id)
+        .first();
+
+      console.log("📦 Course DB result:", c);
+    } catch (err) {
+      console.error("❌ DB error (course):", err);
+      return new Response("DB error", { status: 500 });
+    }
+
+    if (!c) {
+      console.error("❌ Course not found for id:", id);
+      return notFound();
+    }
+
+    // =========================
+    // DB: Enrollment count
+    // =========================
+    console.log("🧮 Counting enrolled users...");
+
+    let countRow: any;
+    try {
+      countRow = await env.DB
+        .prepare('SELECT COUNT(1) as c FROM enrollment WHERE course_id = ? AND status = ?')
+        .bind(id, 'registered')
+        .first();
+
+      console.log("📊 Enrollment count row:", countRow);
+    } catch (err) {
+      console.error("❌ DB error (count):", err);
+    }
+
+    const enrolled_count = Number(countRow?.c || 0);
+    console.log("👥 Total enrolled:", enrolled_count);
+
+    // =========================
+    // Auth: Current user
+    // =========================
+    console.log("🔐 Checking current user session...");
+
+    let enrolled = false;
+    let u: any = null;
+
+    try {
+      u = await requireUser(request, env);
+      console.log("👤 Current user:", u);
+    } catch (err) {
+      console.error("❌ Error retrieving user:", err);
+    }
+
+    if (u) {
+      console.log("🔎 Checking if user is enrolled...");
+
+      try {
+        const row = await env.DB
+          .prepare('SELECT 1 as x FROM enrollment WHERE user_id = ? AND course_id = ? AND status = ?')
+          .bind(u.id, id, 'registered')
+          .first();
+
+        console.log("📄 Enrollment row for user:", row);
+
+        enrolled = !!row;
+      } catch (err) {
+        console.error("❌ DB error (user enrollment):", err);
+      }
+    }
+
+    console.log("✅ User enrolled status:", enrolled);
+
+    // =========================
+    // OG META BUILD
+    // =========================
+    const origin = new URL(request.url).origin;
+    console.log("🌍 Origin:", origin);
+
+    const og_title = c.name || 'Course';
+    const og_date = c.date;
+
+    const og_description = [
+      c.date ? `Date: ${c.date}` : '',
+      c.location ? `Location: ${c.location}` : '',
+      c.about ? String(c.about).replace(/\s+/g, ' ').trim() : ''
+    ]
+      .filter(Boolean)
+      .join(' · ')
+      .slice(0, 220);
+
+    const og_image = absoluteImageUrl(origin, c.image_url);
+    const og_url = `${origin}/course?id=${id}`;
+    const og_type = 'website';
+
+    console.log("🧠 OG DATA:");
+    console.log("   title:", og_title);
+    console.log("   description:", og_description);
+    console.log("   image:", og_image);
+    console.log("   url:", og_url);
+    console.log("   type:", og_type);
+
+    console.log("📤 Returning JSON response for course id:", id);
+
+    return json({
+      ...c,
+      enrolled_count,
+      enrolled,
+      og_title,
+      og_description,
+      og_image,
+      og_url,
+      og_type
+    });
+  }
+
+  if (request.method === 'PATCH' && m) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const id = Number(m[1]);
+    const body = await readJson(request);
+    if (!body) return badRequest('Expected JSON');
+
+    const name = String(body.name || '').trim();
+    const presenter = String(body.presenter || '').trim();
+    const about = String(body.about || '').trim();
+    const location = String(body.location || '').trim();
+    const requirements = body.requirements ? String(body.requirements).trim() : null;
+    const imageUrl = body.image_url ? String(body.image_url).trim() : '';
+    const date = toIso(body.date);
+    const capacity = Math.max(0, Number(body.capacity || 0) || 0);
+
+    if (!name || !presenter || !about || !location || !date) {
+      return badRequest('Missing required fields');
+    }
+
+    const result = await env.DB.prepare(`
+      UPDATE course
+      SET name = ?, date = ?, presenter = ?, about = ?, location = ?, requirements = ?,
+          image_url = COALESCE(NULLIF(?, ''), image_url), capacity = ?
+      WHERE id = ?
+    `).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, id).run();
+
+    if (!result.meta || result.meta.changes === 0) return notFound('Course not found');
+    return json({ ok: true, id });
   }
 
   const mEnroll = pathname.match(/^\/api\/courses\/(\d+)\/enroll$/);
@@ -830,13 +2069,14 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
     const about = String(body.about || '').trim();
     const location = String(body.location || '').trim();
     const requirements = body.requirements ? String(body.requirements).trim() : null;
+    const imageUrl = body.image_url ? String(body.image_url).trim() : null;
     const date = toIso(body.date);
     const capacity = Math.max(0, Number(body.capacity || 0) || 0);
     if (!name || !presenter || !about || !location || !date) return badRequest('Missing required fields');
 
     const res = await env.DB.prepare(
-      'INSERT INTO course (name,date,presenter,about,location,requirements,capacity,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?)'
-    ).bind(name, date, presenter, about, location, requirements, capacity, u.id, isoNow()).run();
+      'INSERT INTO course (name,date,presenter,about,location,requirements,image_url,capacity,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
+    ).bind(name, date, presenter, about, location, requirements, imageUrl, capacity, u.id, isoNow()).run();
     return json({ id: res.meta.last_row_id });
   }
 
@@ -846,13 +2086,42 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
     const admin = await requireAdmin(request, env);
     if (admin.error) return admin.error;
     const id = Number(mDel[1]);
-    await env.DB.prepare('DELETE FROM enrollment WHERE course_id = ?').bind(id).run();
-    await env.DB.prepare('DELETE FROM course WHERE id = ?').bind(id).run();
-    return json({ ok: true });
+    await env.DB.prepare('UPDATE course SET archived = 1 WHERE id = ?').bind(id).run();
+    return json({ ok: true, archived: true });
   }
 
   const mCourseFeedback = pathname.match(/^\/api\/courses\/(\d+)\/feedback$/);
+  const mCourseFeedbackApprove = pathname.match(/^\/api\/course-feedback\/(\d+)\/approve$/);
   const mCourseFeedbackById = pathname.match(/^\/api\/course-feedback\/(\d+)$/);
+
+  if (request.method === 'GET' && pathname === '/api/testimonials') {
+    const out = await env.DB.prepare(`
+      SELECT
+        id,
+        name,
+        testimony,
+        video_url,
+        testimony_approved,
+        video_approved,
+        created_at
+      FROM user
+      WHERE
+        (
+          testimony IS NOT NULL
+          AND TRIM(testimony) != ''
+          AND testimony_approved = 1
+        )
+        OR
+        (
+          video_url IS NOT NULL
+          AND TRIM(video_url) != ''
+          AND video_approved = 1
+        )
+      ORDER BY created_at DESC
+    `).all();
+
+    return json(out.results || []);
+  }
 
   // Get feedback for one course
   if (request.method === 'GET' && mCourseFeedback) {
@@ -865,10 +2134,12 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
         cf.user_id,
         cf.name,
         cf.feedback,
+        cf.approved,
         cf.created_at,
         cf.updated_at
       FROM course_feedback cf
       WHERE cf.course_id = ?
+        AND cf.approved = 1
       ORDER BY cf.created_at DESC
     `).bind(courseId).all();
 
@@ -897,13 +2168,14 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
     const displayName = String(u.name || u.email || 'User').trim();
 
     const res = await env.DB.prepare(`
-      INSERT INTO course_feedback (course_id, user_id, name, feedback, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO course_feedback (course_id, user_id, name, feedback, approved, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(
       courseId,
       u.id,
       u.name || u.email || 'User',
       feedback,
+      0,
       isoNow(),
       isoNow()
     ).run();
@@ -913,6 +2185,28 @@ async function handleCourses(request: Request, env: Env, pathname: string) {
       id: res.meta.last_row_id,
       name: displayName
     });
+  }
+
+  // Approve course feedback (admin only)
+  if (request.method === 'PATCH' && mCourseFeedbackApprove) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+
+    const feedbackId = Number(mCourseFeedbackApprove[1]);
+    const body = await readJson(request);
+    const approved = body && typeof body.approved !== 'undefined' ? (body.approved ? 1 : 0) : 1;
+
+    const result = await env.DB.prepare(`
+      UPDATE course_feedback
+      SET approved = ?, updated_at = ?
+      WHERE id = ?
+    `).bind(approved, isoNow(), feedbackId).run();
+
+    if (!result.meta || result.meta.changes === 0) {
+      return notFound('Feedback not found');
+    }
+
+    return json({ ok: true });
   }
 
   // Edit course feedback (owner or admin)
@@ -1132,40 +2426,35 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
   }
 
   async function handleAdmin(request: Request, env: Env, pathname: string) {
+    const url = new URL(request.url);
+
     if (request.method === 'GET' && pathname === '/api/admin/users') {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
-      const out = await env.DB.prepare('SELECT id,email,name,role,created_at FROM user ORDER BY id ASC').all();
+      const out = await env.DB.prepare(`
+        SELECT
+          u.id,
+          u.email,
+          u.name,
+          u.role,
+          u.created_at,
+          (SELECT COUNT(1) FROM user_agreement_acknowledgement a WHERE a.user_id = u.id) AS docs_accepted
+        FROM user u
+        ORDER BY u.id ASC
+      `).all();
       return json(out.results || []);
-    }
-
-    const mDel = pathname.match(/^\/api\/admin\/users\/(\d+)$/);
-    if (request.method === 'DELETE' && mDel) {
-      const admin = await requireAdmin(request, env);
-      if (admin.error) return admin.error;
-      const id = Number(mDel[1]);
-      if (id === Number(admin.user!.id)) return badRequest('You cannot delete your own account');
-
-      // cascade-ish deletes
-      await env.DB.prepare('DELETE FROM enrollment WHERE user_id = ?').bind(id).run();
-      await env.DB.prepare('DELETE FROM event_enrollment WHERE user_id = ?').bind(id).run();
-      await env.DB.prepare('DELETE FROM post WHERE created_by = ?').bind(id).run();
-      await env.DB.prepare('DELETE FROM thread WHERE created_by = ?').bind(id).run();
-      await env.DB.prepare('DELETE FROM media_asset WHERE uploaded_by = ?').bind(id).run();
-
-      await env.DB.prepare('DELETE FROM user WHERE id = ?').bind(id).run();
-      return json({ ok: true });
     }
 
     if (
       request.method === 'GET' &&
-      (pathname === '/api/admin/milk-registrations' ||
-       pathname === '/api/admin/milk-registrations.csv')
+      (
+        pathname === '/api/admin/milk-registrations' ||
+        pathname === '/api/admin/milk-registrations.csv'
+      )
     ) {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
 
-      const url = new URL(request.url);
       const query = String(url.searchParams.get('q') || '').trim().slice(0, 100);
       const formula = String(url.searchParams.get('formula') || '').trim().slice(0, 120);
       const queryLike = `%${query}%`;
@@ -1199,7 +2488,7 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
 
       if (pathname.endsWith('.csv')) {
         const out = await env.DB.prepare(select).bind(...bindings).all();
-        const rows = out.results || [];
+        const rows = (out.results || []) as Record<string, unknown>[];
         const header = [
           'id',
           'created_at',
@@ -1212,17 +2501,17 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
           'registered_by_name',
           'registered_by_email',
         ];
-        const escapeCsv = (value: any) => {
+        const escapeCsv = (value: unknown) => {
           let cell = String(value ?? '');
-          // Prevent recipient-entered values from becoming formulas in spreadsheets.
           if (/^[=+\-@]/.test(cell)) cell = `'${cell}`;
           if (/[",\n\r]/.test(cell)) return `"${cell.replace(/"/g, '""')}"`;
           return cell;
         };
         const lines = [header.join(',')].concat(
-          rows.map((row: any) => header.map((key) => escapeCsv(row[key])).join(','))
+          rows.map((row) => header.map((key) => escapeCsv(row[key])).join(',')),
         );
         const date = new Date().toISOString().slice(0, 10);
+
         return new Response('\uFEFF' + lines.join('\r\n'), {
           status: 200,
           headers: {
@@ -1250,10 +2539,137 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
       });
     }
 
+    if (request.method === 'GET' && pathname === '/api/admin/agreement-docs') {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+      const out = await env.DB.prepare(
+        'SELECT id,title,author,original_name,mimetype,active,created_by,created_at FROM agreement_doc ORDER BY created_at DESC'
+      ).all();
+      return json(out.results || []);
+    }
+
+    if (request.method === 'POST' && pathname === '/api/admin/agreement-docs') {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const ct = request.headers.get('content-type') || '';
+      if (!ct.includes('multipart/form-data')) return badRequest('Expected multipart/form-data');
+      const form = await request.formData();
+      const title = String(form.get('title') || '').trim();
+      const author = String(form.get('author') || '').trim();
+      const file = form.get('pdf');
+
+      if (!title || !author) return badRequest('Title and author are required');
+      if (!(file instanceof File)) return badRequest('PDF file is required');
+      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        return badRequest('Uploaded file must be a PDF');
+      }
+
+      const originalName = file.name || 'document.pdf';
+      const safeBase = originalName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+      const key = `agreement-docs/${Date.now()}_${crypto.randomUUID()}_${safeBase}`;
+      await env.R2.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: 'application/pdf' } });
+
+      await env.DB.prepare(
+        'INSERT INTO agreement_doc (title,author,r2_key,original_name,mimetype,active,created_by,created_at) VALUES (?,?,?,?,?,?,?,?)'
+      ).bind(title, author, key, originalName, 'application/pdf', 1, admin.user!.id, isoNow()).run();
+
+      return json({ ok: true });
+    }
+
+    if (request.method === 'GET' && pathname === '/api/admin/agreement-docs/acknowledgements') {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const docsResult = await env.DB.prepare(
+        'SELECT id,title,author,active,created_at FROM agreement_doc ORDER BY created_at DESC'
+      ).all();
+      const usersResult = await env.DB.prepare(
+        'SELECT id,name,email FROM user ORDER BY id ASC'
+      ).all();
+      const ackResult = await env.DB.prepare(
+        'SELECT user_id,agreement_doc_id,accepted_at FROM user_agreement_acknowledgement'
+      ).all();
+
+      const docs = (docsResult.results || []) as any[];
+      const users = (usersResult.results || []) as any[];
+      const acks = (ackResult.results || []) as any[];
+      const ackMap = new Map<string, any>();
+      for (const ack of acks) {
+        ackMap.set(`${ack.agreement_doc_id}:${ack.user_id}`, ack.accepted_at);
+      }
+
+      const out = docs.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        author: doc.author,
+        active: doc.active,
+        created_at: doc.created_at,
+        accepted_users: users.filter((u) => ackMap.has(`${doc.id}:${u.id}`)).map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          accepted_at: ackMap.get(`${doc.id}:${u.id}`)
+        })),
+        pending_users: users.filter((u) => !ackMap.has(`${doc.id}:${u.id}`)).map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email
+        }))
+      }));
+
+      return json(out);
+    }
+
+    const mAckDelete = pathname.match(/^\/api\/admin\/agreement-docs\/(\d+)\/acknowledgements\/(\d+)$/);
+    if (request.method === 'DELETE' && mAckDelete) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+      const docId = Number(mAckDelete[1]);
+      const userId = Number(mAckDelete[2]);
+      if (!docId || !userId) return badRequest('Invalid doc or user id');
+      await env.DB.prepare(
+        'DELETE FROM user_agreement_acknowledgement WHERE agreement_doc_id = ? AND user_id = ?'
+      ).bind(docId, userId).run();
+      return json({ ok: true });
+    }
+
+    const mDocDelete = pathname.match(/^\/api\/admin\/agreement-docs\/(\d+)$/);
+    if (request.method === 'DELETE' && mDocDelete) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+      const docId = Number(mDocDelete[1]);
+      const row = await env.DB.prepare('SELECT r2_key FROM agreement_doc WHERE id = ?').bind(docId).first() as any;
+      if (!row) return notFound();
+      await env.R2.delete(String(row.r2_key));
+      await env.DB.prepare('DELETE FROM agreement_doc WHERE id = ?').bind(docId).run();
+      await env.DB.prepare('DELETE FROM user_agreement_acknowledgement WHERE agreement_doc_id = ?').bind(docId).run();
+      return json({ ok: true });
+    }
+
+    const mDel = pathname.match(/^\/api\/admin\/users\/(\d+)$/);
+    if (request.method === 'DELETE' && mDel) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+      const id = Number(mDel[1]);
+      if (id === Number(admin.user!.id)) return badRequest('You cannot delete your own account');
+
+      // cascade-ish deletes
+      await env.DB.prepare('DELETE FROM enrollment WHERE user_id = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM event_enrollment WHERE user_id = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM post WHERE created_by = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM thread WHERE created_by = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM media_asset WHERE uploaded_by = ?').bind(id).run();
+
+      await env.DB.prepare('DELETE FROM user WHERE id = ?').bind(id).run();
+      return json({ ok: true });
+    }
+
     if (request.method === 'GET' && pathname === '/api/admin/event-feedback') {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
 
+      const pendingOnly = url.searchParams.get('pending') === 'true';
       const out = await env.DB.prepare(`
         SELECT
           ef.id,
@@ -1262,10 +2678,12 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
           ef.user_id,
           ef.name,
           ef.feedback,
+          ef.approved,
           ef.created_at,
           ef.updated_at
         FROM event_feedback ef
         JOIN event e ON e.id = ef.event_id
+        ${pendingOnly ? 'WHERE ef.approved = 0' : ''}
         ORDER BY ef.created_at DESC
       `).all();
 
@@ -1302,6 +2720,7 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
       const admin = await requireAdmin(request, env);
       if (admin.error) return admin.error;
 
+      const pendingOnly = url.searchParams.get('pending') === 'true';
       const out = await env.DB.prepare(`
         SELECT
           cf.id,
@@ -1310,48 +2729,371 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
           cf.user_id,
           cf.name,
           cf.feedback,
+          cf.approved,
           cf.created_at,
           cf.updated_at
         FROM course_feedback cf
         JOIN course c ON c.id = cf.course_id
+        ${pendingOnly ? 'WHERE cf.approved = 0' : ''}
         ORDER BY cf.created_at DESC
       `).all();
 
       return json(out.results || []);
     }
 
+    if (request.method === 'GET' && pathname === '/api/admin/testimonies') {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const pendingOnly = url.searchParams.get('pending') === 'true';
+      let query = `
+        SELECT
+          id,
+          email,
+          name,
+          testimony,
+          testimony_approved,
+          video_url,
+          video_approved,
+          created_at
+        FROM user
+        WHERE
+          (
+            testimony IS NOT NULL
+            AND TRIM(testimony) != ''
+          )
+          OR
+          (
+            video_url IS NOT NULL
+            AND TRIM(video_url) != ''
+          )
+      `;
+      
+      if (pendingOnly) {
+        query += `
+          AND (
+            (testimony IS NOT NULL AND TRIM(testimony) != '' AND testimony_approved = 0)
+            OR
+            (video_url IS NOT NULL AND TRIM(video_url) != '' AND video_approved = 0)
+          )
+        `;
+      }
+      
+      query += `ORDER BY created_at DESC`;
+      
+      const out = await env.DB.prepare(query).all();
+
+      return json(out.results || []);
+    }
+
+    const mTestimonyApprove = pathname.match(/^\/api\/admin\/testimonies\/(\d+)$/);
+    if (request.method === 'PATCH' && mTestimonyApprove) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const userId = Number(mTestimonyApprove[1]);
+      const body = await readJson(request);
+      if (!body) return badRequest('Expected JSON');
+
+      const columns = [];
+      const values = [];
+      if (typeof body.testimony_approved !== 'undefined') {
+        columns.push('testimony_approved = ?');
+        values.push(body.testimony_approved ? 1 : 0);
+      }
+      if (typeof body.video_approved !== 'undefined') {
+        columns.push('video_approved = ?');
+        values.push(body.video_approved ? 1 : 0);
+      }
+
+      if (!columns.length) return badRequest('No approval field provided');
+
+      const sql = `UPDATE user SET ${columns.join(', ')} WHERE id = ?`;
+      values.push(userId);
+
+      const result = await env.DB.prepare(sql).bind(...values).run();
+
+      if (!result.meta || result.meta.changes === 0) {
+        return notFound('User not found');
+      }
+
+      return json({ ok: true });
+    }
+
+    const mUserUpdate = pathname.match(/^\/api\/admin\/users\/(\d+)$/);
+
+    if (request.method === 'PATCH' && mUserUpdate) {
+      console.log("🔥 PATCH /api/admin/users/:id HIT");
+      console.log("🌐 URL:", request.url);
+
+      // =========================
+      // 🔐 AUTH: Require admin
+      // =========================
+      const admin = await requireAdmin(request, env);
+      if (admin?.error) {
+        console.error("❌ Admin auth failed");
+        return admin.error;
+      }
+
+      console.log("✅ Admin verified:", admin);
+
+      // =========================
+      // 🔢 Parse user ID
+      // =========================
+      const userId = Number(mUserUpdate[1]);
+      console.log("🔢 Target userId:", userId);
+
+      if (!userId || Number.isNaN(userId)) {
+        console.error("❌ Invalid user id");
+        return json({ error: "Invalid user id" }, 400);
+      }
+
+      // =========================
+      // 📥 Parse request body
+      // =========================
+      let body: any;
+      try {
+        body = await request.json();
+        console.log("📦 Incoming body:", body);
+      } catch (err) {
+        console.error("❌ Failed to parse JSON:", err);
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      // =========================
+      // 🧠 Extract fields
+      // =========================
+      const {
+        username,
+        first_name,
+        last_name,
+        email,
+        password,
+        role,
+        image_url,
+        testimony
+      } = body;
+
+      console.log("🧠 Parsed fields:", {
+        username,
+        first_name,
+        last_name,
+        email,
+        role,
+        image_url,
+        testimony
+      });
+
+      // =========================
+      // 🛠️ Build dynamic UPDATE
+      // =========================
+      const fields: string[] = [];
+      const values: any[] = [];
+
+      function add(field: string, value: any) {
+        fields.push(`${field} = ?`);
+        values.push(value);
+      }
+
+      if (username) add("name", username); // assuming name = username
+      if (first_name) add("first_name", first_name);
+      if (last_name) add("last_name", last_name);
+      if (email) add("email", email);
+      if (role) add("role", role);
+      if (image_url) add("image_url", image_url);
+      if (testimony) add("testimony", testimony);
+
+      // ⚠️ Password requires hashing
+      if (password) {
+        console.log("🔐 Updating password...");
+        const salt = crypto.randomUUID();
+        const iterations = 100000;
+
+        const encoder = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(password),
+          { name: "PBKDF2" },
+          false,
+          ["deriveBits"]
+        );
+
+        const derivedBits = await crypto.subtle.deriveBits(
+          {
+            name: "PBKDF2",
+            salt: encoder.encode(salt),
+            iterations,
+            hash: "SHA-256"
+          },
+          keyMaterial,
+          256
+        );
+
+        const hash = btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
+
+        add("password_salt", salt);
+        add("password_iterations", iterations);
+        add("password_hash", hash);
+      }
+
+      if (!fields.length) {
+        console.warn("⚠️ No fields to update");
+        return json({ error: "No fields to update" }, 400);
+      }
+
+      // =========================
+      // 🗄️ Execute UPDATE
+      // =========================
+      const sql = `UPDATE user SET ${fields.join(", ")} WHERE id = ?`;
+      values.push(userId);
+
+      console.log("🗄️ SQL:", sql);
+      console.log("📊 Values:", values);
+
+      try {
+        await env.DB.prepare(sql).bind(...values).run();
+        console.log("✅ User updated successfully");
+      } catch (err) {
+        console.error("❌ DB update failed:", err);
+        return json({ error: "Database update failed" }, 500);
+      }
+
+      return json({ ok: true });
+    }
+
     return null;
   }
 
-  async function handleMedia(request: Request, env: Env, pathname: string) {
-    // Upload slider image
-    if (request.method === 'POST' && pathname === '/api/upload-image') {
-      const u = await requireUser(request, env);
-      if (!u) return unauthorized();
-      if (!(u.role === 'admin' || u.role === 'instructor')) return forbidden();
+async function handleMedia(request: Request, env: Env, pathname: string) {
+  console.log("🚀 handleMedia ENTRY");
+  console.log("📍 pathname:", pathname);
+  console.log("📍 method:", request.method);
 
-      const ct = request.headers.get('content-type') || '';
-      if (!ct.includes('multipart/form-data')) {
-        return badRequest('Expected multipart/form-data');
+  if (request.method === 'POST' && pathname === '/api/upload-image') {
+    console.log("✅ Matched /api/upload-image route");
+
+    const u = await requireUser(request, env);
+    console.log("👤 requireUser result:", u);
+
+    if (!u) {
+      console.warn("❌ Unauthorized user");
+      return unauthorized();
+    }
+
+    if (!(u.role === 'admin' || u.role === 'instructor')) {
+      console.warn("❌ Forbidden role:", u.role);
+      return forbidden();
+    }
+
+    const ct = request.headers.get('content-type') || '';
+    console.log("📦 Content-Type:", ct);
+
+    if (!ct.includes('multipart/form-data')) {
+      console.error("❌ Invalid content-type");
+      return badRequest('Expected multipart/form-data');
+    }
+
+    console.log("📥 Parsing formData...");
+    const form = await request.formData();
+
+    console.log("📦 formData entries:");
+    for (const [key, value] of form.entries()) {
+      console.log(`   ${key}:`, value);
+    }
+
+    const overwrite = String(form.get('overwrite') || '').toLowerCase() === 'true';
+    console.log("♻️ overwrite =", overwrite);
+
+    const file = form.get('image');
+    console.log("📄 file object:", file);
+
+    if (!(file instanceof File)) {
+      console.error("❌ No valid file found in formData");
+      return badRequest('No image uploaded');
+    }
+
+    console.log("📄 file.name:", file.name);
+    console.log("📄 file.type:", file.type);
+    console.log("📄 file.size:", file.size);
+
+    if (!(file.type || '').startsWith('image/')) {
+      console.error("❌ File is not an image:", file.type);
+      return badRequest('Uploaded file must be an image');
+    }
+
+    // 🔍 Check current DB state BEFORE any changes
+    const countBeforeRes = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM media_asset
+      WHERE r2_key LIKE 'slider/%'
+    `).first<{ count: number }>();
+
+    const countBefore = Number(countBeforeRes?.count || 0);
+    console.log("📊 Current slider image count BEFORE:", countBefore);
+
+    if (overwrite) {
+      console.log("♻️ Overwrite requested → deleting existing slider images");
+
+      const existing = await env.DB.prepare(`
+        SELECT id, r2_key
+        FROM media_asset
+        WHERE r2_key LIKE 'slider/%'
+      `).all();
+
+      const rows = existing.results || [];
+      console.log("🗑️ Found existing images:", rows.length);
+
+      for (const row of rows as Array<{ id: number; r2_key: string }>) {
+        if (row.r2_key) {
+          try {
+            console.log("🗑️ Deleting R2 object:", row.r2_key);
+            await env.R2.delete(row.r2_key);
+          } catch (err) {
+            console.error("❌ Failed deleting R2 object:", row.r2_key, err);
+          }
+        }
       }
 
-      const form = await request.formData();
-      const file = form.get('image');
-      if (!(file instanceof File)) return badRequest('No image uploaded');
+      console.log("🗑️ Deleting DB records...");
+      await env.DB.prepare(`
+        DELETE FROM media_asset
+        WHERE r2_key LIKE 'slider/%'
+      `).run();
 
-      if (!(file.type || '').startsWith('image/')) {
-        return badRequest('Uploaded file must be an image');
-      }
+      console.log("✅ Existing slider images deleted");
 
-      const original = file.name || 'image';
-      const safeBase = original.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
-      const key = `slider/${Date.now()}_${crypto.randomUUID()}_${safeBase}`;
+      // 🔍 Verify deletion
+      const countAfterDeleteRes = await env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM media_asset
+        WHERE r2_key LIKE 'slider/%'
+      `).first<{ count: number }>();
 
+      const countAfterDelete = Number(countAfterDeleteRes?.count || 0);
+      console.log("📊 Count AFTER delete:", countAfterDelete);
+    }
+
+    const original = file.name || 'image';
+    const safeBase = original.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+
+    const key = `slider/${Date.now()}_${crypto.randomUUID()}_${safeBase}`;
+    console.log("📤 Generated R2 key:", key);
+
+    try {
+      console.log("📤 Uploading to R2...");
       await env.R2.put(key, await file.arrayBuffer(), {
         httpMetadata: { contentType: file.type || 'application/octet-stream' }
       });
+      console.log("✅ R2 upload SUCCESS");
+    } catch (err) {
+      console.error("❌ R2 upload FAILED:", err);
+      return json({ ok: false, error: "R2 upload failed" }, 500);
+    }
 
-      const res = await env.DB.prepare(
+    let res;
+    try {
+      console.log("🗄️ Inserting DB record...");
+      res = await env.DB.prepare(
         'INSERT INTO media_asset (r2_key, original_name, mimetype, uploaded_by, created_at) VALUES (?, ?, ?, ?, ?)'
       ).bind(
         key,
@@ -1361,14 +3103,35 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
         isoNow()
       ).run();
 
-      const id = Number(res.meta.last_row_id);
-
-      return json({
-        ok: true,
-        id,
-        url: `/api/media/${id}`
-      });
+      console.log("✅ DB insert SUCCESS:", res);
+    } catch (err) {
+      console.error("❌ DB insert FAILED:", err);
+      return json({ ok: false, error: "DB insert failed" }, 500);
     }
+
+    const id = Number(res.meta.last_row_id);
+    console.log("📌 New media_asset id:", id);
+
+    // 🔍 Final count check
+    const countFinalRes = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM media_asset
+      WHERE r2_key LIKE 'slider/%'
+    `).first<{ count: number }>();
+
+    const countFinal = Number(countFinalRes?.count || 0);
+    console.log("📊 FINAL slider image count:", countFinal);
+
+    console.log("✅ handleMedia COMPLETE");
+
+    return json({
+      ok: true,
+      id,
+      url: `/api/media/${id}`
+    });
+  }
+
+  console.log("⚠️ handleMedia: route not matched");
 
     // List slider images
     if (request.method === 'GET' && pathname === '/api/slider-images') {
@@ -1478,6 +3241,121 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
 
     return null;
   }
+
+async function handleSmsGateway(request: Request, env: Env, pathname: string) {
+  if (request.method === 'POST' && pathname === '/api/admin/sms/messages') {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Expected JSON');
+    const recipient = validE164Phone(body.recipient);
+    const message = String(body.message || '').trim();
+    if (!recipient) return badRequest('Recipient must use E.164 format');
+    if (!message || message.length > 480) return badRequest('Message must contain 1 to 480 characters');
+
+    const now = isoNow();
+    const result = await env.DB.prepare(`
+      INSERT INTO sms_outbox
+        (recipient,message,status,attempt_count,available_at,created_at,updated_at,created_by)
+      VALUES (?,?, 'queued',0,?,?,?,?)
+    `).bind(
+      recipient,
+      message,
+      body.available_at ? toIso(body.available_at) || now : now,
+      now,
+      now,
+      Number(admin.user!.id),
+    ).run();
+    return json({ ok: true, id: Number(result.meta.last_row_id), status: 'queued' }, 201);
+  }
+
+  const adminMessageMatch = pathname.match(/^\/api\/admin\/sms\/messages\/(\d+)$/);
+  if (request.method === 'GET' && adminMessageMatch) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const row = await env.DB.prepare(`
+      SELECT id,recipient,status,attempt_count,available_at,claimed_by,
+             lease_expires_at,sent_at,delivered_at,last_error,created_at,updated_at
+      FROM sms_outbox WHERE id = ?
+    `).bind(Number(adminMessageMatch[1])).first();
+    return row ? json(row) : notFound();
+  }
+
+  if (request.method === 'POST' && pathname === '/api/sms-gateway/claim') {
+    const authError = await requireSmsGateway(request, env);
+    if (authError) return authError;
+    const body = await readJson(request) as any;
+    const gatewayId = String(body?.gateway_id || '').trim().slice(0, 80);
+    if (!/^[A-Za-z0-9._-]{3,80}$/.test(gatewayId)) return badRequest('Invalid gateway_id');
+
+    const now = isoNow();
+    await env.DB.prepare(`
+      UPDATE sms_outbox
+      SET status = 'queued', claim_token = NULL, claimed_by = NULL,
+          lease_expires_at = NULL, updated_at = ?
+      WHERE status = 'claimed' AND lease_expires_at < ?
+    `).bind(now, now).run();
+
+    const candidate = await env.DB.prepare(`
+      SELECT id FROM sms_outbox
+      WHERE status = 'queued' AND available_at <= ? AND attempt_count < 5
+      ORDER BY id ASC LIMIT 1
+    `).bind(now).first() as any;
+    if (!candidate) return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+
+    const claimToken = crypto.randomUUID();
+    const leaseExpiresAt = new Date(Date.now() + 90_000).toISOString();
+    const claimed = await env.DB.prepare(`
+      UPDATE sms_outbox
+      SET status = 'claimed', claim_token = ?, claimed_by = ?,
+          lease_expires_at = ?, attempt_count = attempt_count + 1, updated_at = ?
+      WHERE id = ? AND status = 'queued'
+    `).bind(claimToken, gatewayId, leaseExpiresAt, now, Number(candidate.id)).run();
+    if (!claimed.meta.changes) {
+      return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+    }
+
+    const message = await env.DB.prepare(`
+      SELECT id,recipient,message,claim_token,lease_expires_at
+      FROM sms_outbox WHERE id = ?
+    `).bind(Number(candidate.id)).first();
+    return json({ message });
+  }
+
+  const gatewayStatusMatch = pathname.match(/^\/api\/sms-gateway\/messages\/(\d+)\/status$/);
+  if (request.method === 'POST' && gatewayStatusMatch) {
+    const authError = await requireSmsGateway(request, env);
+    if (authError) return authError;
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Expected JSON');
+    const claimToken = String(body.claim_token || '');
+    const status = String(body.status || '');
+    if (!['sent', 'delivered', 'failed'].includes(status)) return badRequest('Invalid status');
+    const now = isoNow();
+    const error = status === 'failed' ? String(body.error || 'SMS send failed').slice(0, 300) : null;
+    const result = await env.DB.prepare(`
+      UPDATE sms_outbox SET
+        status = ?,
+        sent_at = CASE WHEN ? IN ('sent','delivered') THEN COALESCE(sent_at, ?) ELSE sent_at END,
+        delivered_at = CASE WHEN ? = 'delivered' THEN ? ELSE delivered_at END,
+        last_error = ?,
+        claim_token = CASE WHEN ? = 'sent' THEN claim_token ELSE NULL END,
+        lease_expires_at = NULL,
+        updated_at = ?
+      WHERE id = ? AND claim_token = ? AND (
+        status = 'claimed'
+        OR (status = 'sent' AND ? IN ('sent','delivered','failed'))
+      )
+    `).bind(
+      status, status, now, status, now, error, status, now,
+      Number(gatewayStatusMatch[1]), claimToken, status,
+    ).run();
+    if (!result.meta.changes) return json({ error: 'Claim is missing or expired' }, 409);
+    return json({ ok: true, status });
+  }
+
+  return null;
+}
 // -------- PDF generation (pdf-lib) --------
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 
@@ -1535,12 +3413,17 @@ async function generateReceiptPdf(d: {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     await ensureDefaultAdmin(env);
+    await ensureApprovalSchema(env);
 
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // The milk giveaway form contains private registration fields and is
-    // available only to registered users with a valid session.
+    console.log("🌍 TOP ROUTER request");
+    console.log("   method:", request.method);
+    console.log("   pathname:", pathname);
+    console.log("   full URL:", url.toString());
+    console.log("   search:", url.search);
+
     if (
       (request.method === 'GET' || request.method === 'HEAD') &&
       (pathname === '/milk-giveaway' || pathname === '/milk-giveaway.html')
@@ -1558,29 +3441,50 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    // API routes
-    if (pathname.startsWith('/api') || pathname.startsWith('/uploads/')) {
+    // API routes + special course page route
+    if (
+      pathname.startsWith('/api') ||
+      pathname.startsWith('/uploads/') ||
+      pathname === '/course' ||
+      pathname === '/courseog' ||
+      pathname === '/eventog' ||
+      pathname === '/workshopog'
+    ) {
+      console.log("➡️ Entering handler pipeline for pathname:", pathname);
+
       const handlers = [
         handleAuth,
+        handleAgreementDocs,
         handleMe,
         handleMilkGiveaway,
+        handleSettings,
+        handleYoutubeSlider,
         handleEvents,
         handleCourses,
+        handleWorkshops,
         handleForum,
         handleDonations,
         handleAdmin,
+        handleSmsGateway,
         handleMedia,
       ];
 
       for (const h of handlers) {
+        console.log("🧪 Trying handler:", h.name, "for pathname:", pathname);
+
         const resp = await h(request, env, pathname as any);
-        if (resp) return resp;
+
+        if (resp) {
+          console.log("✅ Handler matched:", h.name, "for pathname:", pathname);
+          return resp;
+        }
       }
 
+      console.error("❌ No handler matched pathname in handler pipeline:", pathname);
       return notFound();
     }
 
-    // Static assets + pages
+    console.log("📦 Falling through to ASSETS for pathname:", pathname);
     return env.ASSETS.fetch(request);
   },
 };

@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
   <style>
     #events-list .event-summary {
       display: grid;
-      grid-template-columns: 120px minmax(0, 1fr);
+      grid-template-columns: 240px minmax(0, 1fr);
       gap: 18px;
       align-items: center;
       width: 100%;
@@ -17,8 +17,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 120px;
-      height: 96px;
+      width: 240px;
+      height: 192px;
       overflow: hidden;
       border: 1px solid rgba(91, 45, 109, 0.14);
       border-radius: 12px;
@@ -28,7 +28,8 @@
       display: block;
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
+      object-position: center;
     }
     #events-list .event-thumbnail-placeholder {
       flex-direction: column;
@@ -54,12 +55,12 @@
     }
     @media (max-width: 520px) {
       #events-list .event-summary {
-        grid-template-columns: 84px minmax(0, 1fr);
+        grid-template-columns: 168px minmax(0, 1fr);
         gap: 12px;
       }
       #events-list .event-thumbnail {
-        width: 84px;
-        height: 72px;
+        width: 168px;
+        height: 144px;
       }
     }
   </style>
@@ -133,6 +134,10 @@
 
         <a href="/about" class="nav-btn">
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
+        </a>
+
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
         </a>
 
         <div id="auth-links" class="auth-links"></div>

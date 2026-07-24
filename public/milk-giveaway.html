@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#6d2140">
   <title>Registro para entrega de leche | Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724">
   <link rel="stylesheet" href="/static/css/milk-giveaway.css">
 </head>
-<body class="milk-page">
+<body class="milk-page" data-page-type="user">
   <header class="milk-header">
     <a class="milk-brand brand" href="/" aria-label="Ir al inicio de Tu Mejor Versión">
       <img src="/static/images/TuMejorVersionBird.png"
@@ -21,8 +22,37 @@
            alt=""
            class="brand-img">
     </a>
-    <button class="milk-logout" id="logoutButton" type="button">Cerrar sesión</button>
   </header>
+
+  <div class="nav-container">
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-label="Abrir menú">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav id="mobile-menu" class="mobile-menu">
+      <a href="/" class="nav-btn">
+        <span data-en="Home" data-es="Inicio">Inicio</span>
+      </a>
+      <a href="/courses" class="nav-btn">
+        <span data-en="Courses" data-es="Cursos">Cursos</span>
+      </a>
+      <a href="/events" class="nav-btn">
+        <span data-en="Events" data-es="Eventos">Eventos</span>
+      </a>
+      <a href="/donate" class="nav-btn">
+        <span data-en="Donate" data-es="Donar">Donar</span>
+      </a>
+      <a href="/forum" class="nav-btn">
+        <span data-en="Forum" data-es="Foro">Foro</span>
+      </a>
+      <a href="/about" class="nav-btn">
+        <span data-en="About Us" data-es="Sobre Nosotros">Sobre Nosotros</span>
+      </a>
+      <div id="auth-links" class="auth-links"></div>
+    </nav>
+  </div>
 
   <main class="milk-shell">
     <section class="milk-intro" aria-labelledby="pageTitle">
@@ -119,6 +149,8 @@
     </section>
   </main>
 
-  <script src="/static/js/milk-giveaway.js"></script>
+  <script src="/static/js/language-user-row.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/milk-giveaway.js?v=standard-menu-20260724"></script>
 </body>
 </html>

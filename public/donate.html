@@ -4,48 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
-  <style>
-    .donate-page {
-      padding-top: 18px;
-      padding-bottom: 40px;
-      max-width: 720px;
-    }
-    .zelle-card {
-      margin: 0 auto 28px;
-      padding: clamp(18px, 4vw, 28px);
-      border: 1px solid rgba(91, 45, 109, 0.14);
-      border-radius: 22px;
-      background: rgba(255, 255, 255, 0.86);
-      box-shadow: 0 12px 32px rgba(74, 35, 90, 0.1);
-      text-align: center;
-    }
-    .zelle-card h2 {
-      margin-top: 0;
-      margin-bottom: 8px;
-    }
-    .zelle-card p {
-      margin-top: 0;
-    }
-    .zelle-image {
-      display: block;
-      width: 100%;
-      max-width: 440px;
-      height: auto;
-      margin: 18px auto 0;
-      border-radius: 14px;
-      box-shadow: 0 8px 22px rgba(48, 29, 54, 0.14);
-    }
-    .donation-form-card {
-      padding: clamp(20px, 4vw, 30px);
-      border-radius: 22px;
-    }
-    .donation-form-card input:not([type="checkbox"]) {
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
 </head>
 <body>
   <header class="top">
@@ -104,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -118,43 +71,112 @@
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
         </a>
 
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
-    </div>
+    </div>>
   </header>
-  <main class="container donate-page">
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
+  <main class="container" style="padding-top:18px;max-width:640px;">
   <h1 class="nav-gold">Donate</h1>
-  <section class="zelle-card">
-    <h2>Donate with Zelle</h2>
-    <p>Scan the QR code below with your phone to send your donation.</p>
-    <img
-      class="zelle-image"
-      src="/static/images/Zelle.jpg"
-      alt="Tu Mejor Versión Zelle donation QR code"
-    >
-  </section>
-  <section class="donation-form-card card">
-    <form id="f">
-      <label>Name<br><input name="donor_name" required></label><br><br>
-      <label>Email<br><input name="donor_email" type="email" required></label><br><br>
-      <label>Amount (USD)<br><input name="amount" type="number" step="0.01" min="1" required></label><br><br>
-      <label>Campaign (optional)<br><input name="campaign"></label><br><br>
-      <label><input type="checkbox" name="restricted"> Restricted</label><br><br>
-      <button type="submit">Submit Donation</button>
-    </form>
-    <p id="msg"></p>
-  </section>
+  <div id="donate-image-wrap" style="margin:12px 0 18px; display:none;">
+    <img id="donate-image" alt="Donate" style="max-width:100%; border-radius:10px; display:block;">
+  </div>
+  <form id="donate-image-admin" class="form" style="display:none; margin-bottom:18px;">
+    <label>Donation Page Image<br>
+      <input type="file" name="image" accept="image/*">
+    </label>
+    <button type="submit">Save Image</button>
+    <span id="donate-image-status" class="muted"></span>
+  </form>
+  <form id="f">
+    <label>Name<br><input name="donor_name" required></label><br><br>
+    <label>Email<br><input name="donor_email" type="email" required></label><br><br>
+    <label>Amount (USD)<br><input name="amount" type="number" step="0.01" min="1" required></label><br><br>
+    <label>Campaign (optional)<br><input name="campaign"></label><br><br>
+    <label><input type="checkbox" name="restricted"> Restricted</label><br><br>
+    <button type="submit">Submit Donation</button>
+  </form>
+  <p id="msg"></p>
   <p><a href="/">Home</a></p>
   </main>
   <script src="/static/js/app.js"></script>
   <script>
+  function imageSrc(value){
+    if(!value) return '';
+    if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+    return `/static/images/${value}`;
+  }
+
   async function api(path, opts={}){
     const r=await fetch(path,{credentials:'include', headers:{'content-type':'application/json', ...(opts.headers||{})}, ...opts});
     const j=await r.json().catch(()=>null);
     if(!r.ok) throw new Error(j?.error || 'Failed');
     return j;
   }
+
+  async function loadDonateImage(){
+    const data = await api('/api/settings/donate-image').catch(() => ({ image_url: '' }));
+    const wrap = document.getElementById('donate-image-wrap');
+    const img = document.getElementById('donate-image');
+    if (data.image_url) {
+      img.src = imageSrc(data.image_url);
+      wrap.style.display = 'block';
+    } else {
+      wrap.style.display = 'none';
+    }
+  }
+
+  (async()=>{
+    await loadDonateImage();
+    const adminForm = document.getElementById('donate-image-admin');
+    const status = document.getElementById('donate-image-status');
+    const me = await api('/api/me').catch(() => null);
+    if (me && me.role === 'admin') {
+      adminForm.style.display = 'block';
+      adminForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const file = adminForm.image?.files?.[0];
+        if (!file) {
+          status.textContent = 'Choose an image first.';
+          return;
+        }
+        try {
+          status.textContent = 'Uploading...';
+          const imageForm = new FormData();
+          imageForm.append('image', file);
+          const uploadRes = await fetch('/api/upload-image', {
+            method: 'POST',
+            credentials: 'include',
+            body: imageForm
+          });
+          const uploadData = await uploadRes.json().catch(() => null);
+          if (!uploadRes.ok) throw new Error((uploadData && uploadData.error) || 'Image upload failed');
+
+          await api('/api/settings/donate-image', {
+            method: 'PATCH',
+            body: JSON.stringify({ image_url: uploadData.url || '' })
+          });
+          adminForm.reset();
+          status.textContent = 'Saved.';
+          await loadDonateImage();
+        } catch (err) {
+          status.textContent = err.message || 'Failed to save image.';
+        }
+      });
+    }
+  })();
+
   document.getElementById('f').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const fd=new FormData(e.target);

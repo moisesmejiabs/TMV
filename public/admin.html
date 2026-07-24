@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
 </head>
 <body data-page-type="admin">
   <header class="top">
@@ -63,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -77,33 +71,111 @@
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
         </a>
 
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
     </div>>
   </header>
-    <body>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
+    <main class="container" style="padding-top:18px;">
       <h1 class="nav-gold"><span data-en="Admin" data-es="Admin"></span></h1>
-      
-      <p><a href="/">Home</a></p>
-      <section>
-        <h2>Users</h2>
-        <div id="users"></div>
+
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Milk Registration" data-es="Registro de Leche"></span>
+        </h1>
+        <p><a class="btn" href="/admin-milk-registrations">View registrations and download CSV</a></p>
       </section>
-      <section>
-        <h2>Accounting</h2>
-        <p><a href="/api/admin/accounting.csv" target="_blank">Download donations export (CSV)</a></p>
-      </section>
-      <section>
-        <h2>Baby Formula Giveaway</h2>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Course, Workshop, and Event Management" data-es="Administración de Cursos, Talleres y Eventos"></span>
+        </h1>
         <p>
-          <a class="btn" href="/admin-milk-registrations">
-            View registrations and download CSV
-          </a>
+          <a class="btn" href="/create-workshop.html">Create Workshop</a>
+          <a class="btn" href="/workshop_delete.html">Archive Workshops</a>
+          <a class="btn" href="/create-course.html">Create Course</a>
+          <a class="btn" href="/course_delete.html">Archive Courses</a>
+          <a class="btn" href="/create-event.html">Create Event</a>
+          <a class="btn" href="/event_delete.html">Archive Events</a>
         </p>
       </section>
-    </body>  
-</main>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Users" data-es="Usuarios"></span>
+        </h1>
+        <div id="users"></div>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Agreement Documents" data-es="Documentos de Acuerdo"></span>
+        </h1>
+        <div id="agreement-docs"></div>
+        <form id="agreement-form" enctype="multipart/form-data">
+          <label>Title<br><input name="title" required></label><br><br>
+          <label>Author<br><input name="author" required></label><br><br>
+          <label>PDF File<br><input type="file" name="pdf" accept="application/pdf" required></label><br><br>
+          <button type="submit">Upload Agreement Document</button>
+        </form>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Document Acknowledgements" data-es="Confirmaciones de Documentos"></span>
+        </h1>
+        <div id="acknowledgement-status"></div>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Course Feedback Approval" data-es="Aprobación de Comentarios de Cursos"></span>
+        </h1>
+        <div id="course-feedback-admin"></div>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Event Feedback Approval" data-es="Aprobación de Comentarios de Eventos"></span>
+        </h1>
+        <div id="event-feedback-admin"></div>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Workshop Feedback Approval" data-es="Aprobación de Comentarios de Talleres"></span>
+        </h1>
+        <div id="workshop-feedback-admin"></div>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="YouTube Slider" data-es="Carrusel de YouTube"></span>
+        </h1>
+        <div id="youtube-slider-admin"></div>
+        <form id="youtube-slider-form">
+          <label>Title<br><input name="title" required></label><br><br>
+          <label>YouTube URL<br><input name="youtube_url" required></label><br><br>
+          <label>Sort Order<br><input name="sort_order" type="number" min="0" value="0"></label><br><br>
+          <button type="submit">Add Video</button>
+        </form>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Testimonials Approval" data-es="Aprobación de Testimonios"></span>
+        </h1>
+        <div id="testimonials-admin"></div>
+      </section>
+      <section class="section-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Accounting" data-es="Contabilidad"></span>
+        </h1>
+        <p><a href="/api/admin/accounting.csv" target="_blank">Download donations export (CSV)</a></p>
+      </section>
+    </main>
 <script src="/static/js/app.js"></script>
 <script>
 async function api(path, opts={}){
@@ -119,8 +191,16 @@ async function api(path, opts={}){
     const me = await api('/api/me');
     console.log("ADMIN PAGE: /api/me =", me);
 
+    if (!me) {
+      console.warn("ADMIN PAGE: not logged in → redirecting to login");
+      window.location.href = "/login.html";
+      return;
+    }
+
     if (me.role !== 'admin') {
-      throw new Error('Admin only');
+      console.warn("ADMIN PAGE: non-admin user → redirecting to profile");
+      window.location.href = "/adminuser.html";
+      return;
     }
 
     const users = await api('/api/admin/users');
@@ -138,7 +218,7 @@ async function api(path, opts={}){
         const isAdmin = u.role === 'admin';
         return `
           <li>
-            ${u.id} — ${u.name} (${u.email}) [${u.role}]
+            ${u.id} — ${u.name} (${u.email}) [${u.role}] accepted docs: ${u.docs_accepted || 0}
             <button
               data-id="${u.id}"
               data-name="${escapeHtml(u.name || '')}"
@@ -214,6 +294,124 @@ async function api(path, opts={}){
       });
     });
 
+    const agreementDocsEl = document.getElementById('agreement-docs');
+    const agreementForm = document.getElementById('agreement-form');
+
+    async function loadAgreementDocs() {
+      try {
+        const docs = await api('/api/admin/agreement-docs');
+        if (!docs.length) {
+          agreementDocsEl.innerHTML = '<p>No agreement documents uploaded yet.</p>';
+          return;
+        }
+
+        agreementDocsEl.innerHTML = `
+          <ul>
+            ${docs.map((doc) => `
+              <li style="margin-bottom:12px;">
+                <strong>${escapeHtml(doc.title)}</strong> by ${escapeHtml(doc.author)}
+                <a href="/api/agreement-docs/${doc.id}/pdf" target="_blank">Download</a>
+                <button data-id="${doc.id}" class="delete-agreement" type="button">Delete</button>
+              </li>
+            `).join('')}
+          </ul>
+        `;
+
+        document.querySelectorAll('.delete-agreement').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-id');
+            if (!confirm('Delete this agreement document?')) return;
+            try {
+              const result = await api(`/api/admin/agreement-docs/${id}`, { method: 'DELETE' });
+              console.log('Agreement delete result', result);
+              await loadAgreementDocs();
+            } catch (err) {
+              console.error('Agreement delete failed', err);
+              alert(`Delete failed: ${err.message}`);
+            }
+          });
+        });
+      } catch (err) {
+        agreementDocsEl.innerHTML = `<p>Error loading agreement documents: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    if (agreementForm) {
+      agreementForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        try {
+          const resp = await fetch('/api/admin/agreement-docs', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+          });
+          const body = await resp.json().catch(() => null);
+          if (!resp.ok) throw new Error(body?.error || 'Upload failed');
+          agreementForm.reset();
+          await loadAgreementDocs();
+          await loadAcknowledgementStatus();
+        } catch (err) {
+          alert(`Upload failed: ${err.message}`);
+        }
+      });
+    }
+
+    async function loadAcknowledgementStatus() {
+      try {
+        const ackEl = document.getElementById('acknowledgement-status');
+        if (!ackEl) return;
+        const docs = await api('/api/admin/agreement-docs/acknowledgements');
+        if (!docs.length) {
+          ackEl.innerHTML = '<p>No documents or acknowledgements available.</p>';
+          return;
+        }
+
+        ackEl.innerHTML = docs.map((doc) => `
+          <div style="border:1px solid #ddd; padding:12px; margin-bottom:16px;">
+            <h3 style="margin:0 0 8px;">${escapeHtml(doc.title)} <small style="font-size:0.9em; color:#555;">by ${escapeHtml(doc.author)}</small></h3>
+            <p style="margin:0 0 12px;">Accepted: ${doc.accepted_users.length} · Pending: ${doc.pending_users.length}</p>
+            <div style="margin-bottom:10px;">
+              <strong>Accepted users</strong>
+              ${doc.accepted_users.length ? `<ul>${doc.accepted_users.map((user) => `
+                <li style="margin-bottom:6px;">
+                  ${escapeHtml(user.name)} (${escapeHtml(user.email)}) — accepted at ${escapeHtml(user.accepted_at)}
+                  <button type="button" data-doc-id="${doc.id}" data-user-id="${user.id}" class="revoke-ack">Resend request</button>
+                </li>
+              `).join('')}</ul>` : '<p>No accepted users yet.</p>'}
+            </div>
+            <div>
+              <strong>Pending users</strong>
+              ${doc.pending_users.length ? `<ul>${doc.pending_users.map((user) => `
+                <li>${escapeHtml(user.name)} (${escapeHtml(user.email)})</li>
+              `).join('')}</ul>` : '<p>No pending users.</p>'}
+            </div>
+          </div>
+        `).join('');
+
+        document.querySelectorAll('.revoke-ack').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const docId = btn.getAttribute('data-doc-id');
+            const userId = btn.getAttribute('data-user-id');
+            if (!confirm('Resend request for this user by revoking acknowledgement?')) return;
+            try {
+              await api(`/api/admin/agreement-docs/${docId}/acknowledgements/${userId}`, { method: 'DELETE' });
+              await loadAgreementDocs();
+              await loadAcknowledgementStatus();
+            } catch (err) {
+              alert(`Failed to resend request: ${err.message}`);
+            }
+          });
+        });
+      } catch (err) {
+        const ackEl = document.getElementById('acknowledgement-status');
+        if (ackEl) ackEl.innerHTML = `<p>Error loading acknowledgements: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    await loadAgreementDocs();
+    await loadAcknowledgementStatus();
+
   } catch (err) {
     console.error("ADMIN PAGE FAILED:", err);
     alert(err.message || 'Failed to load admin page');
@@ -227,6 +425,371 @@ async function api(path, opts={}){
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
   }
+
+  // Load and display course feedback for approval
+  async function loadCourseFeedbackAdmin() {
+    try {
+      const items = await api('/api/admin/course-feedback');
+      const container = document.getElementById('course-feedback-admin');
+      
+      if (!items.length) {
+        container.innerHTML = '<p>No feedback.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(f => `
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <strong>${escapeHtml(f.course_name || 'Unknown Course')}</strong><br>
+          <em>${escapeHtml(f.name || 'User')}</em> - ${new Date(f.created_at).toLocaleDateString()}
+          <p style="margin-top: 8px;">${escapeHtml(f.feedback)}</p>
+          <small style="color: #666;">Status: ${f.approved ? '✅ Approved' : '❌ Pending'}</small>
+          <div style="margin-top: 8px;">
+            ${f.approved === 0 ? `<button data-id="${f.id}" class="approve-course-feedback-btn" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Approve</button>` : `<button data-id="${f.id}" class="unapprove-course-feedback-btn" style="background-color: #f44336; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Remove Approval</button>`}
+            <button data-id="${f.id}" class="delete-course-feedback-btn" style="background-color: #ff9800; color: white; padding: 5px 10px; border: none; cursor: pointer;">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.approve-course-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/course-feedback/${feedbackId}/approve`, { method: 'PATCH' });
+            loadCourseFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to approve: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.unapprove-course-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Remove approval for this feedback?')) return;
+          try {
+            await api(`/api/course-feedback/${feedbackId}/approve`, { method: 'PATCH', body: JSON.stringify({ approved: 0 }) });
+            loadCourseFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to remove approval: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-course-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Delete this feedback?')) return;
+          try {
+            await api(`/api/course-feedback/${feedbackId}`, { method: 'DELETE' });
+            loadCourseFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to delete: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Error loading course feedback:', err);
+      document.getElementById('course-feedback-admin').innerHTML = '<p>Error loading feedback.</p>';
+    }
+  }
+
+  // Load and display event feedback for approval
+  async function loadEventFeedbackAdmin() {
+    try {
+      const items = await api('/api/admin/event-feedback');
+      const container = document.getElementById('event-feedback-admin');
+      
+      if (!items.length) {
+        container.innerHTML = '<p>No feedback.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(f => `
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <strong>${escapeHtml(f.event_name || 'Unknown Event')}</strong><br>
+          <em>${escapeHtml(f.name || 'User')}</em> - ${new Date(f.created_at).toLocaleDateString()}
+          <p style="margin-top: 8px;">${escapeHtml(f.feedback)}</p>
+          <small style="color: #666;">Status: ${f.approved ? '✅ Approved' : '❌ Pending'}</small>
+          <div style="margin-top: 8px;">
+            ${f.approved === 0 ? `<button data-id="${f.id}" class="approve-event-feedback-btn" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Approve</button>` : `<button data-id="${f.id}" class="unapprove-event-feedback-btn" style="background-color: #f44336; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Remove Approval</button>`}
+            <button data-id="${f.id}" class="delete-event-feedback-btn" style="background-color: #ff9800; color: white; padding: 5px 10px; border: none; cursor: pointer;">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.approve-event-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/event-feedback/${feedbackId}/approve`, { method: 'PATCH' });
+            loadEventFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to approve: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.unapprove-event-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Remove approval for this feedback?')) return;
+          try {
+            await api(`/api/event-feedback/${feedbackId}/approve`, { method: 'PATCH', body: JSON.stringify({ approved: 0 }) });
+            loadEventFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to remove approval: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-event-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Delete this feedback?')) return;
+          try {
+            await api(`/api/event-feedback/${feedbackId}`, { method: 'DELETE' });
+            loadEventFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to delete: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Error loading event feedback:', err);
+      document.getElementById('event-feedback-admin').innerHTML = '<p>Error loading feedback.</p>';
+    }
+  }
+
+  // Load and display testimonials for approval
+  async function loadWorkshopFeedbackAdmin() {
+    try {
+      const items = await api('/api/admin/workshop-feedback');
+      const container = document.getElementById('workshop-feedback-admin');
+
+      if (!items.length) {
+        container.innerHTML = '<p>No feedback.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(f => `
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <strong>${escapeHtml(f.workshop_name || 'Unknown Workshop')}</strong><br>
+          <em>${escapeHtml(f.name || 'User')}</em> - ${new Date(f.created_at).toLocaleDateString()}
+          <p style="margin-top: 8px;">${escapeHtml(f.feedback)}</p>
+          <small style="color: #666;">Status: ${f.approved ? 'Approved' : 'Pending'}</small>
+          <div style="margin-top: 8px;">
+            ${f.approved === 0 ? `<button data-id="${f.id}" class="approve-workshop-feedback-btn" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Approve</button>` : `<button data-id="${f.id}" class="unapprove-workshop-feedback-btn" style="background-color: #f44336; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Remove Approval</button>`}
+            <button data-id="${f.id}" class="delete-workshop-feedback-btn" style="background-color: #ff9800; color: white; padding: 5px 10px; border: none; cursor: pointer;">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.approve-workshop-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/workshop-feedback/${feedbackId}/approve`, { method: 'PATCH' });
+            loadWorkshopFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to approve: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.unapprove-workshop-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Remove approval for this feedback?')) return;
+          try {
+            await api(`/api/workshop-feedback/${feedbackId}/approve`, { method: 'PATCH', body: JSON.stringify({ approved: 0 }) });
+            loadWorkshopFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to remove approval: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-workshop-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const feedbackId = btn.getAttribute('data-id');
+          if (!confirm('Delete this feedback?')) return;
+          try {
+            await api(`/api/workshop-feedback/${feedbackId}`, { method: 'DELETE' });
+            loadWorkshopFeedbackAdmin();
+          } catch (err) {
+            alert('Failed to delete: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Error loading workshop feedback:', err);
+      document.getElementById('workshop-feedback-admin').innerHTML = '<p>Error loading feedback.</p>';
+    }
+  }
+
+  // Load and display testimonials for approval
+  async function loadYoutubeSliderAdmin() {
+    const container = document.getElementById('youtube-slider-admin');
+    if (!container) return;
+
+    try {
+      const videos = await api('/api/youtube-slider');
+      if (!videos.length) {
+        container.innerHTML = '<p>No slider videos yet.</p>';
+        return;
+      }
+
+      container.innerHTML = `
+        <ul>
+          ${videos.map((video) => `
+            <li style="margin-bottom:10px;">
+              <strong>${escapeHtml(video.title || '')}</strong>
+              <a href="${escapeHtml(video.youtube_url || '')}" target="_blank" rel="noopener noreferrer">Open</a>
+              <button type="button" class="delete-youtube-slider-video" data-id="${video.id}">Delete</button>
+            </li>
+          `).join('')}
+        </ul>
+      `;
+
+      document.querySelectorAll('.delete-youtube-slider-video').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          if (!confirm('Delete this slider video?')) return;
+          try {
+            await api(`/api/admin/youtube-slider/${id}`, { method: 'DELETE' });
+            await loadYoutubeSliderAdmin();
+          } catch (err) {
+            alert('Failed to delete video: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      container.innerHTML = '<p>Error loading slider videos.</p>';
+    }
+  }
+
+  const youtubeSliderForm = document.getElementById('youtube-slider-form');
+  if (youtubeSliderForm) {
+    youtubeSliderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      try {
+        await api('/api/admin/youtube-slider', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: String(fd.get('title') || '').trim(),
+            youtube_url: String(fd.get('youtube_url') || '').trim(),
+            sort_order: Number(fd.get('sort_order') || 0)
+          })
+        });
+        e.target.reset();
+        await loadYoutubeSliderAdmin();
+      } catch (err) {
+        alert('Failed to add video: ' + err.message);
+      }
+    });
+  }
+
+  // Load and display testimonials for approval
+  async function loadTestimonialsAdmin() {
+    try {
+      const items = await api('/api/admin/testimonies');
+      const container = document.getElementById('testimonials-admin');
+      
+      if (!items.length) {
+        container.innerHTML = '<p>No testimonials.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(t => `
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <strong>${escapeHtml(t.name || 'Anonymous')}</strong> (${escapeHtml(t.email || '')}) - ${new Date(t.created_at).toLocaleDateString()}
+          ${t.testimony ? `<p style="margin-top: 8px; white-space: pre-wrap;"><strong>Text:</strong><br>${escapeHtml(t.testimony)}</p><small style="color: #666;">Status: ${t.testimony_approved ? '✅ Approved' : '❌ Pending'}</small>` : ''}
+          ${t.video_url ? `<p style="margin-top: 8px;"><strong>Video URL:</strong> <a href="${escapeHtml(t.video_url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t.video_url)}</a><br><small style="color: #666;">Status: ${t.video_approved ? '✅ Approved' : '❌ Pending'}</small></p>` : ''}
+          <div style="margin-top: 8px;">
+            ${t.testimony ? `
+              ${t.testimony_approved === 0 ? `<button data-id="${t.id}" data-field="testimony" class="approve-testimony-btn" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Approve Text</button>` : `<button data-id="${t.id}" data-field="testimony" class="unapprove-testimony-btn" style="background-color: #f44336; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Remove Approval (Text)</button>`}
+            ` : ''}
+            ${t.video_url ? `
+              ${t.video_approved === 0 ? `<button data-id="${t.id}" data-field="video" class="approve-video-btn" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Approve Video</button>` : `<button data-id="${t.id}" data-field="video" class="unapprove-video-btn" style="background-color: #f44336; color: white; padding: 5px 10px; border: none; cursor: pointer; margin-right: 5px;">Remove Approval (Video)</button>`}
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.approve-testimony-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/admin/testimonies/${userId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ testimony_approved: 1 })
+            });
+            loadTestimonialsAdmin();
+          } catch (err) {
+            alert('Failed to approve: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.unapprove-testimony-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = btn.getAttribute('data-id');
+          if (!confirm('Remove approval for this text testimony?')) return;
+          try {
+            await api(`/api/admin/testimonies/${userId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ testimony_approved: 0 })
+            });
+            loadTestimonialsAdmin();
+          } catch (err) {
+            alert('Failed to remove approval: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.approve-video-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = btn.getAttribute('data-id');
+          try {
+            await api(`/api/admin/testimonies/${userId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ video_approved: 1 })
+            });
+            loadTestimonialsAdmin();
+          } catch (err) {
+            alert('Failed to approve video: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('.unapprove-video-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = btn.getAttribute('data-id');
+          if (!confirm('Remove approval for this video testimony?')) return;
+          try {
+            await api(`/api/admin/testimonies/${userId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ video_approved: 0 })
+            });
+            loadTestimonialsAdmin();
+          } catch (err) {
+            alert('Failed to remove approval: ' + err.message);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Error loading testimonials:', err);
+      document.getElementById('testimonials-admin').innerHTML = '<p>Error loading testimonials.</p>';
+    }
+  }
+
+  // Load all approval panels
+  loadCourseFeedbackAdmin();
+  loadEventFeedbackAdmin();
+  loadWorkshopFeedbackAdmin();
+  loadYoutubeSliderAdmin();
+  loadTestimonialsAdmin();
 })();
 </script>
 </body></html>

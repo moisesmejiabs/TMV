@@ -106,9 +106,4 @@ document.getElementById("anotherRegistration").addEventListener("click", () => {
   document.getElementById("fullName").focus();
 });
 
-document.getElementById("logoutButton").addEventListener("click", async () => {
-  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-  window.location.replace("/login.html");
-});
-
 verifySession();

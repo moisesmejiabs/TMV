@@ -63,7 +63,7 @@
   font-size: clamp(2rem, 4vw, 3.35rem);
   line-height: 0.92;
   letter-spacing: 0.1em;
-  text-shadow: 0 8px 20px rgba(21, 5, 13, 0.34);
+  text-shadow: none;
 }
 
 .milk-admin-heading > p {
@@ -320,4 +320,10 @@
   }
 
   .milk-admin-actions > * { flex: 1; }
+}
+
+/* Sitewide local readability review: milk-admin content minimum. */
+.milk-admin-page main :where(p, li, label, input, select, textarea, button, td, th, small, a){
+  font-size: 19px;
+  line-height: 1.6;
 }

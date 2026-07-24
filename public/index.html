@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
+  <link rel="stylesheet" href="/static/css/homepage-readability-v3.css" />
   <style>
     .index-tmv-header {
       min-height: 180px;
@@ -12,77 +13,35 @@
       padding: 28px clamp(20px, 4vw, 56px);
       display: grid;
       place-items: center;
-      background:
-        radial-gradient(circle at 50% 44%, #cf0b88 0%, #b30773 34%, #861447 72%, #5b142f 100%);
+      background: radial-gradient(circle at 50% 44%, #cf0b88 0%, #b30773 34%, #861447 72%, #5b142f 100%);
       border-bottom: 1px solid rgba(246, 234, 223, 0.34);
       box-shadow: 0 14px 36px rgba(73, 15, 42, 0.22);
     }
-
-    .index-tmv-brand {
-      gap: clamp(18px, 3vw, 38px);
-      color: inherit;
-      text-decoration: none;
-    }
-
+    .index-tmv-brand { gap: clamp(18px, 3vw, 38px); color: inherit; text-decoration: none; }
     .index-tmv-brand .brand-img {
       width: auto;
       height: clamp(82px, 9vw, 126px);
       border-radius: 0;
-      -webkit-mask-image: radial-gradient(ellipse 76% 72% at center, #000 55%, transparent 100%);
       mask-image: radial-gradient(ellipse 76% 72% at center, #000 55%, transparent 100%);
-      filter:
-        saturate(0.92)
-        drop-shadow(0 10px 16px rgba(62, 5, 35, 0.28))
-        drop-shadow(0 0 12px rgba(255, 239, 205, 0.2));
+      filter: saturate(.92) drop-shadow(0 10px 16px rgba(62,5,35,.28));
     }
-
-    .index-tmv-brand h1.nav-gold {
-      margin: 0;
-      font-size: clamp(2rem, 4vw, 3.35rem);
-      line-height: 0.92;
-      letter-spacing: 0.1em;
-      text-align: center;
-      text-shadow: 0 8px 20px rgba(21, 5, 13, 0.34);
-    }
-
-    @media (max-width: 900px) {
-      .index-tmv-header {
-        margin: -1.25rem -1.25rem 0;
-      }
-    }
-
+    .index-tmv-brand h1.nav-gold { margin: 0; font-size: clamp(2rem, 4vw, 3.35rem); line-height: .92; letter-spacing: .1em; text-align: center; }
+    @media (max-width: 900px) { .index-tmv-header { margin: -1.25rem -1.25rem 0; } }
     @media (max-width: 600px) {
-      .index-tmv-header {
-        min-height: 150px;
-        margin: -0.9rem -0.9rem 0;
-        padding: 22px 14px;
-      }
-
-      .index-tmv-brand {
-        gap: 12px;
-      }
-
-      .index-tmv-brand .brand-img {
-        height: clamp(62px, 18vw, 82px);
-      }
-
-      .index-tmv-brand h1.nav-gold {
-        font-size: clamp(1.55rem, 6vw, 2rem);
-      }
+      .index-tmv-header { min-height: 150px; margin: -.9rem -.9rem 0; padding: 22px 14px; }
+      .index-tmv-brand { gap: 12px; }
+      .index-tmv-brand .brand-img { height: clamp(62px, 18vw, 82px); }
+      .index-tmv-brand h1.nav-gold { font-size: clamp(1.55rem, 6vw, 2rem); }
     }
   </style>
 </head>
-<body>
+<body class="home-page">
     <header class="top">
     <div class="index-tmv-header">
       <a class="index-tmv-brand brand" href="/" aria-label="Tu Mejor Versión — Inicio">
-        <img src="/static/images/TuMejorVersionBird.png"
-             alt=""
-             class="brand-img flipped">
+        <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img flipped">
         <h1 class="nav-gold">Tu<br>Mejor<br>Versión</h1>
-        <img src="/static/images/TuMejorVersionBird.png"
-             alt=""
-             class="brand-img">
+        <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img">
       </a>
     </div>
 
@@ -121,11 +80,6 @@
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
         </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
         <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
@@ -134,11 +88,21 @@
           <span data-en="About Us" data-es="Sobre Nosotros"></span>
         </a>
 
+        <a href="/testimonials" class="nav-btn">
+          <span data-en="Testimonials" data-es="Testimonios"></span>
+        </a>
+
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
     </div>
   </header>
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
 
 <!--  <header class="topbar">
     <div class="container">
@@ -180,6 +144,15 @@
           <!-- ✅ Overlay shown only when index == 1 -->
         <div class="slider-overlay" data-show-on-index="1">
           <div class="overlay-card">
+            <h1 class="section-title nav-gold">
+              <span
+                data-en="Mission and Vision"
+                data-es="Misión y Visión"></span>
+            </h1>
+            <p class="section-description"
+              data-en="The heart of Tu Mejor Versión is healing, faith, and renewed strength for every woman we serve."
+              data-es="El corazón de Tu Mejor Versión es la sanación, la fe y una fortaleza renovada para cada mujer a la que servimos."></p>
+
             <h2 
                 data-en='Mission of "Your Best Version"'
                 data-es='Misión de "Tu Mejor Versión"'></h2>
@@ -196,21 +169,209 @@
           </div>
         </div>
       </section>
+      <section class="section-card workshops-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Current Workshops" data-es="Talleres Actuales"></span>
+        </h1>
+        <p class="section-description"
+          data-en="Join practical gatherings created to support growth, healing, and community connection."
+          data-es="Únete a encuentros prácticos creados para apoyar el crecimiento, la sanación y la conexión comunitaria."></p>
+        <ul class="workshop-list" id="workshops-list">
+          <li>Loading workshops...</li>
+        </ul>
+        <div id="create-workshop-container" style="display:none;"></div>
+      </section>
+
+      <section class="section-card youtube-slider-card">
+        <h1 class="section-title nav-gold">
+          <span data-en="Featured Videos" data-es="Videos Destacados"></span>
+        </h1>
+        <p class="section-description"
+          data-en="Watch messages, testimonies, and teaching moments that encourage the journey toward your best version."
+          data-es="Mira mensajes, testimonios y momentos de enseñanza que animan el camino hacia tu mejor versión."></p>
+        <div id="youtube-slider" class="youtube-slider">
+          <p class="muted">Loading videos...</p>
+        </div>
+      </section>
+
       <section class="section-card  events-card">
-        <h2><span data-en="Events" data-es="Eventos"></span></h2>
+        <h1 class="section-title nav-gold">
+          <span data-en="Upcoming Events" data-es="Próximos Eventos"></span>
+        </h1>
+        <p class="section-description"
+          data-en="Find upcoming opportunities to gather, learn, and take the next step with the TMV community."
+          data-es="Encuentra próximas oportunidades para reunirte, aprender y dar el siguiente paso junto a la comunidad TMV."></p>
         <ul class="event-list" id="events-list">
           <li>Loading events...</li>
         </ul>
         <div id="create-event-container" style="display:none;"></div>
       </section>
     <section class="section-card  courses-card">
-      <h2><span data-en="Courses" data-es="Cursos"></span></h2>
+      <h1 class="section-title nav-gold">
+        <span data-en="Courses" data-es="Cursos"></span>
+      </h1>
+      <p class="section-description"
+        data-en="Explore guided learning experiences designed to strengthen confidence, faith, and personal restoration."
+        data-es="Explora experiencias de aprendizaje guiadas para fortalecer la confianza, la fe y la restauración personal."></p>
 
         <ul class="course-list" id="courses-list">
           <li>Loading courses...</li>
         </ul>
         <div id="create-course-container" style="display:none;"></div>
     </section>
+    <section class="section-card book-card">
+      <h1 class="section-title nav-gold">
+        <span data-en="The Book" data-es="El Libro"></span>
+      </h1>
+      <p class="section-description"
+        data-en="A faith-centered resource for reflection, encouragement, and transformation."
+        data-es="Un recurso basado en la fe para la reflexión, el ánimo y la transformación."></p>
+
+      <div class="book-presentation">
+        <img src="/static/images/AmazonBook.png" alt="Tu Mejor Versión" class="book-cover">
+
+        <div class="book-details">
+          <h2>Tu Mejor Versión: Transformando tu Vida en Bendición</h2>
+          <p>Spanish Edition</p>
+
+          <div class="book-actions">
+            <a
+              href="https://a.co/d/052II0pU"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              class="amazon-btn"
+            >
+              Ver en Amazon
+            </a>
+
+            <a
+              href="https://www.facebook.com/sharer/sharer.php?u=https://a.co/d/052II0pU"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="fb-share-btn"
+            >
+              Compartir en Facebook
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section-card TMV-friends-card">
+    <h1 class="section-title nav-gold">        
+      <span 
+        data-en="Community Partners" 
+        data-es="Aliados Comunitarios">
+      </span>
+    </h1>
+      <p class="section-description"
+        data-en="Thank you to the organizations that support the mission and work of Tu Mejor Versión."
+        data-es="Gracias a las organizaciones que apoyan la misión y el trabajo de Tu Mejor Versión."></p>
+
+      <div class="partner-grid">
+        <article class="partner-item">
+          <a class="partner-media-link" href="https://scwbec.org/">
+            <img src="/static/images/SCWE_TMV.png" alt="Suffolk County Women's Business Enterprise Coalition">
+          </a>
+          <h2>Suffolk County Women's Business Enterprise Coalition</h2>
+
+          <a href="https://scwbec.org/">
+            Oprima el link para mas informacion
+          </a>
+        </article>
+
+        <article class="partner-item">
+          <a class="partner-media-link" href="https://www.hispaniccounseling.org/">
+            <img src="/static/images/HCC_TMV.png" alt="Hispanic Counseling Center">
+          </a>
+          <h2>Hispanic Counseling Center</h2>
+
+          <a href="https://www.hispaniccounseling.org/">
+            Oprima el link para mas informacion
+          </a>
+        </article>
+
+        <article class="partner-item">
+          <a class="partner-media-link" href="https://www.yesnews.org/yes-news">
+            <img src="/static/images/YES+Logo+JPEG+File+110515.webp" alt="Youth Enrichment Services">
+          </a>
+          <h2>Youth Enrichment Services</h2>
+
+          <a href="https://www.yesnews.org/yes-news">
+            Oprima el link para mas informacion
+          </a>
+        </article>
+
+        <article class="partner-item">
+          <a
+            class="partner-media-link"
+            href="https://www.domesticshelters.org/help/ny/central-islip/11722/l-i-against-domestic-violence"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img src="/static/images/liagainstdomesticviolence.jpeg" alt="L.I. Against Domestic Violence">
+          </a>
+          <h2>L.I. Against Domestic Violence</h2>
+
+          <a
+            href="https://www.domesticshelters.org/help/ny/central-islip/11722/l-i-against-domestic-violence"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Oprima el link para mas informacion
+          </a>
+        </article>
+      </div>
+    </section>
+    <section class="section-card TMV-friends-card">
+
+      <h1 class="section-title nav-gold">        
+        <span 
+          data-en="Our YouTube Channel" 
+          data-es="Nuestro Canal YouTube">
+        </span>
+      </h1>
+      <p class="section-description"
+        data-en="Stay connected with TMV videos, updates, and encouragement from our online community."
+        data-es="Mantente conectada con videos, novedades y ánimo de nuestra comunidad en línea."></p>
+
+      <div class="yt-channel-presentation">
+        <a
+          href="https://youtu.be/wvby2X0BD1Y"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="yt-card"
+          aria-label="Visita Nuestro Canal en YouTube"
+        >
+          <div class="yt-thumb">
+            <img
+              src="https://img.youtube.com/vi/wvby2X0BD1Y/hqdefault.jpg"
+              alt="Nuestro Canal YouTube"
+            >
+            <div class="yt-play">▶</div>
+          </div>
+        </a>
+
+        <div class="yt-info">
+          <a
+            href="https://youtu.be/wvby2X0BD1Y"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <h3>Visita Nuestro Canal en YouTube</h3>
+          </a>
+
+          <a
+            href="https://www.facebook.com/sharer/sharer.php?u=https://youtu.be/wvby2X0BD1Y"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="fb-share-btn"
+          >
+            Compartir en Facebook
+          </a>
+        </div>
+      </div>
+    </section>
+    
   </main>
 
   <script src="/static/js/app.js"></script>
@@ -242,6 +403,13 @@
       } else {
         console.warn("⚠️ loadEvents is not defined");
       }
+
+      if (typeof loadWorkshops === "function") {
+        console.log("Calling loadWorkshops()");
+        loadWorkshops();
+      } else {
+        console.warn("loadWorkshops is not defined");
+      }
     });
 
   } else {
@@ -259,6 +427,13 @@
       loadEvents();
     } else {
       console.warn("⚠️ loadEvents is not defined");
+    }
+
+    if (typeof loadWorkshops === "function") {
+      console.log("Calling loadWorkshops()");
+      loadWorkshops();
+    } else {
+      console.warn("loadWorkshops is not defined");
     }
   }
 

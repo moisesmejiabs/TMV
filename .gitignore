@@ -1,5 +1,29 @@
 node_modules/
+.wrangler/
+cookies.txt
 .env
+.dev.vars
+.dev.vars.*
 *.log
 dist/
-.wrangler/
+checkiflogedin.sh
+logout.sh
+login.sh
+listtablesinD1.sh
+addimagetocoursetable.sh
+addcolumntotable.sh
+listtablestructure.sh
+
+# Local backups, exports, and retired working files
+Backups/*
+!Backups/README.md
+Archive/*
+!Archive/README.md
+*.csv
+*.sqlite
+*.sqlite3
+
+# Android local build state and generated packages
+android-sms-gateway/.gradle/
+android-sms-gateway/**/build/
+android-sms-gateway/local.properties

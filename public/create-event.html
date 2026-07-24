@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tu Mejor Versión</title>
-    <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
     <script src="/static/js/app.js"></script>
   </head>
   <body data-page-type="admin">
@@ -63,13 +63,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -87,7 +81,13 @@
   </header>
 
 
-    <h1 class="nav-gold"><span data-en="Create Event" data-es="Crear Evento"></span></h1>
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
+    <h1 class="nav-gold"><span id="event-form-title" data-en="Create Event" data-es="Crear Evento"></span></h1>
 
  <form id="eventForm" class="form">
   <label>Event Name
@@ -118,6 +118,10 @@
     <textarea name="requirements" rows="4"></textarea>
   </label>
 
+  <label>Event Image
+    <input type="file" name="image" accept="image/*">
+  </label>
+
   <button type="submit">Create Event</button>
 </form>
 
@@ -125,7 +129,44 @@
 console.log("🚀 eventForm script loaded");
 
 const formEl = document.getElementById("eventForm");
+const editEventId = new URLSearchParams(window.location.search).get("id");
 console.log("🔍 event form element:", formEl);
+
+function toDatetimeLocal(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const offsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function localInputToIso(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? value : d.toISOString();
+}
+
+async function loadEventForEdit() {
+  if (!editEventId || !formEl) return;
+  const res = await fetch(`/api/events/${encodeURIComponent(editEventId)}`, { credentials: "include" });
+  const event = await res.json().catch(() => null);
+  if (!res.ok) throw new Error((event && event.error) || "Failed to load event");
+  document.getElementById("event-form-title").textContent = "Edit Event";
+  const submit = formEl.querySelector('button[type="submit"]');
+  if (submit) submit.textContent = "Save Event";
+  formEl.elements.name.value = event.name || "";
+  formEl.elements.date.value = toDatetimeLocal(event.date);
+  formEl.elements.presenter.value = event.presenter || "";
+  formEl.elements.location.value = event.location || "";
+  formEl.elements.capacity.value = event.capacity || 0;
+  formEl.elements.about.value = event.about || "";
+  formEl.elements.requirements.value = event.requirements || "";
+}
+
+loadEventForEdit().catch((err) => {
+  console.error("Failed to load event for edit:", err);
+  alert(err.message || "Failed to load event.");
+});
 
 if (!formEl) {
   console.error("❌ eventForm NOT FOUND");
@@ -137,20 +178,39 @@ if (!formEl) {
     try {
       const form = e.target;
 
+      let imageUrl = "";
+      const imageFile = form.image?.files?.[0];
+      if (imageFile) {
+        const imageForm = new FormData();
+        imageForm.append("image", imageFile);
+
+        const uploadRes = await fetch("/api/upload-image", {
+          method: "POST",
+          credentials: "include",
+          body: imageForm
+        });
+        const uploadData = await uploadRes.json().catch(() => null);
+        if (!uploadRes.ok) {
+          throw new Error((uploadData && uploadData.error) || "Image upload failed");
+        }
+        imageUrl = uploadData.url || "";
+      }
+
       const payload = {
-        name: form.name.value.trim(),
-        date: form.date.value,
-        presenter: form.presenter.value.trim(),
-        location: form.location.value.trim(),
-        capacity: Number(form.capacity.value || 0),
-        about: form.about.value.trim(),
-        requirements: form.requirements.value.trim()
+        name: form.elements.name.value.trim(),
+        date: localInputToIso(form.elements.date.value),
+        presenter: form.elements.presenter.value.trim(),
+        location: form.elements.location.value.trim(),
+        capacity: Number(form.elements.capacity.value || 0),
+        about: form.elements.about.value.trim(),
+        requirements: form.elements.requirements.value.trim(),
+        image_url: imageUrl
       };
 
       console.log("📦 Event payload:", payload);
 
-      const res = await fetch("/api/events", {
-        method: "POST",
+      const res = await fetch(editEventId ? `/api/events/${encodeURIComponent(editEventId)}` : "/api/events", {
+        method: editEventId ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json"
         },
@@ -179,9 +239,8 @@ if (!formEl) {
         return;
       }
 
-      console.log("🎉 Event created successfully, ID:", data.id);
-      alert(`Event created successfully. ID: ${data.id}`);
-      form.reset();
+      console.log("🎉 Event saved successfully, ID:", data.id || editEventId);
+      window.location.href = `/event.html?id=${encodeURIComponent(data.id || editEventId)}`;
 
     } catch (err) {
       console.error("💥 EVENT SUBMIT ERROR:", err);
@@ -198,4 +257,3 @@ if (!formEl) {
   </script>
 </body>
 </html>
-

@@ -3,90 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
-  <style>
-    .course-page {
-      padding-top: 24px;
-      padding-bottom: 40px;
-    }
-    .course-detail-card {
-      overflow: hidden;
-      margin: 0 auto 24px;
-      border: 1px solid rgba(91, 45, 109, 0.14);
-      border-radius: 22px;
-      background: #fff;
-      box-shadow: 0 12px 32px rgba(74, 35, 90, 0.1);
-    }
-    .course-image-wrap {
-      width: 100%;
-      background: #f8f3f8;
-      text-align: center;
-    }
-    .course-image-wrap[hidden] { display: none; }
-    .course-detail-image {
-      display: block;
-      width: 100%;
-      max-height: 680px;
-      object-fit: contain;
-      margin: 0 auto;
-    }
-    .course-detail-content {
-      padding: clamp(20px, 4vw, 36px);
-    }
-    .course-detail-content h1 {
-      margin-top: 0;
-      margin-bottom: 22px;
-    }
-    .course-facts {
-      display: grid;
-      gap: 14px;
-      margin: 0 0 24px;
-    }
-    .course-fact {
-      display: grid;
-      grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
-      gap: 10px;
-      align-items: start;
-    }
-    .course-fact dt { font-weight: 700; }
-    .course-fact dd {
-      min-width: 0;
-      margin: 0;
-      overflow-wrap: anywhere;
-      white-space: pre-wrap;
-    }
-    .feedback-section {
-      width: 100%;
-      max-width: 100%;
-      margin: 0 auto;
-      box-sizing: border-box;
-    }
-    .feedback-list,
-    .list-item,
-    .course-feedback-text {
-      min-width: 0;
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .feedback-section textarea,
-    .edit-course-feedback-textarea {
-      display: block;
-      width: 100% !important;
-      max-width: 100%;
-      min-width: 0;
-      box-sizing: border-box;
-      resize: vertical;
-    }
-    @media (max-width: 640px) {
-      .course-page { padding-top: 14px; }
-      .course-detail-card { border-radius: 16px; }
-      .course-fact {
-        grid-template-columns: 1fr;
-        gap: 3px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
 </head>
 <body>
     <header class="top">
@@ -145,13 +64,7 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>
-
-        <a href="/media" class="nav-btn">
-          <span data-en="Media" data-es="Medios"></span>
-        </a>
-
-        <a href="/forum" class="nav-btn">
+        </a>        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -164,28 +77,39 @@
       </nav>
     </div>
     </header>
-    <main class="container course-page">
-      <article class="course-detail-card">
-        <div id="course-image-wrap" class="course-image-wrap" hidden>
-          <img id="course-image" class="course-detail-image" alt="">
+
+  <div id="me" class="section-card">
+  <h3>Current User</h3>
+  <p><b>Name:</b> <span id="me-name"></span></p>
+  <p><b>Email:</b> <span id="me-email"></span></p>
+  </div>
+
+    <main class="container detail-page">
+      <article class="section-card course-detail-card">
+        <div id="course-image-frame" class="course-detail-media" style="display:none;">
+          <img id="course-image" alt="">
         </div>
-        <div class="course-detail-content">
-          <h1 id="title">Course</h1>
-          <dl class="course-facts">
-            <div class="course-fact"><dt>Date:</dt><dd id="date"></dd></div>
-            <div class="course-fact"><dt>Presenter:</dt><dd id="presenter"></dd></div>
-            <div class="course-fact"><dt>Description:</dt><dd id="about"></dd></div>
-            <div class="course-fact"><dt>Location:</dt><dd id="loc"></dd></div>
-            <div class="course-fact"><dt>Requirements:</dt><dd id="req"></dd></div>
-            <div class="course-fact"><dt>Capacity:</dt><dd id="cap"></dd></div>
-            <div class="course-fact"><dt>Registered:</dt><dd id="count"></dd></div>
-          </dl>
-          <div id="actions"></div>
-          <div id="admin"></div>
-          <p><a href="/courses.html">Back</a></p>
+        <h1 id="title" class="nav-gold">Course</h1>
+        <dl class="course-detail-grid">
+          <div><dt>Date:</dt><dd id="course-date"></dd></div>
+          <div><dt>Presenter:</dt><dd id="presenter"></dd></div>
+          <div><dt>Description:</dt><dd id="about"></dd></div>
+          <div><dt>Location:</dt><dd id="loc"></dd></div>
+          <div><dt>Requirements:</dt><dd id="req"></dd></div>
+          <div><dt>Capacity:</dt><dd id="cap"></dd></div>
+          <div><dt>Registered:</dt><dd id="count"></dd></div>
+        </dl>
+        <div id="actions"></div>
+        <div id="admin"></div>
+        <p><a href="/courses.html">Back</a></p>
+        <div>
+          <a href="#" onclick="shareCourseOnFacebook(event)" class="fb-share-btn">
+            Compartir curso en Facebook
+          </a>
         </div>
       </article>
-      <section class="feedback-section card">
+
+      <section class="section-card feedback-section">
       <h2>Leave Feedback</h2>
 
       <form id="course-feedback-form" class="feedback-form">
@@ -215,8 +139,14 @@
       </section>
     </main>
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/facebook.js"></script>
   <script>
     function q(name){return new URLSearchParams(location.search).get(name)}
+    function imageSrc(value){
+      if(!value) return '';
+      if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+      return `/static/images/${value}`;
+    }
     async function api(path, opts={}){
       const r=await fetch(path,{credentials:'include', headers:{...(opts.body?{'content-type':'application/json'}:{})}, ...opts});
       const ct=r.headers.get('content-type')||'';
@@ -229,22 +159,21 @@
       const c=await api(`/api/courses/${id}`);
       document.title = c.name;
       document.getElementById('title').textContent=c.name;
-      document.getElementById('date').textContent = new Date(c.date).toLocaleString();
+      document.getElementById('course-date').textContent =
+        new Date(c.date).toLocaleString('en-US', {timeZone: 'America/New_York'});
       document.getElementById('presenter').textContent = c.presenter || 'Not specified';
       document.getElementById('about').textContent = c.about;
       document.getElementById('loc').textContent = c.location;
       document.getElementById('req').textContent = c.requirements || 'None';
       document.getElementById('cap').textContent = c.capacity || 0;
       document.getElementById('count').textContent = c.enrolled_count;
-      if(c.image_url){
-        const imageWrap = document.getElementById('course-image-wrap');
-        const image = document.getElementById('course-image');
-        image.alt = `${c.name} course image`;
-        image.addEventListener('error', () => {
-          imageWrap.hidden = true;
-        }, { once: true });
-        image.src = c.image_url;
-        imageWrap.hidden = false;
+
+      const img = document.getElementById('course-image');
+
+      if (img && c.image_url) {
+        img.src = imageSrc(c.image_url);
+        img.alt = c.name || 'Course image';
+        document.getElementById('course-image-frame').style.display = 'block';
       }
 
       const me = await api('/api/me').catch(()=>null);
@@ -252,7 +181,7 @@
       if(!me){ html = '<p><a href="/login.html">Login</a> to register.</p>'; }
       else {
         html += c.enrolled ? '<button id="cancel">Cancel Enrollment</button>' : '<button id="enroll">Enroll</button>';
-        if(me.role==='admin') html += ' <button id="delete">Delete Course</button>';
+        if(me.role==='admin') html += ` <a class="btn" href="/create-course.html?id=${encodeURIComponent(id)}">Edit Course</a> <button id="delete">Delete Course</button>`;
       }
       document.getElementById('actions').innerHTML = html;
 
@@ -261,7 +190,7 @@
       const cancelBtn=document.getElementById('cancel');
       if(cancelBtn) cancelBtn.addEventListener('click', async()=>{await api(`/api/courses/${id}/cancel`,{method:'POST'}); location.reload();});
       const delBtn=document.getElementById('delete');
-      if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm('Delete this course?')){await api(`/api/courses/${id}`,{method:'DELETE'}); location.href='/courses.html';}});
+      if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm('Delete this course? Feedback will be saved for future display.')){await api(`/api/courses/${id}`,{method:'DELETE'}); location.href='/courses.html';}});
 
       if(me && me.role==='admin'){
         const users = await api(`/api/courses/${id}/registered`);

@@ -11,9 +11,33 @@ CREATE TABLE IF NOT EXISTS user (
   password_iterations INTEGER NOT NULL,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'user',
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  first_name TEXT,
+  last_name TEXT,
+  image_url TEXT,
+  testimony TEXT,
+  testimony_approved INTEGER NOT NULL DEFAULT 0,
+  video_url TEXT,
+  video_approved INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_user_email ON user(email);
+
+CREATE TABLE IF NOT EXISTS milk_giveaway_registration (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  registered_by INTEGER NOT NULL,
+  full_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  baby_name TEXT NOT NULL,
+  baby_age_months INTEGER NOT NULL,
+  formula_type TEXT NOT NULL,
+  formula_other TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(registered_by) REFERENCES user(id)
+);
+CREATE INDEX IF NOT EXISTS idx_milk_registration_created_at
+  ON milk_giveaway_registration(created_at);
+CREATE INDEX IF NOT EXISTS idx_milk_registration_registered_by
+  ON milk_giveaway_registration(registered_by);
 
 CREATE TABLE IF NOT EXISTS event (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,6 +47,8 @@ CREATE TABLE IF NOT EXISTS event (
   about TEXT NOT NULL,
   location TEXT NOT NULL,
   requirements TEXT,
+  image_url TEXT,
+  archived INTEGER NOT NULL DEFAULT 0,
   capacity INTEGER NOT NULL DEFAULT 0,
   created_by INTEGER NOT NULL,
   created_at TEXT NOT NULL,
@@ -37,10 +63,41 @@ CREATE TABLE IF NOT EXISTS course (
   about TEXT NOT NULL,
   location TEXT NOT NULL,
   requirements TEXT,
+  image_url TEXT,
+  archived INTEGER NOT NULL DEFAULT 0,
   capacity INTEGER NOT NULL DEFAULT 0,
   created_by INTEGER NOT NULL,
   created_at TEXT NOT NULL,
   FOREIGN KEY(created_by) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS workshop (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  date TEXT NOT NULL,
+  presenter TEXT NOT NULL,
+  about TEXT NOT NULL,
+  location TEXT NOT NULL,
+  requirements TEXT,
+  image_url TEXT,
+  archived INTEGER NOT NULL DEFAULT 0,
+  capacity INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(created_by) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS workshop_feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workshop_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  feedback TEXT NOT NULL,
+  approved INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(workshop_id) REFERENCES workshop(id),
+  FOREIGN KEY(user_id) REFERENCES user(id)
 );
 
 CREATE TABLE IF NOT EXISTS enrollment (
@@ -104,6 +161,49 @@ CREATE TABLE IF NOT EXISTS media_asset (
   uploaded_by INTEGER NOT NULL,
   created_at TEXT NOT NULL,
   FOREIGN KEY(uploaded_by) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS app_setting (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_by INTEGER,
+  updated_at TEXT,
+  FOREIGN KEY(updated_by) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS youtube_slider_video (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  youtube_url TEXT NOT NULL,
+  embed_url TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(created_by) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS agreement_doc (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  r2_key TEXT NOT NULL,
+  original_name TEXT NOT NULL,
+  mimetype TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_by INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(created_by) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_agreement_acknowledgement (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  agreement_doc_id INTEGER NOT NULL,
+  accepted_at TEXT NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  FOREIGN KEY(agreement_doc_id) REFERENCES agreement_doc(id),
+  UNIQUE(user_id, agreement_doc_id)
 );
 
 CREATE TABLE IF NOT EXISTS thread (

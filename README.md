@@ -1,53 +1,47 @@
-# Tu Mejor Versión — Cloudflare Workers + D1 + R2
+# Tu Mejor Versión (TMV)
 
-## What this is
-- **Workers** hosts the API and serves static pages from `./public`.
-- **D1** is the SQLite database.
-- **R2** stores receipts (PDF) and uploaded media files.
+Production website and community application for Tu Mejor Versión. Cloudflare
+Workers hosts the API and static site, D1 stores application data, and R2 stores
+uploaded media and generated PDF receipts.
 
-## Setup
+## Project identity
 
-### 1) Install
+- Customer: Tu Mejor Versión
+- Repository: `moisesmejiabs/TMV`
+- Production: `https://tumejorversion-li.org`
+- Cloudflare Worker: `tu-mejor-version`
+- Planned production branch: `main`
+- Current operational release branch: `live-release-2026-07-24`
+
+Read `AGENTS.md`, every file in `Documentation/Instructions/`, and
+`CUSTOMER.md` before changing the project or proposing a deployment.
+
+## Local development
+
 ```bash
-npm install
-```
-
-### 2) Create D1 + apply migration
-```bash
-wrangler d1 create tumejorversion
-# copy the returned database_id into wrangler.toml
-
-wrangler d1 migrations apply tumejorversion
-```
-
-### 3) Create R2 bucket
-```bash
-wrangler r2 bucket create tumejorversion-assets
-```
-
-### 4) Set JWT secret
-Generate a long random secret:
-```bash
-openssl rand -base64 48
-```
-Put it in `wrangler.toml` under `[vars]`.
-
-### 5) Run locally
-```bash
+npm ci
 npm run dev
 ```
 
-Open the local URL shown by Wrangler.
+Open the local URL printed by Wrangler. Local development requires a
+non-production `JWT_SECRET` in `.dev.vars`; never commit that file or reuse the
+production value.
 
-## Default admin
-If there are **no users**, the worker creates a default admin:
-- `admin@example.com`
-- `admin1234`
+## Validation
 
-Change this immediately by creating a new admin user flow (recommended) or editing the DB.
+```bash
+npx tsc --noEmit
+npx wrangler deploy --dry-run
+```
 
-## Notes vs your Flask version
-- Flask/Jinja templates were replaced by simple static pages + `fetch()` calls.
-- Password hashing uses PBKDF2 (WebCrypto) instead of Werkzeug.
-- Receipts are generated with `pdf-lib` and stored in R2.
-- `/uploads/<...>` are served from R2 (public read in MVP).
+## Deployment
+
+Deployment is production-impacting and requires an explicit user request plus
+the checks in `Documentation/Deployment.md`.
+
+```bash
+npm run deploy
+```
+
+Never deploy to a `workers.dev` test address. The project configuration keeps
+`workers_dev` and preview URLs disabled.
