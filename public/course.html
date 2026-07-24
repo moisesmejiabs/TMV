@@ -75,7 +75,7 @@
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
-    </div>>
+    </div>
     </header>
 
   <div id="me" class="section-card">
@@ -84,30 +84,32 @@
   <p><b>Email:</b> <span id="me-email"></span></p>
   </div>
 
-    <main class="container" style="padding-top:18px;">
-      <h1 id="title">Course</h1>
-      <!-- NEW IMAGE -->
-      <img id="course-image" style="max-width:100%; border-radius:10px; margin:10px 0; display:none;" />
-      <p id="meta"></p>
-      <div id="about"></div>
-      <p><b>Location:</b> <span id="loc"></span></p>
-      <p><b>Requirements:</b> <span id="req"></span></p>
-      <p><b>Capacity:</b> <span id="cap"></span> · <b>Registered:</b> <span id="count"></span></p>
-      <div id="actions"></div>
-      <div id="admin"></div>
-      <p><a href="/courses.html">Back</a></p>
-      <!-- FACEBOOK SHARE BUTTON -->
-      <div style="margin-top:10px;">
-        <a
-          href="#"
-          onclick="shareCourseOnFacebook(event)"
-          class="fb-share-btn"
-        >
-          Compartir curso en Facebook
-        </a>
-      </div>
-    </main>
-    <section class="feedback-section card">
+    <main class="container detail-page">
+      <article class="section-card course-detail-card">
+        <div id="course-image-frame" class="course-detail-media" style="display:none;">
+          <img id="course-image" alt="">
+        </div>
+        <h1 id="title" class="nav-gold">Course</h1>
+        <dl class="course-detail-grid">
+          <div><dt>Date:</dt><dd id="course-date"></dd></div>
+          <div><dt>Presenter:</dt><dd id="presenter"></dd></div>
+          <div><dt>Description:</dt><dd id="about"></dd></div>
+          <div><dt>Location:</dt><dd id="loc"></dd></div>
+          <div><dt>Requirements:</dt><dd id="req"></dd></div>
+          <div><dt>Capacity:</dt><dd id="cap"></dd></div>
+          <div><dt>Registered:</dt><dd id="count"></dd></div>
+        </dl>
+        <div id="actions"></div>
+        <div id="admin"></div>
+        <p><a href="/courses.html">Back</a></p>
+        <div>
+          <a href="#" onclick="shareCourseOnFacebook(event)" class="fb-share-btn">
+            Compartir curso en Facebook
+          </a>
+        </div>
+      </article>
+
+      <section class="section-card feedback-section">
       <h2>Leave Feedback</h2>
 
       <form id="course-feedback-form" class="feedback-form">
@@ -134,7 +136,8 @@
           <li class="muted">No feedback yet.</li>
         </ul>
       </div>
-    </section>
+      </section>
+    </main>
     <script src="/static/js/app.js"></script>
     <script src="/static/js/facebook.js"></script>
   <script>
@@ -156,10 +159,12 @@
       const c=await api(`/api/courses/${id}`);
       document.title = c.name;
       document.getElementById('title').textContent=c.name;
-      document.getElementById('meta').textContent =`${new Date(c.date).toLocaleString('en-US', {timeZone: 'America/New_York'})} · Presenter: ${c.presenter}`;
+      document.getElementById('course-date').textContent =
+        new Date(c.date).toLocaleString('en-US', {timeZone: 'America/New_York'});
+      document.getElementById('presenter').textContent = c.presenter || 'Not specified';
       document.getElementById('about').textContent = c.about;
       document.getElementById('loc').textContent = c.location;
-      document.getElementById('req').textContent = c.requirements || '';
+      document.getElementById('req').textContent = c.requirements || 'None';
       document.getElementById('cap').textContent = c.capacity || 0;
       document.getElementById('count').textContent = c.enrolled_count;
 
@@ -168,7 +173,7 @@
       if (img && c.image_url) {
         img.src = imageSrc(c.image_url);
         img.alt = c.name || 'Course image';
-        img.style.display = 'block';
+        document.getElementById('course-image-frame').style.display = 'block';
       }
 
       const me = await api('/api/me').catch(()=>null);
