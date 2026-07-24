@@ -1,0 +1,24 @@
+/* Homepage content maintains a 19px minimum for comfortable reading. */
+.home-page .section-card > .section-description,
+.home-page .overlay-card > .section-description{
+  color: var(--berry);
+  font-size: 1.1875rem;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+.home-page main p,
+.home-page main li,
+.home-page main .muted,
+.home-page main .course-meta,
+.home-page main .workshop-summary-description,
+.home-page main .homepage-summary-description,
+.home-page main .book-details p,
+.home-page main .partner-item > a,
+.home-page main .youtube-slider-controls,
+.home-page main button,
+.home-page main .btn,
+.home-page main .amazon-btn,
+.home-page main .fb-share-btn{
+  font-size: 1.1875rem;
+}
