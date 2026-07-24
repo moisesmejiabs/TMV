@@ -1022,24 +1022,28 @@ h1{
   display: block;
   text-decoration: none;
   color: inherit;
-  width: 100%;
+  width: min(452px, calc(100% - 40px));
+  margin-inline-start: 40px;
   margin-top: 10px;
 }
 
 .yt-thumb {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 665px;
   overflow: hidden;
-  border-radius: 12px;
-  background: rgba(109,33,64,0.08);
+  border-radius: 16px;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .yt-thumb img {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 0;
 }
 
@@ -1065,6 +1069,13 @@ h1{
   margin: 0;
   font-size: 14px;
   color: #777;
+}
+
+@media (max-width: 850px) {
+  .yt-thumb {
+    height: auto;
+    aspect-ratio: 452 / 665;
+  }
 }
 /* =========================
    END OF YOUTUBE
@@ -1220,6 +1231,24 @@ h1{
   .book-card p {
     margin: 0 0 16px;
     color: #555;
+  }
+
+  .book-cover {
+    display: block;
+    width: min(452px, calc(100% - 40px));
+    height: 665px;
+    margin-inline-start: 40px;
+    margin-bottom: 24px;
+    object-fit: contain;
+    border-radius: 16px;
+    background: rgba(109,33,64,0.08);
+  }
+
+  @media (max-width: 850px) {
+    .book-cover {
+      height: auto;
+      aspect-ratio: 452 / 665;
+    }
   }
 
   .amazon-btn {
