@@ -6,6 +6,18 @@
   <title>Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css" />
   <style>
+    .event-detail-media {
+      width: min(100%, 452px);
+      height: 665px;
+      max-height: none;
+    }
+
+    .event-detail-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
     .event-detail-grid {
       grid-template-columns: 1fr;
       gap: 6px;
@@ -17,6 +29,13 @@
 
     .event-detail-grid dt {
       margin-bottom: 2px;
+    }
+
+    @media (max-width: 600px) {
+      .event-detail-media {
+        height: auto;
+        aspect-ratio: 452 / 665;
+      }
     }
   </style>
 </head>
