@@ -321,3 +321,9 @@
 
   .milk-admin-actions > * { flex: 1; }
 }
+
+/* Sitewide local readability review: milk-admin content minimum. */
+.milk-admin-page main :where(p, li, label, input, select, textarea, button, td, th, small, a){
+  font-size: 19px;
+  line-height: 1.6;
+}

@@ -367,3 +367,15 @@
     transition: none !important;
   }
 }
+
+/* Sitewide local readability review: milk-registration content minimum. */
+.milk-page main :where(p, li, label, input, select, textarea, button, small, a){
+  font-size: 19px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .milk-page {
+    font-size: 19px;
+  }
+}

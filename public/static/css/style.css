@@ -1649,3 +1649,44 @@ article{
     width: min(86vw, 320px);
   }
 }
+
+/* =========================
+   SITEWIDE CONTENT TYPOGRAPHY + RHYTHM
+   Homepage has its own reviewed rules above.
+========================= */
+body:not(.home-page) :where(main, .section-card, .form)
+  :where(p, li, label, input, textarea, select, button, td, th, small, .muted){
+  font-size: 1.1875rem;
+  line-height: 1.6;
+}
+
+body:not(.home-page) :where(main, .section-card, .form)
+  :where(.btn, .fb-share-btn, .amazon-btn){
+  font-size: 1.1875rem;
+}
+
+body:not(.home-page) > h1.nav-gold,
+body:not(.home-page) main > h1,
+body:not(.home-page) .section-card > h1{
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 3.2vw, 2.375rem);
+  line-height: 1.15;
+}
+
+body:not(.home-page) main :where(h2, h3),
+body:not(.home-page) .section-card :where(h2, h3){
+  margin-top: 0;
+  font-size: clamp(1.55rem, 2.5vw, 2.15rem);
+  line-height: 1.2;
+}
+
+body:not(.home-page) .section-card{
+  padding: 42px 34px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 600px){
+  body:not(.home-page) .section-card{
+    padding: 26px 18px;
+  }
+}
