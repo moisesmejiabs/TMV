@@ -5,8 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    #courses-list .course-summary {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      width: 100%;
+    }
+    #courses-list .course-thumbnail {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 120px;
+      height: 96px;
+      overflow: hidden;
+      border: 1px solid rgba(91, 45, 109, 0.14);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+    #courses-list .course-thumbnail img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    #courses-list .course-thumbnail-placeholder {
+      flex-direction: column;
+      gap: 4px;
+      color: #765f7d;
+      font-size: 0.72rem;
+      font-weight: 700;
+      line-height: 1.1;
+      text-align: center;
+    }
+    #courses-list .course-thumbnail-placeholder::before {
+      content: "▧";
+      font-size: 1.6rem;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+    #courses-list .course-summary-details {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    #courses-list .course-description {
+      margin-top: 5px;
+    }
+    @media (max-width: 520px) {
+      #courses-list .course-summary {
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 12px;
+      }
+      #courses-list .course-thumbnail {
+        width: 84px;
+        height: 72px;
+      }
+    }
+  </style>
 </head>
-<body>
+<body class="courses-listing-page">
     <header class="top">
     <div class="brand" style="text-align: center;">
 
@@ -63,7 +121,13 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>        <a href="/forum" class="nav-btn">
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -78,15 +142,8 @@
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
-    </div>>
+    </div>
   </header>
-
-  <div id="me" class="section-card">
-  <h3>Current User</h3>
-  <p><b>Name:</b> <span id="me-name"></span></p>
-  <p><b>Email:</b> <span id="me-email"></span></p>
-  </div>
-
   <main>
     <h1 class="nav-gold">        
       <span 
@@ -94,25 +151,18 @@
         data-es="Cursos">
       </span>
     </h1>
-    <body>
-      <section class="section-card  courses-card">
+      <section class="section-card courses-card">
         <h2><span data-en="Courses" data-es="Cursos"></span></h2>
         <ul class="course-list" id="courses-list">
           <li>Loading events...</li>
         </ul>
         <div id="create-course-container" style="display:none;"></div>
       </section>
-    </body>
 </main>
 
   <script src="/static/js/app.js"></script>
 
   <script>
-  async function api(p){const r=await fetch(p,{credentials:'include'});const j=await r.json();if(!r.ok)throw new Error(j.error||'fail');return j;}
-  (async()=>{
-    const items=await api('/api/courses');
-    document.getElementById('list').innerHTML = '<ul>'+items.map(c=>`<li><a href="/course.html?id=${c.id}">${escapeHtml(c.name)}</a> — ${new Date(c.date).toLocaleString()}</li>`).join('')+'</ul>';
-  })().catch(e=>{document.getElementById('courses-list').textContent=e.message;});
   loadCourses();
   createCoursebutton();
   </script>

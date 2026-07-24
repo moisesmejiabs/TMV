@@ -44,8 +44,10 @@ async function verifySession() {
     document.getElementById("userGreeting").textContent =
       `Sesión iniciada como ${user.name || user.email}`;
     formSection.hidden = false;
-  } catch {
-    location.replace(`/login.html?next=${encodeURIComponent("/milk-giveaway")}`);
+    document.getElementById("fullName").focus({ preventScroll: true });
+  } catch (error) {
+    const next = encodeURIComponent("/milk-giveaway");
+    window.location.replace(`/login.html?next=${next}`);
   }
 }
 
@@ -56,23 +58,26 @@ form.addEventListener("change", (event) => {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   message.hidden = true;
+
   if (!form.reportValidity()) return;
 
   const data = new FormData(form);
+  const payload = {
+    full_name: data.get("full_name"),
+    phone: data.get("phone"),
+    baby_name: data.get("baby_name"),
+    baby_age_months: Number(data.get("baby_age_months")),
+    formula_type: data.get("formula_type"),
+    formula_other: data.get("formula_other")
+  };
+
   submitButton.disabled = true;
   submitButton.textContent = "Guardando registro…";
 
   try {
     const result = await requestJson("/api/milk-registrations", {
       method: "POST",
-      body: JSON.stringify({
-        full_name: data.get("full_name"),
-        phone: data.get("phone"),
-        baby_name: data.get("baby_name"),
-        baby_age_months: Number(data.get("baby_age_months")),
-        formula_type: data.get("formula_type"),
-        formula_other: data.get("formula_other")
-      })
+      body: JSON.stringify(payload)
     });
     document.getElementById("confirmationNumber").textContent =
       `Número de confirmación: ${result.registration_id}`;
@@ -81,7 +86,8 @@ form.addEventListener("submit", async (event) => {
     successSection.focus();
   } catch (error) {
     if (error.status === 401) {
-      location.replace(`/login.html?next=${encodeURIComponent("/milk-giveaway")}`);
+      const next = encodeURIComponent("/milk-giveaway");
+      window.location.replace(`/login.html?next=${next}`);
       return;
     }
     showError(error.message);
@@ -96,12 +102,13 @@ document.getElementById("anotherRegistration").addEventListener("click", () => {
   updateOtherFormula();
   successSection.hidden = true;
   formSection.hidden = false;
+  window.scrollTo({ top: formSection.offsetTop - 20, behavior: "smooth" });
   document.getElementById("fullName").focus();
 });
 
 document.getElementById("logoutButton").addEventListener("click", async () => {
   await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-  location.replace("/login.html");
+  window.location.replace("/login.html");
 });
 
 verifySession();

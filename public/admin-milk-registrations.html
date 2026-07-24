@@ -11,20 +11,35 @@
 <body class="milk-admin-page">
   <header class="milk-admin-header">
     <a href="/admin.html" class="milk-admin-back">← Volver a Admin</a>
-    <div>
-      <h1>Registros para entrega de leche</h1>
-      <p>Tu Mejor Versión</p>
+    <div class="milk-admin-heading">
+      <a class="milk-admin-brand brand" href="/" aria-label="Ir al inicio de Tu Mejor Versión">
+        <img src="/static/images/TuMejorVersionBird.png"
+             alt=""
+             class="brand-img flipped">
+        <h1 class="nav-gold">Tu<br>Mejor<br>Versión</h1>
+        <img src="/static/images/TuMejorVersionBird.png"
+             alt=""
+             class="brand-img">
+      </a>
+      <p>Registros para entrega de leche</p>
     </div>
-    <button id="logoutButton" type="button">Cerrar sesión</button>
+    <button id="logoutButton" class="milk-admin-logout" type="button">Cerrar sesión</button>
   </header>
+
   <main class="milk-admin-shell">
-    <section class="milk-admin-card">
-      <h2>Buscar y filtrar</h2>
-      <form id="filterForm" class="milk-admin-filters">
-        <label>Buscar
-          <input id="searchInput" type="search" maxlength="100" placeholder="Nombre, teléfono o bebé">
+    <section class="milk-admin-toolbar" aria-labelledby="filtersTitle">
+      <div>
+        <h2 id="filtersTitle">Buscar y filtrar</h2>
+        <p>Busque por persona, teléfono o nombre del bebé.</p>
+      </div>
+      <form id="filterForm" class="milk-admin-filters" role="search">
+        <label>
+          Buscar
+          <input id="searchInput" type="search" maxlength="100"
+                 placeholder="Nombre, teléfono o bebé">
         </label>
-        <label>Tipo de fórmula
+        <label>
+          Tipo de fórmula
           <select id="formulaFilter">
             <option value="">Todas las fórmulas</option>
             <option>Enfamil</option>
@@ -35,24 +50,49 @@
           </select>
         </label>
         <button type="submit">Aplicar filtros</button>
-        <button id="clearFilters" type="button">Limpiar</button>
+        <button id="clearFilters" class="secondary" type="button">Limpiar</button>
       </form>
     </section>
-    <section class="milk-admin-summary milk-admin-card">
-      <div>Total encontrado: <strong id="registrationCount">—</strong></div>
+
+    <section class="milk-admin-summary" aria-live="polite">
       <div>
-        <button id="refreshButton" type="button">Actualizar</button>
-        <a id="csvDownload" href="/api/admin/milk-registrations.csv">Descargar CSV</a>
+        <span>Total encontrado</span>
+        <strong id="registrationCount">—</strong>
+      </div>
+      <div class="milk-admin-actions">
+        <button id="refreshButton" class="secondary" type="button">Actualizar</button>
+        <a id="csvDownload" class="download" href="/api/admin/milk-registrations.csv">
+          Descargar CSV
+        </a>
       </div>
     </section>
+
     <div id="adminMessage" class="milk-admin-message" role="alert" hidden></div>
-    <section class="milk-admin-card milk-admin-table-wrap">
-      <table>
-        <thead><tr><th>Fecha</th><th>Persona</th><th>Teléfono</th><th>Bebé</th><th>Edad</th><th>Fórmula</th><th>Registrado por</th><th>ID</th></tr></thead>
-        <tbody id="registrationRows"><tr><td colspan="8">Cargando registros…</td></tr></tbody>
-      </table>
+
+    <section class="milk-admin-table-card" aria-labelledby="tableTitle">
+      <h2 id="tableTitle" class="sr-only">Lista de registros</h2>
+      <div class="milk-admin-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Persona</th>
+              <th>Teléfono</th>
+              <th>Bebé</th>
+              <th>Edad</th>
+              <th>Fórmula</th>
+              <th>Registrado por</th>
+              <th>ID</th>
+            </tr>
+          </thead>
+          <tbody id="registrationRows">
+            <tr><td colspan="8" class="empty">Cargando registros…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
+
   <script src="/static/js/milk-admin.js"></script>
 </body>
 </html>

@@ -207,6 +207,19 @@ function renderAuthLinks(me) {
     `).join("");
   }
 
+function positionCurrentUserBesideLanguage(meEl) {
+  if (!meEl) return;
+
+  const languageToggle = document.querySelector(".lang-toggle");
+  const languageRow = languageToggle?.parentElement;
+  if (!languageToggle || !languageRow) return;
+
+  languageRow.classList.add("language-user-row");
+  meEl.classList.remove("section-card");
+  meEl.classList.add("current-user-compact");
+  languageRow.appendChild(meEl);
+}
+
 async function initApp() {
   console.log("🚀 initApp START");
 
@@ -245,8 +258,18 @@ async function initApp() {
   }
 
   // ---------- ME DISPLAY ----------
-  const meEl = document.getElementById("me");
+  let meEl = document.getElementById("me");
   console.log("🔍 #me element:", meEl);
+
+  if (!meEl && me && document.querySelector(".lang-toggle")) {
+    meEl = document.createElement("aside");
+    meEl.id = "me";
+    meEl.innerHTML = `
+      <h3>Current User</h3>
+      <p><b>Name:</b> <span id="me-name"></span></p>
+      <p><b>Email:</b> <span id="me-email"></span></p>
+    `;
+  }
 
   if (meEl) {
     if (me) {
@@ -257,6 +280,8 @@ async function initApp() {
     } else {
       meEl.innerHTML = '<h3>Unregistered</h3>';
     }
+
+    positionCurrentUserBesideLanguage(meEl);
   }
 
   
@@ -825,10 +850,51 @@ async function loadCourses() {
         const safeName = escapeHtml(name);
         const safeDate = escapeHtml(formattedDate);
         const safePresenter = escapeHtml(presenter);
+        const safeId = encodeURIComponent(id);
+        const safeLocation = escapeHtml(c.location || "");
+        const safeDescription = escapeHtml(c.about || "");
+        const rawImageUrl = c.image_url
+          ? (String(c.image_url).startsWith("/") || /^https?:\/\//i.test(c.image_url)
+              ? c.image_url
+              : `/static/images/${c.image_url}`)
+          : "";
+        const safeImageUrl = escapeHtml(rawImageUrl);
+
+        if (document.body.classList.contains("courses-listing-page")) {
+          const thumbnail = safeImageUrl ? `
+            <a class="course-thumbnail" href="/course.html?id=${safeId}" aria-label="View ${safeName}">
+              <img src="${safeImageUrl}" alt="${safeName} course image" loading="lazy">
+            </a>
+          ` : `
+            <div class="course-thumbnail course-thumbnail-placeholder" aria-label="No course image">
+              <span>No image</span>
+            </div>
+          `;
+
+          html += `
+            <li class="course-item">
+              <div class="course-summary">
+                ${thumbnail}
+                <div class="course-summary-details">
+                  <a href="/course.html?id=${safeId}">
+                    <strong>${safeName}</strong>
+                  </a>
+                  <div class="course-meta">
+                    <span><b>Date:</b> ${safeDate}</span><br>
+                    <span><b>Presenter:</b> ${safePresenter}</span><br>
+                    <span><b>Location:</b> ${safeLocation}</span>
+                    ${safeDescription ? `<div class="course-description"><b>Description:</b> ${safeDescription}</div>` : ""}
+                  </div>
+                </div>
+              </div>
+            </li>
+          `;
+          return;
+        }
 
         html += `
           <li class="course-item">
-            <a href="/course.html?id=${id}">
+            <a href="/course.html?id=${safeId}">
               <strong>${safeName}</strong>
             </a>
             <div class="course-meta">
@@ -1508,19 +1574,60 @@ async function loadEvents() {
         console.error(`❌ formatDate FAILED for index ${i}`, e.date, err);
       }
 
-      const image = e.image_url ? (String(e.image_url).startsWith("/") || /^https?:\/\//i.test(e.image_url) ? e.image_url : `/static/images/${e.image_url}`) : "";
+      const safeId = encodeURIComponent(e.id);
+      const safeName = escapeHtml(e.name || "");
+      const safeDate = escapeHtml(formattedDate);
+      const safeLocation = escapeHtml(e.location || "");
+      const safeDescription = escapeHtml(e.about || "");
+      const rawImageUrl = e.image_url
+        ? (String(e.image_url).startsWith("/") || /^https?:\/\//i.test(e.image_url)
+            ? e.image_url
+            : `/static/images/${e.image_url}`)
+        : "";
+      const safeImageUrl = escapeHtml(rawImageUrl);
+
+      if (!document.body.classList.contains("events-listing-page")) {
+        return `
+          <li class="list-item">
+            ${safeImageUrl ? `<a class="event-media-link" href="/event.html?id=${safeId}"><img src="${safeImageUrl}" alt="${safeName} event image"></a>` : ""}
+            <div>
+              <a href="/event.html?id=${safeId}">
+                <strong>${safeName}</strong>
+              </a>
+              <div class="muted">
+                <span><b>ID:</b> ${escapeHtml(e.id || "")}</span><br>
+                <span><b>Date:</b> ${safeDate}</span><br>
+                <span><b>Location:</b> ${safeLocation}</span>
+              </div>
+            </div>
+          </li>
+        `;
+      }
+
+      const thumbnail = safeImageUrl ? `
+        <a class="event-thumbnail" href="/event.html?id=${safeId}" aria-label="View ${safeName}">
+          <img src="${safeImageUrl}" alt="${safeName} event image" loading="lazy">
+        </a>
+      ` : `
+        <div class="event-thumbnail event-thumbnail-placeholder" aria-label="No event image">
+          <span>No image</span>
+        </div>
+      `;
 
       return `
         <li class="list-item">
-          ${image ? `<a class="event-media-link" href="/event.html?id=${encodeURIComponent(e.id)}"><img src="${escapeHtml(image)}" alt="${escapeHtml(e.name || 'Event image')}"></a>` : ""}
-          <div>
-            <a href="/event.html?id=${encodeURIComponent(e.id)}">
-              <strong>${escapeHtml(e.name || "")}</strong>
-            </a>
-            <div class="muted">
-              <span><b>ID:</b> ${escapeHtml(e.id || "")}</span><br>
-              <span><b>Date:</b> ${escapeHtml(formattedDate)}</span><br>
-              <span><b>Location:</b> ${escapeHtml(e.location || "")}</span>
+          <div class="event-summary">
+            ${thumbnail}
+            <div class="event-summary-details">
+              <a href="/event.html?id=${safeId}">
+                <strong>${safeName}</strong>
+              </a>
+              <div class="muted">
+                <span><b>ID:</b> ${escapeHtml(e.id || "")}</span><br>
+                <span><b>Date:</b> ${safeDate}</span><br>
+                <span><b>Location:</b> ${safeLocation}</span>
+                ${safeDescription ? `<div class="event-description"><b>Description:</b> ${safeDescription}</div>` : ""}
+              </div>
             </div>
           </div>
         </li>

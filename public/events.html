@@ -5,8 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    #events-list .event-summary {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      width: 100%;
+    }
+    #events-list .event-thumbnail {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 120px;
+      height: 96px;
+      overflow: hidden;
+      border: 1px solid rgba(91, 45, 109, 0.14);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+    #events-list .event-thumbnail img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    #events-list .event-thumbnail-placeholder {
+      flex-direction: column;
+      gap: 4px;
+      color: #765f7d;
+      font-size: 0.72rem;
+      font-weight: 700;
+      line-height: 1.1;
+      text-align: center;
+    }
+    #events-list .event-thumbnail-placeholder::before {
+      content: "▧";
+      font-size: 1.6rem;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+    #events-list .event-summary-details {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    #events-list .event-description {
+      margin-top: 5px;
+    }
+    @media (max-width: 520px) {
+      #events-list .event-summary {
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 12px;
+      }
+      #events-list .event-thumbnail {
+        width: 84px;
+        height: 72px;
+      }
+    }
+  </style>
 </head>
-<body>
+<body class="events-listing-page">
     <header class="top">
     <div class="brand" style="text-align: center;">
 
@@ -63,7 +121,13 @@
 
         <a href="/donate" class="nav-btn">
           <span data-en="Donate" data-es="Donar"></span>
-        </a>        <a href="/forum" class="nav-btn">
+        </a>
+
+        <a href="/media" class="nav-btn">
+          <span data-en="Media" data-es="Medios"></span>
+        </a>
+
+        <a href="/forum" class="nav-btn">
           <span data-en="Forum" data-es="Foro"></span>
         </a>
 
@@ -78,15 +142,8 @@
         <div id="auth-links" class="auth-links"></div>
 
       </nav>
-    </div>>
+    </div>
   </header>
-
-  <div id="me" class="section-card">
-  <h3>Current User</h3>
-  <p><b>Name:</b> <span id="me-name"></span></p>
-  <p><b>Email:</b> <span id="me-email"></span></p>
-  </div>
-
     <h1 class="nav-gold">        
       <span 
         data-en="Events" 
@@ -94,25 +151,18 @@
       </span>
     </h1>
     <main>
-      <body>
-        <section class="section-card  events-card">
-          <h2><span data-en="Events" data-es="Eventos"></span></h2>
-          <ul class="event-list" id="events-list">
-            <li>Loading events...</li>
-          </ul>
-          <div id="create-event-container" style="display:none;"></div>
-        </section>
-      </body>
+      <section class="section-card events-card">
+        <h2><span data-en="Events" data-es="Eventos"></span></h2>
+        <ul class="event-list" id="events-list">
+          <li>Loading events...</li>
+        </ul>
+        <div id="create-event-container" style="display:none;"></div>
+      </section>
     </main>
 
     <script src="/static/js/app.js"></script>
 
     <script>
-      async function api(p){const r=await fetch(p,{credentials:'include'});const j=await r.json();if(!r.ok)throw new Error(j.error||'fail');return j;}
-      (async()=>{
-        const items=await api('/api/events');
-        document.getElementById('list').innerHTML = '<ul>'+items.map(e=>`<li><a href="/event.html?id=${e.id}">${e.name}</a> — ${new Date(e.date).toLocaleString()}</li>`).join('')+'</ul>';
-      })().catch(e=>{document.getElementById('events-list').textContent=e.message;});
       loadEvents();
     </script>
 </body>
