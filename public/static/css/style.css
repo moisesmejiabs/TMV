@@ -550,19 +550,42 @@ h1{
   border-radius: 0;
 }
 
-/* Homepage workshops use the same full-image presentation as workshop details. */
+/* Homepage workshops align a proportional thumbnail to the text block height. */
+.workshops-card .list-item{
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: stretch;
+}
+
 .workshops-card .workshop-media-link{
-  width: min(100%, 452px);
+  width: 96px;
+  height: 100%;
   aspect-ratio: auto;
-  overflow: visible;
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(109,33,64,0.08);
 }
 
 .workshops-card .workshop-media-link img{
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: contain;
   border-radius: 10px;
+}
+
+.workshops-card .list-item > div{
+  min-width: 0;
+}
+
+@media (max-width: 500px){
+  .workshops-card .list-item{
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .workshops-card .workshop-media-link{
+    width: 72px;
+  }
 }
 
 /* Homepage upcoming events match the 452 × 665 visual footprint. */
