@@ -1,0 +1,8 @@
+/* Homepage readability overrides kept separate to avoid stale shared CSS caches. */
+.home-page .section-card > .section-description,
+.home-page .overlay-card > .section-description{
+  color: var(--berry);
+  font-size: 1.1875rem;
+  font-weight: 500;
+  line-height: 1.7;
+}
