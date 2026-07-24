@@ -1253,7 +1253,6 @@ h1{
 ========================= */
   .book-card {
     max-width: none;          /* 🔥 remove constraint */
-    padding: 20px;
     border: 1px solid #ddd;
     border-radius: 12px;
     background: #fff;
