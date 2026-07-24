@@ -93,6 +93,7 @@
     <p id="msg"></p>
     <p><a href="/">Home</a> · <a href="/register.html">Register</a></p>
   </main>
+  <script src="/static/js/app.js"></script>
   <script>
   async function api(path, opts={}){
     const r = await fetch(path, {credentials:'include', headers:{'content-type':'application/json', ...(opts.headers||{})}, ...opts});

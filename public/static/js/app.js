@@ -220,6 +220,37 @@ function positionCurrentUserBesideLanguage(meEl) {
   languageRow.appendChild(meEl);
 }
 
+function ensureLanguageToggleRow() {
+  const existing = document.querySelector(".lang-toggle");
+  if (existing) return existing;
+
+  const row = document.createElement("div");
+  row.className = "top-row utility-language-row";
+  row.innerHTML = `
+    <span class="lang-toggle" aria-label="Language selector">
+      <button type="button" class="lang-btn" data-language="en">🇺🇸 EN</button>
+      <span class="lang-sep">|</span>
+      <button type="button" class="lang-btn" data-language="es">🇲🇽 ES</button>
+    </span>
+  `;
+
+  row.querySelectorAll("[data-language]").forEach((button) => {
+    button.addEventListener("click", () => setLanguage(button.dataset.language));
+  });
+
+  const header = document.querySelector("header");
+  const main = document.querySelector("main");
+  if (header) {
+    header.insertAdjacentElement("afterend", row);
+  } else if (main) {
+    main.insertAdjacentElement("beforebegin", row);
+  } else {
+    document.body.prepend(row);
+  }
+
+  return row.querySelector(".lang-toggle");
+}
+
 async function initApp() {
   console.log("🚀 initApp START");
 
@@ -258,6 +289,7 @@ async function initApp() {
   }
 
   // ---------- ME DISPLAY ----------
+  ensureLanguageToggleRow();
   let meEl = document.getElementById("me");
   console.log("🔍 #me element:", meEl);
 
