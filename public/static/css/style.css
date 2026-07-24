@@ -1692,12 +1692,9 @@ body:not(.home-page) .section-card{
 }
 
 /* =========================
-   BRIGHT METALLIC HEADER BRAND
+   BRIGHT METALLIC HOMEPAGE BRAND
 ========================= */
-.brand h1.nav-gold,
-.index-tmv-brand h1.nav-gold,
-.milk-brand h1.nav-gold,
-.milk-admin-brand h1.nav-gold{
+.index-tmv-brand h1.nav-gold{
   background-image: linear-gradient(
     110deg,
     #744500 0%,
@@ -1731,10 +1728,7 @@ body:not(.home-page) .section-card{
 }
 
 @media (prefers-reduced-motion: reduce){
-  .brand h1.nav-gold,
-  .index-tmv-brand h1.nav-gold,
-  .milk-brand h1.nav-gold,
-  .milk-admin-brand h1.nav-gold{
+  .index-tmv-brand h1.nav-gold{
     animation: none;
     background-position: 50% 50%;
   }
