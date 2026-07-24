@@ -1237,21 +1237,61 @@ h1{
     margin-bottom: 10px;
   }
 
+  .book-presentation {
+    width: calc(100% - 40px);
+    margin-inline-start: 40px;
+    display: grid;
+    grid-template-columns: minmax(0, 452px) minmax(260px, 1fr);
+    gap: clamp(24px, 4vw, 48px);
+    align-items: stretch;
+    padding: clamp(20px, 3vw, 32px);
+    border: 1px solid rgba(109,33,64,0.14);
+    border-radius: 24px;
+    background: rgba(255,255,255,0.86);
+    box-shadow: 0 16px 38px rgba(73,24,48,0.10);
+  }
+
   .book-cover {
     display: block;
-    width: min(452px, calc(100% - 40px));
+    width: 100%;
+    max-width: 452px;
     height: 665px;
-    margin-inline-start: 40px;
-    margin-bottom: 24px;
     object-fit: contain;
     border-radius: 16px;
     background: rgba(109,33,64,0.08);
   }
 
+  .book-details {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .book-details h2,
+  .book-details p {
+    margin: 0;
+  }
+
+  .book-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
   @media (max-width: 850px) {
+    .book-presentation {
+      grid-template-columns: 1fr;
+    }
+
     .book-cover {
+      width: min(100%, 452px);
       height: auto;
       aspect-ratio: 452 / 665;
+      justify-self: center;
     }
   }
 
