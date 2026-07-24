@@ -66,7 +66,12 @@
   text-shadow: 0 8px 20px rgba(21, 5, 13, 0.34);
 }
 
-.top > .brand > #nav-auth:empty{ display: none !important; }
+.top > .brand h1.nav-gold span:empty::before{
+  content: "Tu\A Mejor\A Versión";
+  white-space: pre-line;
+}
+
+.top > .brand > #nav-auth{ display: none !important; }
 
 @media (max-width: 900px){
   .top > .brand{ margin: -1.25rem -1.25rem 0; }
@@ -1694,7 +1699,10 @@ body:not(.home-page) .section-card{
 /* =========================
    BRIGHT METALLIC HOMEPAGE BRAND
 ========================= */
-.index-tmv-brand h1.nav-gold{
+.index-tmv-brand h1.nav-gold,
+.top > .brand h1.nav-gold,
+.milk-brand h1.nav-gold,
+.milk-admin-brand h1.nav-gold{
   background-image: linear-gradient(
     110deg,
     #744500 0%,
@@ -1724,7 +1732,10 @@ body:not(.home-page) .section-card{
 }
 
 @media (prefers-reduced-motion: reduce){
-  .index-tmv-brand h1.nav-gold{
+  .index-tmv-brand h1.nav-gold,
+  .top > .brand h1.nav-gold,
+  .milk-brand h1.nav-gold,
+  .milk-admin-brand h1.nav-gold{
     animation: none;
     background-position: 50% 50%;
   }

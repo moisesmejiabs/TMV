@@ -254,6 +254,9 @@ function ensureLanguageToggleRow() {
 async function initApp() {
   console.log("🚀 initApp START");
 
+  const initialLanguage = localStorage.getItem("lang") || "en";
+  updateLanguage(initialLanguage);
+
   let me = null;
 
   // ---------- AUTH ----------

@@ -1,5 +1,22 @@
 (function () {
   async function initializeLanguageUserRow() {
+    let header = document.querySelector("header");
+    const main = document.querySelector("main");
+
+    if (!header) {
+      header = document.createElement("header");
+      header.className = "top";
+      header.innerHTML = `
+        <div class="brand">
+          <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img flipped">
+          <h1 class="nav-gold">Tu<br>Mejor<br>Versión</h1>
+          <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img">
+        </div>
+      `;
+      if (main) main.insertAdjacentElement("beforebegin", header);
+      else document.body.prepend(header);
+    }
+
     let languageToggle = document.querySelector(".lang-toggle");
 
     if (!languageToggle) {
@@ -13,8 +30,6 @@
         </span>
       `;
 
-      const header = document.querySelector("header");
-      const main = document.querySelector("main");
       if (header) header.insertAdjacentElement("afterend", row);
       else if (main) main.insertAdjacentElement("beforebegin", row);
       else document.body.prepend(row);
