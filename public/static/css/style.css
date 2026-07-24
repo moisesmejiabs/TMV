@@ -552,7 +552,7 @@ h1{
 
 /* Homepage workshops use the same full-image presentation as workshop details. */
 .workshops-card .workshop-media-link{
-  width: min(100%, 678px);
+  width: min(100%, 452px);
   aspect-ratio: auto;
   overflow: visible;
   background: transparent;
