@@ -1690,3 +1690,52 @@ body:not(.home-page) .section-card{
     padding: 26px 18px;
   }
 }
+
+/* =========================
+   BRIGHT METALLIC HEADER BRAND
+========================= */
+.brand h1.nav-gold,
+.index-tmv-brand h1.nav-gold,
+.milk-brand h1.nav-gold,
+.milk-admin-brand h1.nav-gold{
+  background-image: linear-gradient(
+    110deg,
+    #744500 0%,
+    #d99b1f 18%,
+    #fff1a8 34%,
+    #f4bd32 47%,
+    #fffbe2 56%,
+    #f7ce55 64%,
+    #bd7910 82%,
+    #704000 100%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter:
+    brightness(1.18)
+    saturate(1.18)
+    drop-shadow(0 2px 1px rgba(74, 38, 0, 0.55))
+    drop-shadow(0 0 9px rgba(255, 219, 96, 0.48));
+  text-shadow:
+    0 1px 0 rgba(255,255,255,0.34),
+    0 5px 13px rgba(72,35,0,0.30);
+  animation: tmv-gold-shimmer 7s ease-in-out infinite;
+}
+
+@keyframes tmv-gold-shimmer{
+  0%, 18%{ background-position: 100% 50%; }
+  52%, 100%{ background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .brand h1.nav-gold,
+  .index-tmv-brand h1.nav-gold,
+  .milk-brand h1.nav-gold,
+  .milk-admin-brand h1.nav-gold{
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
