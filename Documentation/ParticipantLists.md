@@ -12,9 +12,11 @@ Migration `0002_participant_lists.sql` adds:
 - `event_participant`: an event-specific snapshot of name, phone, address,
   optional participant ID, and optional authentication user ID.
 
-Authentication accounts and participant profiles remain distinct. Deleting a
-reusable list never deletes participants. Deleting or changing a participant
-does not rewrite an existing event snapshot.
+Authentication accounts and participant profiles remain distinct. Accounts
+are offered only in Event Builder's **Registered Users** group; they do not
+appear in Add Participant or reusable-list management. Deleting a reusable
+list never deletes participants. Deleting or changing a participant does not
+rewrite an existing event snapshot.
 
 ## Roles and routes
 
@@ -32,8 +34,13 @@ from the signed-in session. It does not accept a browser-supplied user ID.
 ## List expansion and snapshots
 
 The Event Builder accepts reusable-list IDs, individual participant IDs, and
-ad-hoc participant details. The server validates IDs, expands current list
-members, and deduplicates registered people by stable participant ID.
+ad-hoc participant details. It also offers authentication accounts in a
+separate Registered Users group. The server validates IDs, expands current
+list members, and deduplicates people by stable participant or account ID.
+
+On event detail pages, administrators see the saved assigned-participant
+snapshot when one exists. Events without assigned participants continue to
+show only their existing self-registration behavior.
 
 Ad-hoc entries are deduplicated by case-insensitive trimmed name plus phone
 digits. A matching selected registered participant wins over an ad-hoc entry.

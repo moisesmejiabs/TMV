@@ -230,6 +230,7 @@
 
   <script>
   function q(name){return new URLSearchParams(location.search).get(name)}
+  function eventSafe(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function imageSrc(value){
     if(!value) return '';
     if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
@@ -345,8 +346,21 @@
     if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm(eventText('Delete this event? Feedback will be saved for future display.', '¿Eliminar este evento? Los comentarios se guardarán para mostrarlos en el futuro.'))){await api(`/api/events/${id}`,{method:'DELETE'}); location.href='/events.html';}});
 
     if(me && me.role==='admin'){
-      const users = await api(`/api/events/${id}/registered`);
-      document.getElementById('admin').innerHTML = '<h3 data-en="Registered Users" data-es="Usuarios Registrados">Registered Users</h3>' + (users.length?('<ul>'+users.map(u=>`<li>${u.name} (${u.email})</li>`).join('')+'</ul>'):'<p data-en="No registrations." data-es="No hay registros.">No registrations.</p>');
+      const [assigned, users] = await Promise.all([
+        api(`/api/admin/events/${id}/participants`),
+        api(`/api/events/${id}/registered`)
+      ]);
+      const assignedHtml = assigned.length ? `
+        <section class="event-detail-section">
+          <h3 data-en="Assigned Participants" data-es="Participantes Asignados">Assigned Participants</h3>
+          <p>${assigned.length} participant${assigned.length === 1 ? '' : 's'}</p>
+          <div style="max-height:18rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #ddd;border-radius:.5rem;padding:.5rem;">
+            <ul>${assigned.map(person => `<li><strong>${eventSafe(person.name)}</strong>${person.phone ? ` — ${eventSafe(person.phone)}` : ''}${person.address ? `<br><small>${eventSafe(person.address)}</small>` : ''}</li>`).join('')}</ul>
+          </div>
+        </section>` : '';
+      const registeredHtml = '<h3 data-en="Self-Registered Users" data-es="Usuarios Auto-Registrados">Self-Registered Users</h3>' +
+        (users.length ? '<ul>'+users.map(u=>`<li>${eventSafe(u.name)} (${eventSafe(u.email)})</li>`).join('')+'</ul>' : '<p data-en="No registrations." data-es="No hay registros.">No registrations.</p>');
+      document.getElementById('admin').innerHTML = assignedHtml + registeredHtml;
       applyEventLanguage();
     }
   })().catch(err=>{document.getElementById('about').textContent=err.message;});

@@ -957,14 +957,8 @@ async function handleParticipants(request: Request, env: Env, pathname: string) 
     const name = String(body.name || '').trim();
     const phone = normalizePhone(body.phone);
     const address = String(body.address || '').trim();
-    const userId = body.user_id ? Number(body.user_id) : null;
     const listId = body.list_id ? Number(body.list_id) : null;
     if (!name) return badRequest('Participant name is required');
-    if (userId && !Number.isInteger(userId)) return badRequest('Invalid user id');
-    if (userId) {
-      const account = await env.DB.prepare('SELECT id FROM user WHERE id = ?').bind(userId).first();
-      if (!account) return badRequest('Unknown user id');
-    }
     if (listId) {
       const list = await env.DB.prepare('SELECT id FROM participant_list WHERE id = ?').bind(listId).first();
       if (!list) return badRequest('Unknown participant list');
@@ -974,7 +968,7 @@ async function handleParticipants(request: Request, env: Env, pathname: string) 
       const result = await env.DB.prepare(`
         INSERT INTO participant (user_id,name,phone,address,created_by,created_at,updated_at)
         VALUES (?,?,?,?,?,?,?)
-      `).bind(userId, name, phone || null, address || null, admin.user!.id, now, now).run();
+      `).bind(null, name, phone || null, address || null, admin.user!.id, now, now).run();
       const participantId = Number(result.meta.last_row_id);
       if (listId) {
         try {
@@ -1007,17 +1001,12 @@ async function handleParticipants(request: Request, env: Env, pathname: string) 
     const name = String(body.name || '').trim();
     const phone = normalizePhone(body.phone);
     const address = String(body.address || '').trim();
-    const userId = body.user_id ? Number(body.user_id) : null;
     if (!name) return badRequest('Participant name is required');
-    if (userId) {
-      const account = await env.DB.prepare('SELECT id FROM user WHERE id = ?').bind(userId).first();
-      if (!account) return badRequest('Unknown user id');
-    }
     try {
       const result = await env.DB.prepare(`
-        UPDATE participant SET user_id = ?,name = ?,phone = ?,address = ?,updated_at = ?
+        UPDATE participant SET name = ?,phone = ?,address = ?,updated_at = ?
         WHERE id = ?
-      `).bind(userId, name, phone || null, address || null, isoNow(), id).run();
+      `).bind(name, phone || null, address || null, isoNow(), id).run();
       if (!result.meta?.changes) return notFound('Participant not found');
       return json({ ok: true });
     } catch (error) {
@@ -1171,6 +1160,7 @@ async function handleParticipants(request: Request, env: Env, pathname: string) 
 async function resolveEventParticipants(env: Env, body: any) {
   const directIds = integerIds(body.participant_ids);
   const listIds = integerIds(body.participant_list_ids);
+  const registeredUserIds = integerIds(body.registered_user_ids);
   const registeredIds = new Set<number>(directIds);
 
   if (listIds.length) {
@@ -1188,6 +1178,7 @@ async function resolveEventParticipants(env: Env, body: any) {
   }
 
   const rows: any[] = [];
+  const selectedUserIds = new Set<number>();
   if (registeredIds.size) {
     const ids = [...registeredIds];
     const placeholders = ids.map(() => '?').join(',');
@@ -1198,6 +1189,7 @@ async function resolveEventParticipants(env: Env, body: any) {
       return { error: 'Unknown participant', rows: [] as any[] };
     }
     for (const participant of (participants.results || []) as any[]) {
+      if (participant.user_id) selectedUserIds.add(Number(participant.user_id));
       rows.push({
         participant_id: Number(participant.id),
         user_id: participant.user_id ? Number(participant.user_id) : null,
@@ -1205,6 +1197,30 @@ async function resolveEventParticipants(env: Env, body: any) {
         name: String(participant.name),
         phone: participant.phone || null,
         address: participant.address || null
+      });
+    }
+  }
+
+  if (registeredUserIds.length) {
+    const placeholders = registeredUserIds.map(() => '?').join(',');
+    const users = await env.DB.prepare(`
+      SELECT id,name,email FROM user
+      WHERE role = 'user' AND id IN (${placeholders})
+    `).bind(...registeredUserIds).all();
+    if ((users.results || []).length !== registeredUserIds.length) {
+      return { error: 'Unknown registered user', rows: [] as any[] };
+    }
+    for (const user of (users.results || []) as any[]) {
+      const userId = Number(user.id);
+      if (selectedUserIds.has(userId)) continue;
+      selectedUserIds.add(userId);
+      rows.push({
+        participant_id: null,
+        user_id: userId,
+        participant_type: 'registered',
+        name: String(user.name),
+        phone: null,
+        address: null
       });
     }
   }
@@ -1493,6 +1509,7 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     const replacesParticipants =
       Array.isArray((body as any).participant_ids) ||
       Array.isArray((body as any).participant_list_ids) ||
+      Array.isArray((body as any).registered_user_ids) ||
       Array.isArray((body as any).ad_hoc_participants);
     const resolved = replacesParticipants
       ? await resolveEventParticipants(env, body)

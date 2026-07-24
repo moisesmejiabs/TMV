@@ -127,7 +127,10 @@
     <p><a href="/admin-participants.html">Manage participants and reusable lists</a></p>
     <label>Reusable participant lists</label>
     <div id="event-participant-lists" class="participant-picker" aria-live="polite"></div>
-    <label>Individual registered participants</label>
+    <label>Registered Users</label>
+    <p>Select website accounts only when this event should appear in their User View.</p>
+    <div id="event-registered-users" class="participant-picker" aria-live="polite"></div>
+    <label>Individual participants</label>
     <input id="event-participant-search" type="search" placeholder="Search name or phone">
     <p id="event-participant-count" aria-live="polite"></p>
     <div id="event-participants" class="participant-picker" aria-live="polite"></div>
@@ -150,6 +153,7 @@ const formEl = document.getElementById("eventForm");
 const editEventId = new URLSearchParams(window.location.search).get("id");
 let eventParticipants = [];
 let eventLists = [];
+let registeredUsers = [];
 console.log("🔍 event form element:", formEl);
 
 function eventEscape(value) {
@@ -181,15 +185,20 @@ function addAdHocRow(person = {}) {
 }
 
 async function loadParticipantChoices() {
-  const [participantData, lists] = await Promise.all([
+  const [participantData, lists, users] = await Promise.all([
     fetch("/api/admin/participants", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d}),
-    fetch("/api/admin/participant-lists", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d})
+    fetch("/api/admin/participant-lists", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d}),
+    fetch("/api/admin/users", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d})
   ]);
   eventParticipants = participantData.participants;
   eventLists = lists;
+  registeredUsers = users.filter(user => user.role === "user");
   document.getElementById("event-participant-lists").innerHTML = lists.map(list =>
     `<label><input type="checkbox" value="${list.id}" data-list-id> ${eventEscape(list.name)} (${list.member_count})</label>`
   ).join("") || "<p>No saved participant lists.</p>";
+  document.getElementById("event-registered-users").innerHTML = registeredUsers.map(user =>
+    `<label><input type="checkbox" value="${user.id}" data-registered-user-id> ${eventEscape(user.name)} <small>${eventEscape(user.email)}</small></label>`
+  ).join("") || "<p>No registered users.</p>";
   renderEventParticipants();
 }
 
@@ -240,6 +249,9 @@ async function loadEventForEdit() {
     if (person.participant_type === "registered" && person.participant_id) {
       const match = eventParticipants.find(item => Number(item.id) === Number(person.participant_id));
       if (match) match.selected = true;
+    } else if (person.participant_type === "registered" && person.user_id) {
+      const input = document.querySelector(`[data-registered-user-id][value="${Number(person.user_id)}"]`);
+      if (input) input.checked = true;
     } else {
       addAdHocRow(person);
     }
@@ -290,6 +302,7 @@ if (!formEl) {
         requirements: form.elements.requirements.value.trim(),
         image_url: imageUrl,
         participant_list_ids: [...document.querySelectorAll("[data-list-id]:checked")].map(input => Number(input.value)),
+        registered_user_ids: [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)),
         participant_ids: eventParticipants.filter(person => person.selected).map(person => Number(person.id)),
         ad_hoc_participants: [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
           name: row.querySelector("[data-adhoc-name]").value.trim(),
