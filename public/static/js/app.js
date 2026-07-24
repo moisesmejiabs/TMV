@@ -893,13 +893,20 @@ async function loadCourses() {
         }
 
         html += `
-          <li class="course-item">
-            <a href="/course.html?id=${safeId}">
-              <strong>${safeName}</strong>
-            </a>
-            <div class="course-meta">
-              <span><b>Date:</b> ${safeDate}</span><br>
-              <span><b>Presenter:</b> ${safePresenter}</span>
+          <li class="course-item homepage-summary-card">
+            ${safeImageUrl
+              ? `<a class="homepage-summary-media" href="/course.html?id=${safeId}"><img src="${safeImageUrl}" alt="${safeName} course image" loading="lazy"></a>`
+              : `<div class="homepage-summary-media homepage-summary-placeholder" aria-hidden="true"></div>`}
+            <div class="homepage-summary-content">
+              <a class="homepage-summary-title" href="/course.html?id=${safeId}">
+                <strong>${safeName}</strong>
+              </a>
+              <div class="course-meta">
+                <span><b>Date:</b> ${safeDate}</span><br>
+                <span><b>Presenter:</b> ${safePresenter}</span><br>
+                <span><b>Location:</b> ${safeLocation}</span>
+              </div>
+              ${safeDescription ? `<p class="homepage-summary-description">${safeDescription}</p>` : ""}
             </div>
           </li>
         `;
@@ -1591,17 +1598,19 @@ async function loadEvents() {
 
       if (!document.body.classList.contains("events-listing-page")) {
         return `
-          <li class="list-item">
-            ${safeImageUrl ? `<a class="event-media-link" href="/event.html?id=${safeId}"><img src="${safeImageUrl}" alt="${safeName} event image"></a>` : ""}
-            <div>
-              <a href="/event.html?id=${safeId}">
+          <li class="list-item homepage-summary-card">
+            ${safeImageUrl
+              ? `<a class="homepage-summary-media" href="/event.html?id=${safeId}"><img src="${safeImageUrl}" alt="${safeName} event image" loading="lazy"></a>`
+              : `<div class="homepage-summary-media homepage-summary-placeholder" aria-hidden="true"></div>`}
+            <div class="homepage-summary-content">
+              <a class="homepage-summary-title" href="/event.html?id=${safeId}">
                 <strong>${safeName}</strong>
               </a>
               <div class="muted">
-                <span><b>ID:</b> ${escapeHtml(e.id || "")}</span><br>
                 <span><b>Date:</b> ${safeDate}</span><br>
                 <span><b>Location:</b> ${safeLocation}</span>
               </div>
+              ${safeDescription ? `<p class="homepage-summary-description">${safeDescription}</p>` : ""}
             </div>
           </li>
         `;
