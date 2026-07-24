@@ -55,6 +55,14 @@ function forbidden(message = 'Forbidden') {
   return json({ error: message }, 403);
 }
 
+function tooManyRequests(message: string, retryAfterSeconds: number) {
+  return json(
+    { error: message, retry_after: retryAfterSeconds },
+    429,
+    { 'retry-after': String(retryAfterSeconds) },
+  );
+}
+
 function notFound(message = 'Not found') {
   return json({ error: message }, 404);
 }
@@ -904,14 +912,201 @@ const FORMULA_TYPES = [
   'Otra fórmula',
 ];
 
-function normalizePhone(value: unknown) {
-  return String(value || '').trim().replace(/[^\d+().\-\s]/g, '');
+function normalizeMilkPhone(value: unknown) {
+  const raw = String(value || '').trim();
+  if (!/^[+\d().\-\s]+$/.test(raw)) return null;
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  if (raw.startsWith('+') && /^[1-9]\d{7,14}$/.test(digits)) return `+${digits}`;
+  return null;
+}
+
+function randomSixDigitCode() {
+  const values = new Uint32Array(1);
+  const range = 1_000_000;
+  const ceiling = Math.floor(0x1_0000_0000 / range) * range;
+  do {
+    crypto.getRandomValues(values);
+  } while (values[0] >= ceiling);
+  return String(values[0] % range).padStart(6, '0');
+}
+
+async function milkVerificationHash(env: Env, salt: string, code: string) {
+  return hmacSign(env.JWT_SECRET, `milk-phone-verification:${salt}:${code}`);
+}
+
+async function milkRequestIpHash(request: Request, env: Env) {
+  const ip = String(request.headers.get('cf-connecting-ip') || 'unknown').trim();
+  return hmacSign(env.JWT_SECRET, `milk-phone-request-ip:${ip}`);
+}
+
+function verificationTokenFromRequest(body: any) {
+  return String(body?.phone_verification_token || '').trim();
 }
 
 async function handleMilkGiveaway(request: Request, env: Env, pathname: string) {
-  if (request.method !== 'POST' || pathname !== '/api/milk-registrations') {
-    return null;
+  if (request.method === 'POST' && pathname === '/api/milk-phone-verification/request') {
+    const user = await requireUser(request, env);
+    if (!user) return unauthorized('Debe iniciar sesión para verificar un teléfono.');
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Se esperaba información en formato JSON.');
+    const phone = normalizeMilkPhone(body.phone);
+    if (!phone) {
+      return badRequest('Escriba un número válido de Estados Unidos o en formato internacional.');
+    }
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const minuteAgo = new Date(now.getTime() - 60_000).toISOString();
+    const dayAgo = new Date(now.getTime() - 86_400_000).toISOString();
+    const ipHash = await milkRequestIpHash(request, env);
+
+    const latest = await env.DB.prepare(`
+      SELECT created_at
+      FROM milk_phone_verification
+      WHERE phone_e164 = ? AND created_at >= ?
+      ORDER BY created_at DESC LIMIT 1
+    `).bind(phone, minuteAgo).first<any>();
+    if (latest) {
+      const retryAfter = Math.max(
+        1,
+        60 - Math.floor((now.getTime() - new Date(latest.created_at).getTime()) / 1000),
+      );
+      return tooManyRequests(
+        'Espere un minuto antes de solicitar otro código.',
+        retryAfter,
+      );
+    }
+
+    const limits = await env.DB.prepare(`
+      SELECT
+        SUM(CASE WHEN phone_e164 = ? THEN 1 ELSE 0 END) AS phone_count,
+        SUM(CASE WHEN user_id = ? THEN 1 ELSE 0 END) AS user_count,
+        SUM(CASE WHEN request_ip_hash = ? THEN 1 ELSE 0 END) AS ip_count
+      FROM milk_phone_verification
+      WHERE created_at >= ?
+    `).bind(phone, Number(user.id), ipHash, dayAgo).first<any>();
+    if (Number(limits?.phone_count || 0) >= 5
+        || Number(limits?.user_count || 0) >= 10
+        || Number(limits?.ip_count || 0) >= 20) {
+      return tooManyRequests(
+        'Se alcanzó el límite diario de códigos. Inténtelo de nuevo mañana.',
+        3600,
+      );
+    }
+
+    const verificationId = crypto.randomUUID();
+    const code = randomSixDigitCode();
+    const salt = crypto.randomUUID();
+    const codeHash = await milkVerificationHash(env, salt, code);
+    const expiresAt = new Date(now.getTime() + 10 * 60_000).toISOString();
+    const smsMessage =
+      `Tu código de verificación de Tu Mejor Versión es ${code}. ` +
+      'Vence en 10 minutos. No lo compartas.';
+
+    await env.DB.batch([
+      env.DB.prepare(`
+        INSERT INTO milk_phone_verification
+          (id,user_id,phone_e164,purpose,code_salt,code_hash,
+           attempts_remaining,expires_at,request_ip_hash,created_at,updated_at)
+        VALUES (?,? ,?,'milk_registration',?,?,5,?,?,?,?)
+      `).bind(
+        verificationId,
+        Number(user.id),
+        phone,
+        salt,
+        codeHash,
+        expiresAt,
+        ipHash,
+        nowIso,
+        nowIso,
+      ),
+      env.DB.prepare(`
+        INSERT INTO sms_outbox
+          (recipient,message,status,attempt_count,available_at,created_at,updated_at,created_by)
+        VALUES (?,?,'queued',0,?,?,?,?)
+      `).bind(phone, smsMessage, nowIso, nowIso, nowIso, Number(user.id)),
+    ]);
+
+    return json({
+      ok: true,
+      verification_id: verificationId,
+      expires_in: 600,
+      resend_after: 60,
+      phone_hint: `•••${phone.slice(-4)}`,
+    }, 201);
   }
+
+  if (request.method === 'POST' && pathname === '/api/milk-phone-verification/verify') {
+    const user = await requireUser(request, env);
+    if (!user) return unauthorized('Debe iniciar sesión para verificar un teléfono.');
+    const body = await readJson(request) as any;
+    if (!body) return badRequest('Se esperaba información en formato JSON.');
+    const verificationId = String(body.verification_id || '').trim();
+    const code = String(body.code || '').trim();
+    if (!/^[0-9a-f-]{36}$/i.test(verificationId) || !/^\d{6}$/.test(code)) {
+      return badRequest('Escriba el código de seis dígitos.');
+    }
+
+    const row = await env.DB.prepare(`
+      SELECT id,user_id,code_salt,code_hash,attempts_remaining,expires_at,
+             verified_at,verified_expires_at,consumed_at
+      FROM milk_phone_verification
+      WHERE id = ? AND user_id = ? AND purpose = 'milk_registration'
+    `).bind(verificationId, Number(user.id)).first<any>();
+    const now = new Date();
+    if (!row || row.consumed_at || row.verified_at
+        || Number(row.attempts_remaining || 0) <= 0
+        || new Date(row.expires_at).getTime() < now.getTime()) {
+      return badRequest('El código no es válido o ya venció.');
+    }
+
+    const providedHash = await milkVerificationHash(env, row.code_salt, code);
+    if (!(await constantTimeSecretMatches(providedHash, row.code_hash))) {
+      const remaining = Math.max(0, Number(row.attempts_remaining) - 1);
+      await env.DB.prepare(`
+        UPDATE milk_phone_verification
+        SET attempts_remaining = ?, updated_at = ?
+        WHERE id = ? AND user_id = ? AND verified_at IS NULL
+      `).bind(remaining, now.toISOString(), verificationId, Number(user.id)).run();
+      return badRequest(
+        remaining > 0
+          ? `El código no es correcto. Quedan ${remaining} intentos.`
+          : 'El código fue bloqueado. Solicite uno nuevo.',
+      );
+    }
+
+    const verifiedExpiresAt = new Date(now.getTime() + 15 * 60_000).toISOString();
+    const verified = await env.DB.prepare(`
+      UPDATE milk_phone_verification
+      SET verified_at = ?, verified_expires_at = ?,
+          code_salt = '', code_hash = '', updated_at = ?
+      WHERE id = ? AND user_id = ? AND verified_at IS NULL
+        AND consumed_at IS NULL AND attempts_remaining > 0 AND expires_at >= ?
+    `).bind(
+      now.toISOString(),
+      verifiedExpiresAt,
+      now.toISOString(),
+      verificationId,
+      Number(user.id),
+      now.toISOString(),
+    ).run();
+    if (!verified.meta.changes) return badRequest('El código no es válido o ya venció.');
+
+    const token = await jwtSign(
+      env.JWT_SECRET,
+      { uid: Number(user.id), vid: verificationId, type: 'milk-phone-verification' },
+      15 * 60,
+    );
+    return json({
+      ok: true,
+      phone_verification_token: token,
+      expires_in: 15 * 60,
+    });
+  }
+
+  if (request.method !== 'POST' || pathname !== '/api/milk-registrations') return null;
 
   const user = await requireUser(request, env);
   if (!user) return unauthorized('Debe iniciar sesión para registrar a una persona.');
@@ -920,7 +1115,7 @@ async function handleMilkGiveaway(request: Request, env: Env, pathname: string) 
   if (!body) return badRequest('Se esperaba información en formato JSON.');
 
   const fullName = String(body.full_name || '').trim();
-  const phone = normalizePhone(body.phone);
+  const phone = normalizeMilkPhone(body.phone);
   const babyName = String(body.baby_name || '').trim();
   const babyAgeMonths = Number(body.baby_age_months);
   const formulaType = String(body.formula_type || '').trim();
@@ -929,9 +1124,7 @@ async function handleMilkGiveaway(request: Request, env: Env, pathname: string) 
   if (fullName.length < 2 || fullName.length > 120) {
     return badRequest('Escriba el nombre completo de la persona que recibirá la leche.');
   }
-  if (phone.replace(/\D/g, '').length < 7 || phone.length > 30) {
-    return badRequest('Escriba un número de teléfono válido.');
-  }
+  if (!phone) return badRequest('Escriba un número de teléfono válido.');
   if (babyName.length < 2 || babyName.length > 120) {
     return badRequest('Escriba el nombre del bebé.');
   }
@@ -948,21 +1141,63 @@ async function handleMilkGiveaway(request: Request, env: Env, pathname: string) 
     return badRequest('Escriba el nombre de la fórmula que usa el bebé.');
   }
 
-  const result = await env.DB.prepare(`
-    INSERT INTO milk_giveaway_registration
-      (registered_by, full_name, phone, baby_name, baby_age_months,
-       formula_type, formula_other, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  const verificationToken = verificationTokenFromRequest(body);
+  let verificationPayload: Json | null = null;
+  if (verificationToken) {
+    try {
+      verificationPayload = await jwtVerify(env.JWT_SECRET, verificationToken);
+    } catch {
+      verificationPayload = null;
+    }
+  }
+  if (verificationPayload?.type !== 'milk-phone-verification'
+      || Number(verificationPayload.uid) !== Number(user.id)
+      || !verificationPayload.vid) {
+    return forbidden('Verifique el número de teléfono antes de enviar el registro.');
+  }
+  const verificationId = String(verificationPayload.vid);
+  const verification = await env.DB.prepare(`
+    SELECT id
+    FROM milk_phone_verification
+    WHERE id = ? AND user_id = ? AND phone_e164 = ?
+      AND purpose = 'milk_registration'
+      AND verified_at IS NOT NULL AND verified_expires_at >= ?
+      AND consumed_at IS NULL
   `).bind(
-    user.id,
-    fullName,
+    verificationId,
+    Number(user.id),
     phone,
-    babyName,
-    babyAgeMonths,
-    formulaType,
-    formulaType === 'Otra fórmula' ? formulaOther : null,
     isoNow(),
-  ).run();
+  ).first();
+  if (!verification) {
+    return forbidden('La verificación del teléfono venció o no corresponde a este número.');
+  }
+
+  const now = isoNow();
+  const statements = await env.DB.batch([
+    env.DB.prepare(`
+      INSERT INTO milk_giveaway_registration
+        (registered_by, full_name, phone, baby_name, baby_age_months,
+         formula_type, formula_other, created_at, phone_verification_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      Number(user.id),
+      fullName,
+      phone,
+      babyName,
+      babyAgeMonths,
+      formulaType,
+      formulaType === 'Otra fórmula' ? formulaOther : null,
+      now,
+      verificationId,
+    ),
+    env.DB.prepare(`
+      UPDATE milk_phone_verification
+      SET consumed_at = ?, updated_at = ?
+      WHERE id = ? AND user_id = ? AND consumed_at IS NULL
+    `).bind(now, now, verificationId, Number(user.id)),
+  ]);
+  const result = statements[0];
 
   return json({
     ok: true,

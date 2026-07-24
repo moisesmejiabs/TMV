@@ -4,7 +4,8 @@
 
 - Public organizational, donation, media, event, course, and workshop pages.
 - User registration, login, and session-aware navigation.
-- Authenticated milk-giveaway receiver registration.
+- Authenticated milk-giveaway receiver registration with SMS confirmation that
+  the registrant can access the submitted phone number.
 - Admin-only review and export of milk-registration data.
 - Event, course, workshop, and media administration.
 - English and Spanish presentation where supported by the current UI.
@@ -21,6 +22,9 @@
 - Protect authenticated and administrative routes on the server, not only by
   hiding navigation links.
 - Keep production secrets in Cloudflare secret storage.
+- Never store or log plaintext milk-registration verification codes.
+- Limit verification requests by authenticated user, phone number, and
+  Cloudflare-provided source IP; expire and consume verification credentials.
 - Do not commit personal data, credentials, generated exports, or local
   environment files.
 

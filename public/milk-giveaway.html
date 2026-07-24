@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#6d2140">
   <title>Registro para entrega de leche | Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724">
-  <link rel="stylesheet" href="/static/css/milk-giveaway.css">
+  <link rel="stylesheet" href="/static/css/milk-giveaway.css?v=phone-verification-20260724">
 </head>
 <body class="milk-page" data-page-type="user">
   <header class="milk-header">
@@ -84,6 +84,23 @@
           <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel"
                  maxlength="30" placeholder="Ejemplo: (212) 555-0123"
                  aria-describedby="phoneHint" required>
+          <div class="milk-phone-verification">
+            <button id="requestCodeButton" class="milk-secondary" type="button">
+              Enviar código por SMS
+            </button>
+            <div id="verificationCodeSection" class="milk-code-section" hidden>
+              <label for="verificationCode">Código de verificación</label>
+              <p class="milk-hint">Escriba los seis dígitos enviados a su teléfono.</p>
+              <input id="verificationCode" type="text" autocomplete="one-time-code"
+                     inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                     placeholder="000000">
+              <button id="verifyCodeButton" class="milk-secondary" type="button">
+                Confirmar código
+              </button>
+            </div>
+            <p id="phoneVerificationStatus" class="milk-verification-status"
+               role="status" aria-live="polite"></p>
+          </div>
         </div>
 
         <div class="milk-field">
@@ -131,7 +148,7 @@
         </fieldset>
 
         <div id="formMessage" class="milk-message" role="alert" aria-live="assertive" hidden></div>
-        <button id="submitButton" class="milk-submit" type="submit">
+        <button id="submitButton" class="milk-submit" type="submit" disabled>
           Enviar registro
         </button>
       </form>
@@ -151,6 +168,6 @@
 
   <script src="/static/js/language-user-row.js"></script>
   <script src="/static/js/app.js"></script>
-  <script src="/static/js/milk-giveaway.js?v=standard-menu-20260724"></script>
+  <script src="/static/js/milk-giveaway.js?v=phone-verification-20260724"></script>
 </body>
 </html>

@@ -8,7 +8,10 @@ standardized project structure.
 - Added standard customer identity, architecture, deployment, operations,
   requirements, credential-reference, and project-instruction documentation.
 - Relocated the maintained working copy into the standard customer workspace.
-- Added a local-first SMS outbox API and a sideloadable Android gateway
-  prototype. Nothing has been deployed or applied to production.
+- Activated the SMS outbox and dedicated Android gateway on SIM 1 with Android
+  send and carrier delivery reporting.
+- Added a locally validated, rate-limited SMS phone-verification flow for milk
+  registration. Production activation remains pending migration and deployment
+  approval.
 
 Historical application changes remain available in Git history.

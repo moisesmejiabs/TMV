@@ -21,7 +21,8 @@ API routes and static files from `public/`.
 
 - Authentication uses signed JWT session data; `JWT_SECRET` is stored as a
   Cloudflare Worker secret.
-- Milk-giveaway registration requires an authenticated user.
+- Milk-giveaway registration requires an authenticated user and a recent,
+  single-use SMS verification tied to that user and normalized phone number.
 - Administrative milk-registration access requires the application's admin
   authorization checks.
 - Production personal data stays in Cloudflare and must not enter Git or local
@@ -33,3 +34,8 @@ API routes and static files from `public/`.
 
 The Worker receives custom-domain traffic, applies route and authorization
 logic, reads or writes D1/R2 when required, and otherwise serves static assets.
+
+For milk registration, the Worker generates a six-digit code, stores only a
+keyed hash, and queues the code through the Android SMS gateway. A correct code
+produces a short-lived signed credential. Registration validates that
+credential against D1 and consumes it once.

@@ -33,6 +33,9 @@ only `SMS_GATEWAY_TOKEN`.
   - `GET /api/admin/sms/messages/:id`
   - `POST /api/sms-gateway/claim`
   - `POST /api/sms-gateway/messages/:id/status`
+- Milk phone-verification routes (local, pending production activation):
+  - `POST /api/milk-phone-verification/request`
+  - `POST /api/milk-phone-verification/verify`
 - Android source: `android-sms-gateway/`
 
 ## Local setup
@@ -54,7 +57,7 @@ database procedure in `Documentation/Operations.md`.
 - Never expose the gateway token in URLs, Git, logs, screenshots, or support
   messages.
 - Record recipient consent before queuing automated SMS.
-- Apply per-user, per-number, and per-IP limits before connecting OTP flows.
+- Preserve the OTP cooldown and daily per-user, per-number, and per-IP limits.
 - Monitor carrier plan terms and message volume. A consumer unlimited plan may
   prohibit automated application messaging.
 - Stop the gateway and rotate the token if the device or SIM is lost.
@@ -68,5 +71,8 @@ database procedure in `Documentation/Operations.md`.
 - The current dedicated device configuration is fixed to physical SIM 1.
 - Status reporting retries three times; extended network outages still require
   operational review.
-- OTP generation and phone-verification screens are intentionally separate
-  follow-up work.
+- Milk-registration OTP is implemented locally and requires migration
+  `0003_milk_phone_verification.sql` before production activation.
+- Six-digit OTPs expire after 10 minutes, allow five attempts, and are stored
+  only as keyed hashes. Successful verification credentials expire after 15
+  minutes and can be consumed by one milk registration.

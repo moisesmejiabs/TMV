@@ -27,3 +27,6 @@ Archive/*
 android-sms-gateway/.gradle/
 android-sms-gateway/**/build/
 android-sms-gateway/local.properties
+
+# Additional local Git worktrees
+.worktrees/
