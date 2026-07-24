@@ -1717,11 +1717,11 @@ body:not(.home-page) .section-card{
   filter:
     brightness(1.18)
     saturate(1.18)
-    drop-shadow(0 2px 1px rgba(74, 38, 0, 0.55))
+    drop-shadow(0 1px 1px rgba(74, 38, 0, 0.42))
     drop-shadow(0 0 9px rgba(255, 219, 96, 0.48));
   text-shadow:
-    0 1px 0 rgba(255,255,255,0.34),
-    0 5px 13px rgba(72,35,0,0.30);
+    0 0 3px rgba(255,255,255,0.30),
+    0 0 11px rgba(255,213,74,0.28);
   animation: tmv-gold-shimmer 7s ease-in-out infinite;
 }
 
