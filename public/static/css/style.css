@@ -999,6 +999,10 @@ h1{
   width: 100%;
 }
 
+.youtube-slider-card .youtube-slider {
+  width: min(100%, 452px);
+}
+
 .youtube-slider-frame {
   position: relative;
   width: 100%;
