@@ -1465,6 +1465,89 @@ article{
   }
 }
 
+/* =========================
+   HOMEPAGE TYPOGRAPHY + RHYTHM
+   Local review: one hierarchy and one content inset.
+========================= */
+.home-page{
+  --home-content-inset: 40px;
+  font-size: 16px;
+}
+
+.home-page .section-card > .section-title,
+.home-page .overlay-card > .section-title{
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 3.2vw, 2.375rem);
+  line-height: 1.15;
+}
+
+.home-page .section-card > .section-description,
+.home-page .overlay-card > .section-description{
+  max-width: 760px;
+  margin: 0 0 14px;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.home-page .workshop-list,
+.home-page .event-list,
+.home-page .course-list{
+  width: calc(100% - var(--home-content-inset));
+  margin: 0;
+  padding: 0;
+  margin-inline-start: var(--home-content-inset);
+  list-style: none;
+}
+
+.home-page .youtube-slider-card .youtube-slider,
+.home-page .book-presentation,
+.home-page .yt-card{
+  width: calc(100% - var(--home-content-inset));
+  margin-inline-start: var(--home-content-inset);
+}
+
+.home-page .partner-grid{
+  width: calc(100% - var(--home-content-inset));
+  margin-inline-start: var(--home-content-inset);
+}
+
+.home-page .workshop-summary-title,
+.home-page .homepage-summary-title,
+.home-page .book-details h2{
+  font-size: clamp(1.55rem, 2.5vw, 2.15rem);
+  line-height: 1.15;
+}
+
+.home-page .workshop-summary-description,
+.home-page .homepage-summary-description,
+.home-page .course-meta,
+.home-page .muted,
+.home-page .book-details p{
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.home-page .btn,
+.home-page button,
+.home-page .amazon-btn,
+.home-page .fb-share-btn{
+  font-size: 1rem;
+}
+
+.home-page .section-card{
+  margin-bottom: 40px;
+}
+
+@media (max-width: 600px){
+  .home-page{
+    --home-content-inset: 0px;
+  }
+
+  .home-page .section-card{
+    padding: 30px 20px;
+  }
+}
+
 @media (max-width: 600px){
   body{
     padding: 0.9rem;
