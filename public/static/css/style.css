@@ -1713,12 +1713,8 @@ body:not(.home-page) .section-card{
   color: transparent;
   filter:
     brightness(1.18)
-    saturate(1.18)
-    drop-shadow(0 1px 1px rgba(74, 38, 0, 0.42))
-    drop-shadow(0 0 9px rgba(255, 219, 96, 0.48));
-  text-shadow:
-    0 0 3px rgba(255,255,255,0.30),
-    0 0 11px rgba(255,213,74,0.28);
+    saturate(1.18);
+  text-shadow: none;
   animation: tmv-gold-shimmer 7s ease-in-out infinite;
 }
 
