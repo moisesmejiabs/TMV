@@ -943,16 +943,19 @@ async function loadWorkshops() {
     list.innerHTML = workshops.map((w) => {
       const image = w.image_url ? (String(w.image_url).startsWith("/") || /^https?:\/\//i.test(w.image_url) ? w.image_url : `/static/images/${w.image_url}`) : "";
       return `
-        <li class="list-item">
-          ${image ? `<a class="workshop-media-link" href="/workshop.html?id=${encodeURIComponent(w.id)}"><img src="${escapeHtml(image)}" alt="${escapeHtml(w.name || 'Workshop image')}"></a>` : ""}
-          <div>
-            <a href="/workshop.html?id=${encodeURIComponent(w.id)}">
+        <li class="list-item workshop-summary-card">
+          ${image
+            ? `<a class="workshop-media-link" href="/workshop.html?id=${encodeURIComponent(w.id)}"><img src="${escapeHtml(image)}" alt="${escapeHtml(w.name || 'Workshop image')}"></a>`
+            : `<div class="workshop-media-placeholder" aria-hidden="true"></div>`}
+          <div class="workshop-summary-content">
+            <a class="workshop-summary-title" href="/workshop.html?id=${encodeURIComponent(w.id)}">
               <strong>${escapeHtml(w.name || "")}</strong>
             </a>
             <div class="muted">
               <span><b>Date:</b> ${formatDate(w.date)}</span><br>
               <span><b>Location:</b> ${escapeHtml(w.location || "")}</span>
             </div>
+            ${w.about ? `<p class="workshop-summary-description">${escapeHtml(w.about)}</p>` : ""}
           </div>
         </li>
       `;
