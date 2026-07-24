@@ -1522,7 +1522,9 @@ article{
 .home-page .overlay-card > .section-description{
   max-width: 760px;
   margin: 0 0 14px;
-  font-size: 1.0625rem;
+  color: var(--berry);
+  font-size: 1.1875rem;
+  font-weight: 500;
   line-height: 1.7;
 }
 
