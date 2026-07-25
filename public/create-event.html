@@ -156,21 +156,25 @@
 </form>
 
 <style>
-.participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #ddd;border-radius:.5rem;padding:.5rem;margin:.4rem 0 1rem}
+.participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid rgba(109,33,64,.28);border-radius:.65rem;padding:.65rem;margin:.4rem 0 1rem;background:rgba(255,255,255,.78);box-shadow:inset 0 1px 4px rgba(95,52,71,.08)}
 .participant-picker label{display:block;padding:.35rem;overflow-wrap:anywhere}.ad-hoc-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin:.5rem 0}
 .participant-mode-toggle{display:flex;gap:.6rem;align-items:center;margin-top:1rem}.participant-mode-toggle input{width:auto}
-.selected-list-row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.45rem .6rem;margin:.35rem 0;border:1px solid #ddd;border-radius:.45rem}
+.selected-list-row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .7rem;margin:.4rem 0;border:1px solid rgba(109,33,64,.3);border-radius:.55rem;background:#fff8fa;box-shadow:0 3px 8px rgba(95,52,71,.08)}
 .selected-list-row button{min-height:2rem;width:auto}
-.event-form-section{margin:1rem 0;padding:1.15rem;border:1px solid rgba(109,33,64,.15);border-radius:18px;box-shadow:0 10px 24px rgba(95,52,71,.08)}
+.event-form-section{margin:1.2rem 0;padding:1.3rem;border:2px solid rgba(109,33,64,.28);border-radius:18px;box-shadow:0 12px 28px rgba(95,52,71,.16)}
 .event-form-section>h2{margin-top:0;color:var(--berry,#6d2140)}
-.event-form-section--rose{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(242,215,222,.58))}
-.event-form-section--champagne{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(246,234,223,.72))}
-.event-form-section--lavender{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(241,233,239,.76))}
-.event-form-section--participants{background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(242,215,222,.42))}
+.event-form-section--rose{background:linear-gradient(180deg,#fff7f9,#edc8d2)}
+.event-form-section--champagne{background:linear-gradient(180deg,#fffaf4,#ecd5bd)}
+.event-form-section--lavender{background:linear-gradient(180deg,#fbf7fc,#dfd0e3)}
+.event-form-section--participants{background:linear-gradient(180deg,#fff5f8,#e8beca)}
 .event-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem}
 .event-form-grid label:first-child{grid-column:1/-1}
 .event-form-actions{display:flex;justify-content:flex-end;margin-top:1rem}
-#participant-assignment-fields{margin-top:1rem;padding:1rem;border:1px solid rgba(109,33,64,.2);border-radius:14px;background:rgba(255,255,255,.58)}
+#participant-assignment-fields{margin-top:1rem;padding:1.15rem;border:2px solid rgba(109,33,64,.38);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(244,225,231,.9));box-shadow:0 8px 20px rgba(95,52,71,.14)}
+#participant-assignment-fields legend{padding:0 .55rem;color:var(--berry,#6d2140);font-weight:700}
+#participant-assignment-fields select{background:#fff;border:1px solid rgba(109,33,64,.35)}
+#event-selected-lists,#registered-users-section,#participant-assignment-fields details{margin:1rem 0;padding:.8rem;border:1px solid rgba(109,33,64,.24);border-radius:10px;background:rgba(255,248,250,.82)}
+#participant-assignment-fields details>summary{color:var(--berry,#6d2140);font-weight:700;cursor:pointer}
 @media(max-width:650px){.ad-hoc-row,.event-form-grid{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}.event-form-section{padding:.85rem}}
 </style>
 <script>
