@@ -31,6 +31,17 @@ Use the shared variable instead of copying the shadow value into individual
 pages. `--shadow-strong` aliases this variable for compatibility with existing
 section-card styles.
 
+Nested information surfaces use `--shadow-nested`:
+
+```css
+--shadow-nested:
+  0 9px 22px rgba(72, 28, 48, 0.18),
+  inset 0 1px 0 rgba(255, 255, 255, 0.80);
+```
+
+This is appropriate for items such as event metadata rows inside a larger
+event card. It provides separation without competing with the primary surface.
+
 Interactive controls may use smaller shadows for affordance, but navigation,
 menus, dialogs, and overlays should not inherit the full content-surface shadow
 unless they are intentionally presented as primary page content.
