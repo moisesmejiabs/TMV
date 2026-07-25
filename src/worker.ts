@@ -1174,6 +1174,9 @@ async function resolveEventParticipants(env: Env, body: any) {
   const registeredUserIds = integerIds(body.registered_user_ids);
   const registeredIds = new Set<number>(directIds);
 
+  // Selected lists are participant sources, not automatic event assignments.
+  // Validate the source IDs here, but include only explicitly selected
+  // participant_ids in the event snapshot.
   if (listIds.length) {
     const placeholders = listIds.map(() => '?').join(',');
     const knownLists = await env.DB.prepare(
@@ -1182,10 +1185,6 @@ async function resolveEventParticipants(env: Env, body: any) {
     if (Number(knownLists?.count) !== listIds.length) {
       return { error: 'Unknown participant list', rows: [] as any[] };
     }
-    const expanded = await env.DB.prepare(
-      `SELECT participant_id FROM participant_list_member WHERE participant_list_id IN (${placeholders})`
-    ).bind(...listIds).all();
-    for (const row of (expanded.results || []) as any[]) registeredIds.add(Number(row.participant_id));
   }
 
   const rows: any[] = [];

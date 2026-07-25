@@ -47,15 +47,20 @@ on the right side of the description and expands the assignment fieldset below.
 
 The Event Builder accepts reusable-list IDs, individual participant IDs, and
 ad-hoc participant details. It also offers authentication accounts in a
-separate Registered Users group. The server validates IDs, expands current
-list members, and deduplicates people by stable participant or account ID.
+separate Registered Users group. The server validates list and participant IDs
+and deduplicates selected people by stable participant or account ID. A list is
+a source of available participants; selecting it does not automatically assign
+all of its members to the event.
 Event Builder provides a standard reusable-list dropdown. Choosing a list adds
 it to the event; the administrator can use the dropdown repeatedly to add
-multiple lists and remove selections individually. A compact scrollable preview
-shows only the unique combined members of the selected lists. Source-list
-selections are stored so they can be restored while editing. Registered Users
-is a special dropdown choice; its account picker is hidden unless that choice
-is added.
+multiple lists and remove list sources individually. A compact scrollable
+picker shows the unique combined members of the selected lists. Every member
+has an individual checkbox, and a **Select all participants** checkbox selects
+or clears all currently displayed unique members. New list selections start
+with no automatic assignments. Only explicitly checked participant IDs are
+copied into the event snapshot. Source-list selections are stored so they can
+be restored while editing. Registered Users is a special dropdown choice; its
+account picker is hidden unless that choice is added.
 
 Event Builder presents two visible checkbox-controlled optional panels beneath
 the reusable-list selection:

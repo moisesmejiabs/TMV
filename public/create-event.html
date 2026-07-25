@@ -175,6 +175,7 @@
 .participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid rgba(109,33,64,.28);border-radius:.65rem;padding:.65rem;margin:.4rem 0 1rem;background:rgba(255,255,255,.88);box-shadow:inset 0 2px 8px rgba(95,52,71,.14),0 5px 14px rgba(95,52,71,.12)}
 .participant-picker label{display:block;padding:.35rem;overflow-wrap:anywhere}.participant-picker label.participant-choice-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.55rem .65rem;border-bottom:1px solid rgba(109,33,64,.12)}
 .participant-choice-row span{display:grid;gap:.1rem;min-width:0}.participant-choice-row input{flex:0 0 auto;width:1.55rem!important;height:1.55rem;margin:0;accent-color:var(--berry,#6d2140);filter:drop-shadow(0 2px 3px rgba(72,28,48,.3))}
+.participant-picker label.participant-select-all{position:sticky;top:0;z-index:1;border:1px solid rgba(109,33,64,.28);border-radius:.55rem;background:#f7e6eb;box-shadow:0 5px 12px rgba(72,28,48,.16)}
 .ad-hoc-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin:.5rem 0}
 .form label.participant-mode-toggle{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:1rem;padding:1rem 1.1rem;border:2px solid rgba(109,33,64,.42);border-radius:14px;background:rgba(255,255,255,.84);box-shadow:0 9px 22px rgba(72,28,48,.2);cursor:pointer}
 .participant-mode-toggle span{display:grid;gap:.25rem}.participant-mode-toggle small{font-weight:400;color:var(--text-main,#2f2430)}
@@ -260,11 +261,25 @@ function renderEventParticipants() {
     : "<p>No reusable lists selected.</p>";
   document.getElementById("registered-users-section").hidden = !registeredUsersGroupSelected;
   document.getElementById("selected-list-count").textContent =
-    `${selectedLists.length} list${selectedLists.length === 1 ? "" : "s"} · ${selectedMembers.size} unique participant${selectedMembers.size === 1 ? "" : "s"}`;
+    `${selectedLists.length} list${selectedLists.length === 1 ? "" : "s"} · ${selectedMembers.size} available participant${selectedMembers.size === 1 ? "" : "s"}`;
+  const selectedListMemberRows = [...selectedMembers.values()].sort((a,b) => a.name.localeCompare(b.name));
+  const selectedListMemberCount = selectedListMemberRows.filter(person =>
+    eventParticipants.some(item => Number(item.id) === Number(person.id) && item.selected)
+  ).length;
   document.getElementById("selected-list-participants").innerHTML = selectedMembers.size
-    ? [...selectedMembers.values()].sort((a,b) => a.name.localeCompare(b.name)).map(person =>
-        `<div>${eventEscape(person.name)} <small>${eventEscape(person.phone || "")}</small></div>`).join("")
+    ? `<label class="participant-choice-row participant-select-all"><span><strong>Select all participants</strong><small>${selectedListMemberCount} of ${selectedMembers.size} selected</small></span>
+        <input type="checkbox" data-select-all-list-members></label>
+      ${selectedListMemberRows.map(person => {
+        const participant = eventParticipants.find(item => Number(item.id) === Number(person.id));
+        return `<label class="participant-choice-row"><span><strong>${eventEscape(person.name)}</strong><small>${eventEscape(person.phone || "")}</small></span>
+          <input type="checkbox" value="${person.id}" data-list-participant-id ${participant?.selected ? "checked" : ""}></label>`;
+      }).join("")}`
     : "<p>Select one or more reusable lists.</p>";
+  const selectAll = document.querySelector("[data-select-all-list-members]");
+  if (selectAll) {
+    selectAll.checked = selectedListMemberCount === selectedMembers.size;
+    selectAll.indeterminate = selectedListMemberCount > 0 && selectedListMemberCount < selectedMembers.size;
+  }
   const visible = eventParticipants.filter(person => {
     const outsideSelectedLists = !selectedMembers.has(Number(person.id));
     const matchesSearch = !normalized || person.name.toLowerCase().includes(normalized) ||
@@ -342,6 +357,21 @@ document.getElementById("event-participants").addEventListener("change", event =
   if (!event.target.matches("[data-participant-id]")) return;
   const person = eventParticipants.find(item => Number(item.id) === Number(event.target.value));
   if (person) person.selected = event.target.checked;
+});
+document.getElementById("selected-list-participants").addEventListener("change", event => {
+  const selectedLists = eventLists.filter(list => selectedParticipantListIds.has(Number(list.id)));
+  const memberIds = new Set(selectedLists.flatMap(list => list.members.map(member => Number(member.id))));
+  if (event.target.matches("[data-select-all-list-members]")) {
+    eventParticipants.forEach(person => {
+      if (memberIds.has(Number(person.id))) person.selected = event.target.checked;
+    });
+  } else if (event.target.matches("[data-list-participant-id]")) {
+    const person = eventParticipants.find(item => Number(item.id) === Number(event.target.value));
+    if (person) person.selected = event.target.checked;
+  } else {
+    return;
+  }
+  renderEventParticipants();
 });
 document.getElementById("save-new-participant").addEventListener("click", async () => {
   const button = document.getElementById("save-new-participant");
@@ -440,9 +470,9 @@ async function loadEventForEdit() {
   for (const person of existing) {
     if (person.participant_type === "registered" && person.participant_id) {
       const match = eventParticipants.find(item => Number(item.id) === Number(person.participant_id));
-      if (match && !selectedMemberIds.has(Number(person.participant_id))) {
+      if (match) {
         match.selected = true;
-        hasIndividualParticipants = true;
+        if (!selectedMemberIds.has(Number(person.participant_id))) hasIndividualParticipants = true;
       }
     } else if (person.participant_type === "registered" && person.user_id) {
       const input = document.querySelector(`[data-registered-user-id][value="${Number(person.user_id)}"]`);
@@ -492,6 +522,10 @@ if (!formEl) {
       const usesExternalParticipants = document.getElementById("uses-external-participants").checked;
       const includesIndividualParticipants = document.getElementById("add-new-participants-toggle").checked;
       const includesAdHocParticipants = document.getElementById("add-ad-hoc-toggle").checked;
+      const selectedListMemberIds = new Set(
+        eventLists.filter(list => selectedParticipantListIds.has(Number(list.id)))
+          .flatMap(list => list.members.map(member => Number(member.id)))
+      );
       const payload = {
         name: form.elements.name.value.trim(),
         date: localInputToIso(form.elements.date.value),
@@ -504,7 +538,9 @@ if (!formEl) {
         uses_external_participants: usesExternalParticipants,
         participant_list_ids: usesExternalParticipants ? [...selectedParticipantListIds] : [],
         registered_user_ids: usesExternalParticipants && registeredUsersGroupSelected ? [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)) : [],
-        participant_ids: usesExternalParticipants && includesIndividualParticipants ? eventParticipants.filter(person => person.selected).map(person => Number(person.id)) : [],
+        participant_ids: usesExternalParticipants ? eventParticipants
+          .filter(person => person.selected && (selectedListMemberIds.has(Number(person.id)) || includesIndividualParticipants))
+          .map(person => Number(person.id)) : [],
         ad_hoc_participants: usesExternalParticipants && includesAdHocParticipants ? [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
           name: row.querySelector("[data-adhoc-name]").value.trim(),
           phone: row.querySelector("[data-adhoc-phone]").value.trim(),
