@@ -34,3 +34,21 @@ section-card styles.
 Interactive controls may use smaller shadows for affordance, but navigation,
 menus, dialogs, and overlays should not inherit the full content-surface shadow
 unless they are intentionally presented as primary page content.
+
+## Heading contrast
+
+Standard `h1` through `h6` headings use the shared `--shadow-heading` token:
+
+```css
+--shadow-heading:
+  0 2px 2px rgba(72, 28, 48, 0.16),
+  0 7px 16px rgba(72, 28, 48, 0.18);
+```
+
+The shadow uses the existing berry tone at low opacity. It should add depth
+without looking like an outline or reducing readability. Use the shared token
+instead of page-specific heading shadows.
+
+Metallic `.nav-gold` headings are excluded because their gradient, filter, and
+shimmer treatment already provide contrast. Brand headings retain their
+purpose-built styling.
