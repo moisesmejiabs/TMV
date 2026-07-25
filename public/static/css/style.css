@@ -1613,6 +1613,66 @@ article{
   margin-bottom: 40px;
 }
 
+/* Homepage contrast: muted backgrounds with clearly layered inner surfaces. */
+.home-page main.container > .image-slider{
+  border: 1px solid rgba(109,33,64,0.30);
+  box-shadow: var(--shadow-surface);
+}
+
+.home-page main.container > .image-slider .image-slider{
+  border: 1px solid rgba(109,33,64,0.22);
+  background: rgba(255,255,255,0.72);
+  box-shadow: var(--shadow-nested);
+}
+
+.home-page .mission-card .overlay-card{
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid rgba(109,33,64,0.24);
+  border-radius: 24px;
+  background: rgba(255,255,255,0.78);
+  box-shadow: var(--shadow-nested);
+}
+
+.home-page .mission-card .overlay-card > p:not(.section-description){
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  border: 1px solid rgba(109,33,64,0.18);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.68);
+  box-shadow: 0 6px 16px rgba(72,28,48,0.14);
+}
+
+.home-page .section-card > .section-description{
+  padding: 12px 16px;
+  border: 1px solid rgba(109,33,64,0.16);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.62);
+  box-shadow: 0 6px 16px rgba(72,28,48,0.13);
+}
+
+.home-page .workshops-card .workshop-summary-card,
+.home-page .homepage-summary-card,
+.home-page .youtube-slider-card .youtube-slider,
+.home-page .book-presentation,
+.home-page .yt-channel-presentation,
+.home-page .partner-item{
+  border-color: rgba(109,33,64,0.22);
+  background: rgba(255,255,255,0.82);
+  box-shadow: var(--shadow-nested);
+}
+
+.home-page .partner-item{
+  padding: 18px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 18px;
+}
+
+.home-page .partner-media-link{
+  border-color: rgba(109,33,64,0.20);
+  box-shadow: 0 6px 16px rgba(72,28,48,0.14);
+}
+
 @media (max-width: 600px){
   .home-page{
     --home-content-inset: 0px;

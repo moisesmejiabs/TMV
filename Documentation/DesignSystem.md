@@ -63,3 +63,19 @@ instead of page-specific heading shadows.
 Metallic `.nav-gold` headings are excluded because their gradient, filter, and
 shimmer treatment already provide contrast. Brand headings retain their
 purpose-built styling.
+
+## Homepage inner surfaces
+
+Homepage sections use the normal `--shadow-surface` outer shadow. Content
+inside those sections uses `--shadow-nested` so lists, media presentations,
+partner cards, and the Mission and Vision panel remain visually separate from
+their containing section.
+
+The homepage image slider uses the primary surface shadow on its outer frame
+and the nested shadow on its inner image frame. Section descriptions and
+Mission and Vision paragraphs may use smaller berry-toned shadows with
+translucent white backgrounds.
+
+Keep all of these backgrounds within the existing muted palette. Homepage
+contrast should come from layering, borders, and shadow depth rather than
+stronger saturation.
