@@ -6,11 +6,11 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Registros de leche | Admin | Tu Mejor Versión</title>
   <link rel="stylesheet" href="/static/css/style.css?v=event-full-width-20260725">
-  <link rel="stylesheet" href="/static/css/milk-admin.css?v=delete-registration-20260725">
+  <link rel="stylesheet" href="/static/css/milk-admin.css?v=hamburger-delete-confirmation-20260725">
 </head>
 <body class="milk-admin-page" data-page-type="admin">
   <header class="milk-admin-header">
-    <a href="/admin.html" class="milk-admin-back">← Volver a Admin</a>
+    <div class="milk-admin-header-spacer" aria-hidden="true"></div>
     <div class="milk-admin-heading">
       <a class="milk-admin-brand brand" href="/" aria-label="Ir al inicio de Tu Mejor Versión">
         <img src="/static/images/TuMejorVersionBird.png"
@@ -23,7 +23,25 @@
       </a>
       <p>Registros para entrega de leche</p>
     </div>
-    <button id="logoutButton" class="milk-admin-logout" type="button">Cerrar sesión</button>
+    <div class="nav-container">
+      <button id="menu-toggle" class="menu-toggle" type="button"
+              aria-label="Abrir menú" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav id="mobile-menu" class="mobile-menu" aria-label="Navegación principal">
+        <a href="/" class="nav-btn"><span data-en="Home" data-es="Inicio"></span></a>
+        <a href="/courses" class="nav-btn"><span data-en="Courses" data-es="Cursos"></span></a>
+        <a href="/events" class="nav-btn"><span data-en="Events" data-es="Eventos"></span></a>
+        <a href="/donate" class="nav-btn"><span data-en="Donate" data-es="Donar"></span></a>
+        <a href="/forum" class="nav-btn"><span data-en="Forum" data-es="Foro"></span></a>
+        <a href="/about" class="nav-btn"><span data-en="About Us" data-es="Sobre Nosotros"></span></a>
+        <a href="/testimonials" class="nav-btn"><span data-en="Testimonials" data-es="Testimonios"></span></a>
+        <div id="auth-links" class="auth-links"></div>
+      </nav>
+    </div>
   </header>
 
   <main class="milk-admin-shell">
@@ -96,6 +114,6 @@
 
   <script src="/static/js/language-user-row.js"></script>
   <script src="/static/js/app.js"></script>
-  <script src="/static/js/milk-admin.js?v=delete-registration-20260725"></script>
+  <script src="/static/js/milk-admin.js?v=hamburger-delete-confirmation-20260725"></script>
 </body>
 </html>

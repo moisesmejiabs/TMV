@@ -96,6 +96,16 @@ function renderRows(registrations) {
       );
       if (!confirmed) return;
 
+      const typedConfirmation = window.prompt(
+        `Para confirmar la eliminación del registro de ${registrationName}, escriba ELIMINAR.`
+      );
+      if (typedConfirmation !== "ELIMINAR") {
+        if (typedConfirmation !== null) {
+          window.alert("No se eliminó el registro porque la confirmación no coincidió.");
+        }
+        return;
+      }
+
       button.disabled = true;
       messageElement.hidden = true;
       try {
@@ -165,10 +175,5 @@ document.getElementById("clearFilters").addEventListener("click", () => {
 });
 
 document.getElementById("refreshButton").addEventListener("click", loadRegistrations);
-
-document.getElementById("logoutButton").addEventListener("click", async () => {
-  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-  location.replace("/login.html");
-});
 
 loadRegistrations();
