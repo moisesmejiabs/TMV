@@ -48,10 +48,24 @@ Event Builder provides a standard reusable-list dropdown. Choosing a list adds
 it to the event; the administrator can use the dropdown repeatedly to add
 multiple lists and remove selections individually. A compact scrollable preview
 shows only the unique combined members of the selected lists. Source-list
-selections are stored so they can be restored while editing. Additional
-individual and ad-hoc participants remain available in one collapsed optional
-section. Registered Users is a special dropdown choice; its account picker is
-hidden unless that choice is added.
+selections are stored so they can be restored while editing. Registered Users
+is a special dropdown choice; its account picker is hidden unless that choice
+is added.
+
+Event Builder presents two visible checkbox-controlled optional panels beneath
+the reusable-list selection:
+
+- **Add new reusable participants** expands an inline participant-directory
+  form and the individual participant picker. A participant created there is
+  saved for future reusable lists, refreshed into the picker, and selected for
+  the current event.
+- **Add ad-hoc participants** expands event-only name, phone, and address rows.
+  These people are stored only in the event snapshot and are not added to the
+  reusable participant directory.
+
+The former participant-management link and the generic “participants outside
+the selected lists” disclosure are not shown in Event Builder. Existing direct
+or ad-hoc selections automatically reopen the appropriate panel while editing.
 
 On event detail pages, administrators see the saved assigned-participant
 snapshot when one exists. Events without assigned participants continue to

@@ -122,7 +122,6 @@
 
     <fieldset id="participant-assignment-fields" hidden>
     <legend>External and Assigned Participants</legend>
-    <p><a href="/admin-participants.html">Manage participants and reusable lists</a></p>
     <label for="event-participant-list-selector">Add a reusable participant list</label>
     <select id="event-participant-list-selector">
       <option value="">Choose a list…</option>
@@ -139,16 +138,35 @@
       <p>Select website accounts only when this event should appear in their User View.</p>
       <div id="event-registered-users" class="participant-picker" aria-live="polite"></div>
     </section>
-    <details>
-      <summary>Add participants outside the selected lists</summary>
+
+    <label class="participant-option-toggle" for="add-new-participants-toggle">
+      <span><strong>Add new reusable participants</strong><small>Create a participant and make them available for this event and future lists.</small></span>
+      <input id="add-new-participants-toggle" type="checkbox" aria-controls="new-participants-panel" aria-expanded="false">
+    </label>
+    <section id="new-participants-panel" class="optional-participant-panel" hidden>
+      <h4>New reusable participant</h4>
+      <div class="new-participant-row">
+        <label>Name<input id="new-participant-name" maxlength="120"></label>
+        <label>Phone<input id="new-participant-phone" type="tel" maxlength="30"></label>
+        <label>Address<input id="new-participant-address" maxlength="300"></label>
+      </div>
+      <button id="save-new-participant" type="button">Add Participant</button>
+      <p id="new-participant-status" aria-live="polite"></p>
       <h4>Individual participants</h4>
       <input id="event-participant-search" type="search" placeholder="Search name or phone">
       <p id="event-participant-count" aria-live="polite"></p>
       <div id="event-participants" class="participant-picker" aria-live="polite"></div>
-      <h4>Ad-hoc participant</h4>
+    </section>
+
+    <label class="participant-option-toggle" for="add-ad-hoc-toggle">
+      <span><strong>Add ad-hoc participants</strong><small>Add event-only people who should not be saved to reusable participant lists.</small></span>
+      <input id="add-ad-hoc-toggle" type="checkbox" aria-controls="ad-hoc-panel" aria-expanded="false">
+    </label>
+    <section id="ad-hoc-panel" class="optional-participant-panel" hidden>
+      <h4>Ad-hoc participants</h4>
       <div id="ad-hoc-participants"></div>
       <button id="add-ad-hoc" type="button">Add Ad-hoc Participant</button>
-    </details>
+    </section>
     </fieldset>
   </section>
 
@@ -159,6 +177,12 @@
 .participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid rgba(109,33,64,.28);border-radius:.65rem;padding:.65rem;margin:.4rem 0 1rem;background:rgba(255,255,255,.88);box-shadow:inset 0 2px 8px rgba(95,52,71,.14),0 5px 14px rgba(95,52,71,.12)}
 .participant-picker label{display:block;padding:.35rem;overflow-wrap:anywhere}.ad-hoc-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin:.5rem 0}
 .participant-mode-toggle{display:flex;gap:.6rem;align-items:center;margin-top:1rem}.participant-mode-toggle input{width:auto}
+.participant-option-toggle{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:1rem 0 .55rem;padding:.85rem 1rem;border:2px solid rgba(109,33,64,.34);border-radius:12px;background:rgba(255,255,255,.82);box-shadow:0 7px 18px rgba(72,28,48,.16);cursor:pointer}
+.participant-option-toggle span{display:grid;gap:.2rem}.participant-option-toggle small{font-weight:400;color:var(--text-main,#2f2430)}
+.participant-option-toggle input{flex:0 0 auto;width:1.8rem;height:1.8rem;margin:0;border:2px solid var(--berry,#6d2140);accent-color:var(--berry,#6d2140);filter:drop-shadow(0 3px 4px rgba(72,28,48,.28));cursor:pointer}
+.participant-option-toggle:has(input:checked){border-color:rgba(109,33,64,.68);background:rgba(242,215,222,.72);box-shadow:0 9px 22px rgba(72,28,48,.22)}
+.optional-participant-panel{margin:0 0 1rem;padding:1rem;border:1px solid rgba(109,33,64,.24);border-radius:12px;background:rgba(255,255,255,.78);box-shadow:var(--shadow-nested)}
+.new-participant-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem;margin-bottom:.75rem}
 .selected-list-row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .7rem;margin:.4rem 0;border:1px solid rgba(109,33,64,.25);border-radius:.55rem;background:rgba(255,255,255,.86);box-shadow:0 6px 16px rgba(95,52,71,.18)}
 .selected-list-row button{min-height:2rem;width:auto}
 .event-form-section{margin:1.35rem 0;padding:1.35rem;border:1px solid rgba(109,33,64,.25);border-radius:18px;box-shadow:var(--shadow-surface)}
@@ -173,9 +197,8 @@
 #participant-assignment-fields{margin-top:1rem;padding:1.15rem;border:1px solid rgba(109,33,64,.3);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(244,225,231,.74));box-shadow:0 14px 30px rgba(72,28,48,.23),inset 0 1px 0 rgba(255,255,255,.82)}
 #participant-assignment-fields legend{padding:0 .55rem;color:var(--berry,#6d2140);font-weight:700}
 #participant-assignment-fields select{background:#fff;border:1px solid rgba(109,33,64,.3);box-shadow:0 4px 12px rgba(72,28,48,.12)}
-#event-selected-lists,#registered-users-section,#participant-assignment-fields details{margin:1rem 0;padding:.8rem;border:1px solid rgba(109,33,64,.22);border-radius:10px;background:rgba(255,255,255,.74);box-shadow:0 9px 22px rgba(72,28,48,.18),inset 0 1px 0 rgba(255,255,255,.8)}
-#participant-assignment-fields details>summary{color:var(--berry,#6d2140);font-weight:700;cursor:pointer}
-@media(max-width:650px){.ad-hoc-row,.event-form-grid{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}.event-form-section{padding:.85rem}}
+#event-selected-lists,#registered-users-section{margin:1rem 0;padding:.8rem;border:1px solid rgba(109,33,64,.22);border-radius:10px;background:rgba(255,255,255,.74);box-shadow:0 9px 22px rgba(72,28,48,.18),inset 0 1px 0 rgba(255,255,255,.8)}
+@media(max-width:650px){.ad-hoc-row,.event-form-grid,.new-participant-row{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}.event-form-section{padding:.85rem}.participant-option-toggle{align-items:flex-start}}
 </style>
 <script>
 console.log("🚀 eventForm script loaded");
@@ -200,6 +223,21 @@ function updateParticipantMode() {
 
 document.getElementById("uses-external-participants").addEventListener("change", updateParticipantMode);
 updateParticipantMode();
+
+function syncOptionalParticipantPanels() {
+  for (const [toggleId, panelId] of [
+    ["add-new-participants-toggle", "new-participants-panel"],
+    ["add-ad-hoc-toggle", "ad-hoc-panel"]
+  ]) {
+    const toggle = document.getElementById(toggleId);
+    document.getElementById(panelId).hidden = !toggle.checked;
+    toggle.setAttribute("aria-expanded", String(toggle.checked));
+  }
+}
+
+document.getElementById("add-new-participants-toggle").addEventListener("change", syncOptionalParticipantPanels);
+document.getElementById("add-ad-hoc-toggle").addEventListener("change", syncOptionalParticipantPanels);
+syncOptionalParticipantPanels();
 
 function renderEventParticipants() {
   const query = document.getElementById("event-participant-search").value;
@@ -236,6 +274,8 @@ function renderEventParticipants() {
 }
 
 function addAdHocRow(person = {}) {
+  document.getElementById("add-ad-hoc-toggle").checked = true;
+  syncOptionalParticipantPanels();
   const row = document.createElement("div");
   row.className = "ad-hoc-row";
   row.innerHTML = `<label>Name<input data-adhoc-name required value="${eventEscape(person.name || "")}"></label>
@@ -246,12 +286,19 @@ function addAdHocRow(person = {}) {
 }
 
 async function loadParticipantChoices() {
+  const selectedIds = new Set(eventParticipants.filter(person => person.selected).map(person => Number(person.id)));
+  const selectedRegisteredUserIds = new Set(
+    [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value))
+  );
   const [participantData, lists, users] = await Promise.all([
     fetch("/api/admin/participants", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d}),
     fetch("/api/admin/participant-lists", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d}),
     fetch("/api/admin/users", {credentials:"include"}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);return d})
   ]);
-  eventParticipants = participantData.participants;
+  eventParticipants = participantData.participants.map(person => ({
+    ...person,
+    selected: selectedIds.has(Number(person.id))
+  }));
   eventLists = lists;
   registeredUsers = users.filter(user => user.role === "user");
   document.getElementById("event-participant-list-selector").innerHTML = `
@@ -260,7 +307,8 @@ async function loadParticipantChoices() {
     ${lists.map(list => `<option value="${list.id}">${eventEscape(list.name)} (${list.member_count})</option>`).join("")}
   `;
   document.getElementById("event-registered-users").innerHTML = registeredUsers.map(user =>
-    `<label><input type="checkbox" value="${user.id}" data-registered-user-id> ${eventEscape(user.name)} <small>${eventEscape(user.email)}</small></label>`
+    `<label><input type="checkbox" value="${user.id}" data-registered-user-id
+      ${selectedRegisteredUserIds.has(Number(user.id)) ? "checked" : ""}> ${eventEscape(user.name)} <small>${eventEscape(user.email)}</small></label>`
   ).join("") || "<p>No registered users.</p>";
   renderEventParticipants();
 }
@@ -288,6 +336,45 @@ document.getElementById("event-participants").addEventListener("change", event =
   if (!event.target.matches("[data-participant-id]")) return;
   const person = eventParticipants.find(item => Number(item.id) === Number(event.target.value));
   if (person) person.selected = event.target.checked;
+});
+document.getElementById("save-new-participant").addEventListener("click", async () => {
+  const button = document.getElementById("save-new-participant");
+  const status = document.getElementById("new-participant-status");
+  const nameInput = document.getElementById("new-participant-name");
+  const name = nameInput.value.trim();
+  if (!name) {
+    status.textContent = "Participant name is required.";
+    nameInput.focus();
+    return;
+  }
+  button.disabled = true;
+  status.textContent = "Adding participant…";
+  try {
+    const response = await fetch("/api/admin/participants", {
+      method: "POST",
+      credentials: "include",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        name,
+        phone: document.getElementById("new-participant-phone").value.trim(),
+        address: document.getElementById("new-participant-address").value.trim()
+      })
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(result?.error || "Failed to add participant.");
+    nameInput.value = "";
+    document.getElementById("new-participant-phone").value = "";
+    document.getElementById("new-participant-address").value = "";
+    await loadParticipantChoices();
+    const added = eventParticipants.find(person => Number(person.id) === Number(result.id));
+    if (added) added.selected = true;
+    renderEventParticipants();
+    status.textContent = "Participant added and selected for this event.";
+  } catch (error) {
+    status.textContent = error.message || "Failed to add participant.";
+  } finally {
+    button.disabled = false;
+  }
 });
 document.getElementById("add-ad-hoc").addEventListener("click", () => addAdHocRow());
 document.getElementById("ad-hoc-participants").addEventListener("click", event => {
@@ -343,10 +430,14 @@ async function loadEventForEdit() {
   registeredUsersGroupSelected = existing.some(person =>
     person.participant_type === "registered" && !person.participant_id && person.user_id
   );
+  let hasIndividualParticipants = false;
   for (const person of existing) {
     if (person.participant_type === "registered" && person.participant_id) {
       const match = eventParticipants.find(item => Number(item.id) === Number(person.participant_id));
-      if (match && !selectedMemberIds.has(Number(person.participant_id))) match.selected = true;
+      if (match && !selectedMemberIds.has(Number(person.participant_id))) {
+        match.selected = true;
+        hasIndividualParticipants = true;
+      }
     } else if (person.participant_type === "registered" && person.user_id) {
       const input = document.querySelector(`[data-registered-user-id][value="${Number(person.user_id)}"]`);
       if (input) input.checked = true;
@@ -354,6 +445,8 @@ async function loadEventForEdit() {
       addAdHocRow(person);
     }
   }
+  document.getElementById("add-new-participants-toggle").checked = hasIndividualParticipants;
+  syncOptionalParticipantPanels();
   renderEventParticipants();
 }
 
@@ -391,6 +484,8 @@ if (!formEl) {
       }
 
       const usesExternalParticipants = document.getElementById("uses-external-participants").checked;
+      const includesIndividualParticipants = document.getElementById("add-new-participants-toggle").checked;
+      const includesAdHocParticipants = document.getElementById("add-ad-hoc-toggle").checked;
       const payload = {
         name: form.elements.name.value.trim(),
         date: localInputToIso(form.elements.date.value),
@@ -403,8 +498,8 @@ if (!formEl) {
         uses_external_participants: usesExternalParticipants,
         participant_list_ids: usesExternalParticipants ? [...selectedParticipantListIds] : [],
         registered_user_ids: usesExternalParticipants && registeredUsersGroupSelected ? [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)) : [],
-        participant_ids: usesExternalParticipants ? eventParticipants.filter(person => person.selected).map(person => Number(person.id)) : [],
-        ad_hoc_participants: usesExternalParticipants ? [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
+        participant_ids: usesExternalParticipants && includesIndividualParticipants ? eventParticipants.filter(person => person.selected).map(person => Number(person.id)) : [],
+        ad_hoc_participants: usesExternalParticipants && includesAdHocParticipants ? [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
           name: row.querySelector("[data-adhoc-name]").value.trim(),
           phone: row.querySelector("[data-adhoc-phone]").value.trim(),
           address: row.querySelector("[data-adhoc-address]").value.trim()

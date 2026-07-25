@@ -89,3 +89,15 @@ shadow value.
 Specialized milk registration pages retain their own layout styles, but their
 primary and nested panels consume the same `--shadow-surface` and
 `--shadow-nested` variables.
+
+## Expandable checkbox controls
+
+Optional form areas use a full-width description row with the checkbox aligned
+on the right. The description contains a bold action name and a short
+explanation. Use a large checkbox, berry accent color, visible border, and
+small shadow so the control remains easy to identify.
+
+When selected, strengthen the row border and muted blush background, then
+reveal the associated nested content surface immediately below it. The
+checkbox must expose `aria-controls` and keep `aria-expanded` synchronized with
+the panel's visible state.
