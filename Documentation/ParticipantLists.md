@@ -44,6 +44,10 @@ The Event Builder accepts reusable-list IDs, individual participant IDs, and
 ad-hoc participant details. It also offers authentication accounts in a
 separate Registered Users group. The server validates IDs, expands current
 list members, and deduplicates people by stable participant or account ID.
+The individual participant picker can be viewed by all participants, unlisted
+participants, or one reusable list at a time. Changing that view does not clear
+participants already selected, and the picker remains a compact scrollable
+viewport.
 
 On event detail pages, administrators see the saved assigned-participant
 snapshot when one exists. Events without assigned participants continue to

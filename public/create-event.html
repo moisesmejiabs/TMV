@@ -137,6 +137,11 @@
     <p>Select website accounts only when this event should appear in their User View.</p>
     <div id="event-registered-users" class="participant-picker" aria-live="polite"></div>
     <label>Individual participants</label>
+    <label for="event-participant-scope">Show participants from</label>
+    <select id="event-participant-scope">
+      <option value="all">All external participants</option>
+      <option value="unlisted">Participants not in a reusable list</option>
+    </select>
     <input id="event-participant-search" type="search" placeholder="Search name or phone">
     <p id="event-participant-count" aria-live="polite"></p>
     <div id="event-participants" class="participant-picker" aria-live="polite"></div>
@@ -175,13 +180,22 @@ function updateParticipantMode() {
 document.getElementById("uses-external-participants").addEventListener("change", updateParticipantMode);
 updateParticipantMode();
 
-function renderEventParticipants(query = "") {
+function renderEventParticipants() {
+  const query = document.getElementById("event-participant-search").value;
+  const scope = document.getElementById("event-participant-scope").value;
   const normalized = query.trim().toLowerCase();
   const digits = query.replace(/\D/g, "");
-  const visible = eventParticipants.filter(person =>
-    !normalized || person.name.toLowerCase().includes(normalized) ||
-    (digits && String(person.phone || '').replace(/\D/g, '').includes(digits))
-  );
+  const listedIds = new Set(eventLists.flatMap(list => list.members.map(member => Number(member.id))));
+  const scopedIds = /^\d+$/.test(scope)
+    ? new Set((eventLists.find(list => Number(list.id) === Number(scope))?.members || []).map(member => Number(member.id)))
+    : null;
+  const visible = eventParticipants.filter(person => {
+    const id = Number(person.id);
+    const inScope = scope === "all" || (scope === "unlisted" ? !listedIds.has(id) : scopedIds?.has(id));
+    const matchesSearch = !normalized || person.name.toLowerCase().includes(normalized) ||
+      (digits && String(person.phone || '').replace(/\D/g, '').includes(digits));
+    return inScope && matchesSearch;
+  });
   document.getElementById("event-participant-count").textContent = `${visible.length} participant${visible.length === 1 ? "" : "s"}`;
   document.getElementById("event-participants").innerHTML = visible.map(person => `
     <label><input type="checkbox" value="${person.id}" data-participant-id
@@ -208,6 +222,11 @@ async function loadParticipantChoices() {
   eventParticipants = participantData.participants;
   eventLists = lists;
   registeredUsers = users.filter(user => user.role === "user");
+  document.getElementById("event-participant-scope").innerHTML = `
+    <option value="all">All external participants</option>
+    <option value="unlisted">Participants not in a reusable list</option>
+    ${lists.map(list => `<option value="${list.id}">${eventEscape(list.name)} (${list.member_count})</option>`).join("")}
+  `;
   document.getElementById("event-participant-lists").innerHTML = lists.map(list =>
     `<label><input type="checkbox" value="${list.id}" data-list-id> ${eventEscape(list.name)} (${list.member_count})</label>`
   ).join("") || "<p>No saved participant lists.</p>";
@@ -217,7 +236,8 @@ async function loadParticipantChoices() {
   renderEventParticipants();
 }
 
-document.getElementById("event-participant-search").addEventListener("input", event => renderEventParticipants(event.target.value));
+document.getElementById("event-participant-search").addEventListener("input", renderEventParticipants);
+document.getElementById("event-participant-scope").addEventListener("change", renderEventParticipants);
 document.getElementById("event-participants").addEventListener("change", event => {
   if (!event.target.matches("[data-participant-id]")) return;
   const person = eventParticipants.find(item => Number(item.id) === Number(event.target.value));
@@ -273,7 +293,7 @@ async function loadEventForEdit() {
       addAdHocRow(person);
     }
   }
-  renderEventParticipants(document.getElementById("event-participant-search").value);
+  renderEventParticipants();
 }
 
 loadParticipantChoices().then(loadEventForEdit).catch((err) => {
