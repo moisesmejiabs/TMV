@@ -131,11 +131,12 @@
   <fieldset id="participant-assignment-fields" hidden>
     <legend>External and Assigned Participants</legend>
     <p><a href="/admin-participants.html">Manage participants and reusable lists</a></p>
-    <label>Reusable participant lists</label>
-    <details class="multi-list-dropdown">
-      <summary id="selected-lists-summary">Select one or more lists</summary>
-      <div id="event-participant-lists" class="participant-picker" aria-live="polite"></div>
-    </details>
+    <label for="event-participant-list-selector">Add a reusable participant list</label>
+    <select id="event-participant-list-selector">
+      <option value="">Choose a list…</option>
+    </select>
+    <p>Select one list at a time. Use the dropdown again to add more lists.</p>
+    <div id="event-selected-lists" aria-live="polite"></div>
     <p id="selected-list-count" aria-live="polite"></p>
     <label>Participants in selected lists</label>
     <div id="selected-list-participants" class="participant-picker" aria-live="polite">
@@ -161,7 +162,8 @@
 .participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #ddd;border-radius:.5rem;padding:.5rem;margin:.4rem 0 1rem}
 .participant-picker label{display:block;padding:.35rem;overflow-wrap:anywhere}.ad-hoc-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin:.5rem 0}
 .participant-mode-toggle{display:flex;gap:.6rem;align-items:center;margin-top:1rem}.participant-mode-toggle input{width:auto}
-.multi-list-dropdown{margin:.4rem 0 1rem}.multi-list-dropdown>summary{cursor:pointer;border:1px solid #bbb;border-radius:.45rem;padding:.7rem;background:#fff}
+.selected-list-row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.45rem .6rem;margin:.35rem 0;border:1px solid #ddd;border-radius:.45rem}
+.selected-list-row button{min-height:2rem;width:auto}
 @media(max-width:650px){.ad-hoc-row{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}}
 </style>
 <script>
@@ -172,6 +174,7 @@ const editEventId = new URLSearchParams(window.location.search).get("id");
 let eventParticipants = [];
 let eventLists = [];
 let registeredUsers = [];
+const selectedParticipantListIds = new Set();
 console.log("🔍 event form element:", formEl);
 
 function eventEscape(value) {
@@ -190,14 +193,12 @@ function renderEventParticipants() {
   const query = document.getElementById("event-participant-search").value;
   const normalized = query.trim().toLowerCase();
   const digits = query.replace(/\D/g, "");
-  const selectedListIds = new Set([...document.querySelectorAll("[data-list-id]:checked")].map(input => Number(input.value)));
-  const selectedLists = eventLists.filter(list => selectedListIds.has(Number(list.id)));
+  const selectedLists = eventLists.filter(list => selectedParticipantListIds.has(Number(list.id)));
   const selectedMembers = new Map();
   selectedLists.forEach(list => list.members.forEach(member => selectedMembers.set(Number(member.id), member)));
-  const selectedNames = selectedLists.map(list => list.name);
-  document.getElementById("selected-lists-summary").textContent = selectedNames.length
-    ? `${selectedNames.length} selected: ${selectedNames.join(", ")}`
-    : "Select one or more lists";
+  document.getElementById("event-selected-lists").innerHTML = selectedLists.length
+    ? selectedLists.map(list => `<div class="selected-list-row"><span>${eventEscape(list.name)} (${list.member_count})</span><button type="button" data-remove-list="${list.id}">Remove</button></div>`).join("")
+    : "<p>No reusable lists selected.</p>";
   document.getElementById("selected-list-count").textContent =
     `${selectedLists.length} list${selectedLists.length === 1 ? "" : "s"} · ${selectedMembers.size} unique participant${selectedMembers.size === 1 ? "" : "s"}`;
   document.getElementById("selected-list-participants").innerHTML = selectedMembers.size
@@ -236,9 +237,10 @@ async function loadParticipantChoices() {
   eventParticipants = participantData.participants;
   eventLists = lists;
   registeredUsers = users.filter(user => user.role === "user");
-  document.getElementById("event-participant-lists").innerHTML = lists.map(list =>
-    `<label><input type="checkbox" value="${list.id}" data-list-id> ${eventEscape(list.name)} (${list.member_count})</label>`
-  ).join("") || "<p>No saved participant lists.</p>";
+  document.getElementById("event-participant-list-selector").innerHTML = `
+    <option value="">Choose a list…</option>
+    ${lists.map(list => `<option value="${list.id}">${eventEscape(list.name)} (${list.member_count})</option>`).join("")}
+  `;
   document.getElementById("event-registered-users").innerHTML = registeredUsers.map(user =>
     `<label><input type="checkbox" value="${user.id}" data-registered-user-id> ${eventEscape(user.name)} <small>${eventEscape(user.email)}</small></label>`
   ).join("") || "<p>No registered users.</p>";
@@ -246,7 +248,18 @@ async function loadParticipantChoices() {
 }
 
 document.getElementById("event-participant-search").addEventListener("input", renderEventParticipants);
-document.getElementById("event-participant-lists").addEventListener("change", renderEventParticipants);
+document.getElementById("event-participant-list-selector").addEventListener("change", event => {
+  const id = Number(event.target.value);
+  if (id) selectedParticipantListIds.add(id);
+  event.target.value = "";
+  renderEventParticipants();
+});
+document.getElementById("event-selected-lists").addEventListener("click", event => {
+  const button = event.target.closest("[data-remove-list]");
+  if (!button) return;
+  selectedParticipantListIds.delete(Number(button.dataset.removeList));
+  renderEventParticipants();
+});
 document.getElementById("event-participants").addEventListener("change", event => {
   if (!event.target.matches("[data-participant-id]")) return;
   const person = eventParticipants.find(item => Number(item.id) === Number(event.target.value));
@@ -297,9 +310,8 @@ async function loadEventForEdit() {
   if (!existingResponse.ok) throw new Error(existing.error || "Failed to load event participants");
   if (!selectedListsResponse.ok) throw new Error(selectedSources.error || "Failed to load selected participant lists");
   const selectedSourceIds = new Set(selectedSources.map(list => Number(list.id)));
-  document.querySelectorAll("[data-list-id]").forEach(input => {
-    input.checked = selectedSourceIds.has(Number(input.value));
-  });
+  selectedParticipantListIds.clear();
+  selectedSourceIds.forEach(id => selectedParticipantListIds.add(id));
   const selectedMemberIds = new Set(
     eventLists.filter(list => selectedSourceIds.has(Number(list.id)))
       .flatMap(list => list.members.map(member => Number(member.id)))
@@ -362,7 +374,7 @@ if (!formEl) {
         requirements: form.elements.requirements.value.trim(),
         image_url: imageUrl,
         uses_external_participants: usesExternalParticipants,
-        participant_list_ids: usesExternalParticipants ? [...document.querySelectorAll("[data-list-id]:checked")].map(input => Number(input.value)) : [],
+        participant_list_ids: usesExternalParticipants ? [...selectedParticipantListIds] : [],
         registered_user_ids: usesExternalParticipants ? [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)) : [],
         participant_ids: usesExternalParticipants ? eventParticipants.filter(person => person.selected).map(person => Number(person.id)) : [],
         ad_hoc_participants: usesExternalParticipants ? [...document.querySelectorAll(".ad-hoc-row")].map(row => ({

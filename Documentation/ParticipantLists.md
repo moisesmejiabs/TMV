@@ -44,11 +44,12 @@ The Event Builder accepts reusable-list IDs, individual participant IDs, and
 ad-hoc participant details. It also offers authentication accounts in a
 separate Registered Users group. The server validates IDs, expands current
 list members, and deduplicates people by stable participant or account ID.
-Event Builder provides one multi-list dropdown. After one or more reusable
-lists are checked, a compact scrollable preview shows only the unique combined
-members of those lists. The source-list selections are stored so they can be
-restored while editing. Additional individual participants remain available in
-a separate optional section.
+Event Builder provides a standard reusable-list dropdown. Choosing a list adds
+it to the event; the administrator can use the dropdown repeatedly to add
+multiple lists and remove selections individually. A compact scrollable preview
+shows only the unique combined members of the selected lists. Source-list
+selections are stored so they can be restored while editing. Additional
+individual participants remain available in a separate optional section.
 
 On event detail pages, administrators see the saved assigned-participant
 snapshot when one exists. Events without assigned participants continue to
