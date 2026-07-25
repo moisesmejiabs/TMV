@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=event-management-20260725" />
+  <link rel="stylesheet" href="/static/css/style.css?v=admin-action-header-20260725" />
   <style>
     .event-detail-media {
       width: min(100%, 452px);
@@ -158,7 +158,7 @@
       </section>
 
       <section class="event-detail-section event-participation-section">
-        <h2 data-en="Participation" data-es="Participación">Participation</h2>
+        <h2 id="event-actions-title" data-en="Participation" data-es="Participación">Participation</h2>
         <div id="actions" class="event-actions"></div>
       </section>
       <div id="admin"></div>
@@ -342,15 +342,14 @@
         if (me.role === 'admin') adminRegistrationHtml = registrationButton;
         else html += registrationButton;
       }
-      if(me.role==='admin') html += `
-        <label class="event-management-toggle" for="event-management-enabled">
-          <span data-en="Edit and Delete Event" data-es="Editar y Eliminar Evento">Edit and Delete Event</span>
-          <input id="event-management-enabled" type="checkbox" aria-controls="event-management-controls" aria-expanded="false">
-        </label>
-        <div id="event-management-controls" class="event-management-controls" hidden>
+      if(me.role==='admin') {
+        const actionsTitle = document.getElementById('event-actions-title');
+        actionsTitle.setAttribute('data-en', 'Edit and Delete Event');
+        actionsTitle.setAttribute('data-es', 'Editar y Eliminar Evento');
+        html += `
           <a class="btn" href="/create-event.html?id=${encodeURIComponent(id)}" data-en="Edit Event" data-es="Editar Evento">Edit Event</a>
-          <button id="delete" data-en="Delete Event" data-es="Eliminar Evento">Delete Event</button>
-        </div>`;
+          <button id="delete" data-en="Delete Event" data-es="Eliminar Evento">Delete Event</button>`;
+      }
     }
     document.getElementById('actions').innerHTML = html;
     applyEventLanguage();
@@ -362,11 +361,6 @@
       if(cancelBtn) cancelBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/cancel`,{method:'POST'}); location.reload();});
     };
     bindRegistrationButtons();
-    const managementToggle=document.getElementById('event-management-enabled');
-    if(managementToggle) managementToggle.addEventListener('change',()=>{
-      document.getElementById('event-management-controls').hidden=!managementToggle.checked;
-      managementToggle.setAttribute('aria-expanded',String(managementToggle.checked));
-    });
     const delBtn=document.getElementById('delete');
     if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm(eventText('Delete this event? Feedback will be saved for future display.', '¿Eliminar este evento? Los comentarios se guardarán para mostrarlos en el futuro.'))){await api(`/api/events/${id}`,{method:'DELETE'}); location.href='/events.html';}});
 

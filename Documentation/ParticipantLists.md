@@ -94,9 +94,9 @@ redundant Back / Volver link.
 
 For traditional self-registration events, the Register / Registrarse or Cancel
 Registration / Cancelar Registro control appears beneath the Registered Users
-list or empty state for administrators. Administrator Edit/Delete actions are
-collapsed behind a high-visibility right-aligned checkbox labeled **Edit and
-Delete Event / Editar y Eliminar Evento** in the Participation section.
+list or empty state for administrators. For administrators, the action-section
+heading is **Edit and Delete Event / Editar y Eliminar Evento**, and the Edit
+and Delete controls remain directly visible without an enabling checkbox.
 
 Ad-hoc entries are deduplicated by case-insensitive trimmed name plus phone
 digits. A matching selected registered participant wins over an ad-hoc entry.

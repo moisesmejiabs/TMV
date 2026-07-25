@@ -145,6 +145,6 @@ below the key while retaining a smaller indentation.
 
 Event registration messaging and administrator Edit/Delete controls belong in
 one `.event-participation-section` surface under a bilingual Participation /
-Participación heading. Destructive or administrative event controls remain
-collapsed until the administrator selects the right-aligned **Edit and Delete
-Event / Editar y Eliminar Evento** checkbox.
+Participación heading for non-administrators. For administrators, this heading
+changes to **Edit and Delete Event / Editar y Eliminar Evento**, with the action
+buttons directly visible.
