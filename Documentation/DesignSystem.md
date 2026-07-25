@@ -123,11 +123,12 @@ reveal the associated nested content surface immediately below it. The
 checkbox must expose `aria-controls` and keep `aria-expanded` synchronized with
 the panel's visible state.
 
-Event creation forms use a wide content area (up to `1100px`) so multi-column
-details and participant controls do not feel compressed. Related core event
-fields—Event Details, Description, and Event Image—belong to one primary
-surface, separated by subheadings and restrained dividers rather than separate
-outer cards.
+Event creation forms use the full available page width, matching the homepage
+content span, so multi-column details and participant controls do not feel
+compressed. Do not restore the former `680px` or `1100px` maximum width.
+Related core event fields—Event Details, Description, and Event Image—belong
+to one primary surface, separated by subheadings and restrained dividers
+rather than separate outer cards.
 
 Event detail pages follow the same grouping principle. About This Event, Event
 Details, and Requirements belong to one `.event-information-section` surface.

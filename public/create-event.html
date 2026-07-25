@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/static/css/style.css?v=event-full-width-20260725" />
     <script src="/static/js/app.js"></script>
   </head>
-  <body data-page-type="admin">
+  <body class="event-builder-page" data-page-type="admin">
     <header class="top">
     <div class="brand" style="text-align: center;">
 
@@ -197,7 +197,8 @@
 .event-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem}
 .event-form-grid label:first-child{grid-column:1/-1}
 .event-form-actions{display:flex;justify-content:flex-end;margin-top:1rem}
-#eventForm{width:min(100%,1100px);max-width:1100px;margin-inline:auto;box-sizing:border-box}
+.event-builder-page #eventForm,.event-builder-page .event-form-section{width:100%;max-width:none;min-width:0}
+.event-builder-page #eventForm{margin-inline:0;box-sizing:border-box}
 #participant-assignment-fields{margin-top:1rem;padding:1.15rem;border:1px solid rgba(109,33,64,.3);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(244,225,231,.74));box-shadow:0 14px 30px rgba(72,28,48,.23),inset 0 1px 0 rgba(255,255,255,.82)}
 #participant-assignment-fields legend{padding:0 .55rem;color:var(--berry,#6d2140);font-weight:700}
 #participant-assignment-fields select{background:#fff;border:1px solid rgba(109,33,64,.3);box-shadow:0 4px 12px rgba(72,28,48,.12)}
