@@ -85,6 +85,10 @@ On event detail pages, administrators see the saved assigned-participant
 snapshot when one exists. Events without assigned participants continue to
 show only their existing self-registration behavior.
 
+The administrator enrollment heading uses **Registered Users** in English and
+**Usuarios Auto-Registrados** in Spanish to distinguish website
+self-registration from administrator-assigned external participants.
+
 Ad-hoc entries are deduplicated by case-insensitive trimmed name plus phone
 digits. A matching selected registered participant wins over an ad-hoc entry.
 The final rows are copied into `event_participant`; later list edits cannot

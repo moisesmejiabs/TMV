@@ -814,6 +814,12 @@ h1{
   white-space: pre-line;
 }
 
+.event-information-section > h2:not(:first-child){
+  margin-top: 1.6rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(109,33,64,0.22);
+}
+
 .event-detail-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

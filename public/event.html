@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=form-field-contrast-20260725" />
+  <link rel="stylesheet" href="/static/css/style.css?v=event-info-group-20260725" />
   <style>
     .event-detail-media {
       width: min(100%, 452px);
@@ -125,12 +125,10 @@
 
       <h1 id="title" class="nav-gold">Event</h1>
 
-      <section class="event-detail-section">
+      <section class="event-detail-section event-information-section">
         <h2 data-en="About This Event" data-es="Sobre Este Evento">About This Event</h2>
         <p id="about"></p>
-      </section>
 
-      <section class="event-detail-section">
         <h2 data-en="Event Details" data-es="Detalles del Evento">Event Details</h2>
         <dl class="event-detail-grid">
           <div>
@@ -154,9 +152,7 @@
             <dd><span id="cap"></span> · <span id="count"></span> <span data-en="registered" data-es="registrados">registered</span></dd>
           </div>
         </dl>
-      </section>
 
-      <section class="event-detail-section">
         <h2 data-en="Requirements" data-es="Requisitos">Requirements</h2>
         <p id="req"></p>
       </section>
@@ -366,7 +362,7 @@
             <ul>${assigned.map(person => `<li><strong>${eventSafe(person.name)}</strong>${person.phone ? ` — ${eventSafe(person.phone)}` : ''}${person.address ? `<br><small>${eventSafe(person.address)}</small>` : ''}</li>`).join('')}</ul>
           </div>
         </section>` : '';
-      const registeredHtml = '<h3 data-en="Self-Registered Users" data-es="Usuarios Auto-Registrados">Self-Registered Users</h3>' +
+      const registeredHtml = '<h3 data-en="Registered Users" data-es="Usuarios Auto-Registrados">Registered Users</h3>' +
         (users.length ? '<ul>'+users.map(u=>`<li>${eventSafe(u.name)} (${eventSafe(u.email)})</li>`).join('')+'</ul>' : '<p data-en="No registrations." data-es="No hay registros.">No registrations.</p>');
       document.getElementById('admin').innerHTML = assignedHtml + registeredHtml;
       applyEventLanguage();

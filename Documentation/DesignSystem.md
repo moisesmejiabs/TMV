@@ -128,3 +128,8 @@ details and participant controls do not feel compressed. Related core event
 fields—Event Details, Description, and Event Image—belong to one primary
 surface, separated by subheadings and restrained dividers rather than separate
 outer cards.
+
+Event detail pages follow the same grouping principle. About This Event, Event
+Details, and Requirements belong to one `.event-information-section` surface.
+Use internal headings and restrained dividers instead of three separate outer
+cards.
