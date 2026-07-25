@@ -132,4 +132,7 @@ outer cards.
 Event detail pages follow the same grouping principle. About This Event, Event
 Details, and Requirements belong to one `.event-information-section` surface.
 Use internal headings and restrained dividers instead of three separate outer
-cards.
+cards. Metadata rows inside that surface remain flat: do not add individual
+backgrounds, rounded borders, or shadows to Day, Time, Presenter, Location, or
+Capacity. The enclosing event-information surface is the single background
+rectangle.

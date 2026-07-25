@@ -835,6 +835,14 @@ h1{
   box-shadow: var(--shadow-nested);
 }
 
+.event-information-section .event-detail-grid > div{
+  padding: 0.45rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .event-detail-grid dt{
   color: var(--berry);
   font-weight: 800;
