@@ -113,6 +113,11 @@ on the right. The description contains a bold action name and a short
 explanation. Use a large checkbox, berry accent color, visible border, and
 small shadow so the control remains easy to identify.
 
+Participant and account selection rows follow the same direction: identifying
+text is grouped on the left and the checkbox is aligned on the far right. Use
+the `.participant-choice-row` pattern so shared form-label rules cannot change
+that alignment.
+
 When selected, strengthen the row border and muted blush background, then
 reveal the associated nested content surface immediately below it. The
 checkbox must expose `aria-controls` and keep `aria-expanded` synchronized with

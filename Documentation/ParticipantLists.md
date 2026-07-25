@@ -68,6 +68,10 @@ the reusable-list selection:
   These people are stored only in the event snapshot and are not added to the
   reusable participant directory.
 
+Checkboxes for optional panels, individual participants, and Registered Users
+are aligned to the right of their descriptions. Name and phone/email remain
+grouped on the left for quick scanning.
+
 The former participant-management link and the generic “participants outside
 the selected lists” disclosure are not shown in Event Builder. Existing direct
 or ad-hoc selections automatically reopen the appropriate panel while editing.
