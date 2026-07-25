@@ -3145,6 +3145,24 @@ async function handleDonations(request: Request, env: Env, pathname: string) {
       return json(out.results || []);
     }
 
+    const milkRegistrationMatch = pathname.match(/^\/api\/admin\/milk-registrations\/(\d+)$/);
+    if (request.method === 'DELETE' && milkRegistrationMatch) {
+      const admin = await requireAdmin(request, env);
+      if (admin.error) return admin.error;
+
+      const registrationId = Number(milkRegistrationMatch[1]);
+      if (!Number.isSafeInteger(registrationId) || registrationId < 1) {
+        return badRequest('Invalid milk registration ID');
+      }
+
+      const result = await env.DB.prepare(
+        'DELETE FROM milk_giveaway_registration WHERE id = ?'
+      ).bind(registrationId).run();
+
+      if (!result.meta?.changes) return notFound('Milk registration not found');
+      return json({ ok: true, deleted_id: registrationId });
+    }
+
     if (
       request.method === 'GET' &&
       (

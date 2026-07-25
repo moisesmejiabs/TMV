@@ -259,6 +259,33 @@
 .milk-admin-table-card tbody tr:nth-child(even) { background: #fcf8f9; }
 .milk-admin-table-card tbody tr:hover { background: #f5e9ed; }
 
+.milk-admin-delete {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid #a61f45;
+  border-radius: 10px;
+  background: #fff;
+  color: #8a1737;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.milk-admin-delete:hover {
+  background: #a61f45;
+  color: #fff;
+}
+
+.milk-admin-delete:focus-visible {
+  outline: 3px solid rgba(166, 31, 69, 0.28);
+  outline-offset: 2px;
+}
+
+.milk-admin-delete:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .milk-admin-table-card .empty {
   padding: 42px 20px;
   color: #6f5a64;

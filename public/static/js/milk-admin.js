@@ -23,8 +23,11 @@ function currentParams() {
   return params;
 }
 
-async function api(path) {
-  const response = await fetch(path, { credentials: "include" });
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: "include",
+    ...options
+  });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(body.error || "No se pudieron cargar los registros.");
@@ -47,7 +50,7 @@ function formatDate(value) {
 function renderRows(registrations) {
   if (!registrations.length) {
     rowsElement.innerHTML =
-      '<tr><td colspan="8" class="empty">No hay registros que coincidan con estos filtros.</td></tr>';
+      '<tr><td colspan="9" class="empty">No hay registros que coincidan con estos filtros.</td></tr>';
     return;
   }
 
@@ -71,14 +74,55 @@ function renderRows(registrations) {
           <span class="milk-admin-subtle">${escapeHtml(item.registered_by_email)}</span>
         </td>
         <td>${escapeHtml(item.id)}</td>
+        <td>
+          <button
+            type="button"
+            class="milk-admin-delete"
+            data-registration-id="${escapeHtml(item.id)}"
+            data-registration-name="${escapeHtml(item.full_name)}">
+            Eliminar
+          </button>
+        </td>
       </tr>
     `;
   }).join("");
+
+  rowsElement.querySelectorAll(".milk-admin-delete").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const registrationId = button.dataset.registrationId;
+      const registrationName = button.dataset.registrationName || `ID ${registrationId}`;
+      const confirmed = window.confirm(
+        `¿Eliminar permanentemente el registro de ${registrationName}?\n\nEsto elimina solamente este registro de entrega de leche. No elimina la cuenta de usuario.`
+      );
+      if (!confirmed) return;
+
+      button.disabled = true;
+      messageElement.hidden = true;
+      try {
+        await api(`/api/admin/milk-registrations/${encodeURIComponent(registrationId)}`, {
+          method: "DELETE"
+        });
+        await loadRegistrations();
+      } catch (error) {
+        button.disabled = false;
+        if (error.status === 401) {
+          location.replace(`/login.html?next=${encodeURIComponent("/admin-milk-registrations")}`);
+          return;
+        }
+        if (error.status === 403) {
+          location.replace("/");
+          return;
+        }
+        messageElement.textContent = "No se pudo eliminar el registro.";
+        messageElement.hidden = false;
+      }
+    });
+  });
 }
 
 async function loadRegistrations() {
   messageElement.hidden = true;
-  rowsElement.innerHTML = '<tr><td colspan="8" class="empty">Cargando registros…</td></tr>';
+  rowsElement.innerHTML = '<tr><td colspan="9" class="empty">Cargando registros…</td></tr>';
 
   const params = currentParams();
   const suffix = params.toString() ? `?${params}` : "";
@@ -105,7 +149,7 @@ async function loadRegistrations() {
     messageElement.textContent = error.message;
     messageElement.hidden = false;
     rowsElement.innerHTML =
-      '<tr><td colspan="8" class="empty">No se pudieron cargar los datos.</td></tr>';
+      '<tr><td colspan="9" class="empty">No se pudieron cargar los datos.</td></tr>';
   }
 }
 
