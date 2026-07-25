@@ -362,7 +362,7 @@
             <ul>${assigned.map(person => `<li><strong>${eventSafe(person.name)}</strong>${person.phone ? ` — ${eventSafe(person.phone)}` : ''}${person.address ? `<br><small>${eventSafe(person.address)}</small>` : ''}</li>`).join('')}</ul>
           </div>
         </section>` : '';
-      const registeredHtml = '<h3 data-en="Registered Users" data-es="Registered Users">Registered Users</h3>' +
+      const registeredHtml = '<h3 data-en="Registered Users" data-es="Usuarios Registrados">Registered Users</h3>' +
         (users.length ? '<ul>'+users.map(u=>`<li>${eventSafe(u.name)} (${eventSafe(u.email)})</li>`).join('')+'</ul>' : '<p data-en="No registrations." data-es="No hay registros.">No registrations.</p>');
       document.getElementById('admin').innerHTML = assignedHtml + registeredHtml;
       applyEventLanguage();
