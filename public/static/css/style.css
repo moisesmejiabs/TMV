@@ -21,7 +21,11 @@
   --gold: #c9a86a;
 
   --shadow-soft: 0 14px 34px rgba(95, 52, 71, 0.10);
-  --shadow-strong: 0 24px 60px rgba(95, 52, 71, 0.18);
+  --shadow-surface:
+    0 20px 44px rgba(72, 28, 48, 0.25),
+    0 3px 10px rgba(72, 28, 48, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --shadow-strong: var(--shadow-surface);
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 28px;
@@ -1473,6 +1477,19 @@ span{
 section,
 article{
   border-radius: 22px;
+}
+
+/* Shared content-surface treatment used across every page type. */
+.card,
+.form{
+  border: 1px solid rgba(109,33,64,0.25);
+  background: var(--surface);
+  box-shadow: var(--shadow-surface);
+}
+
+.form{
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border-radius: var(--radius-md);
 }
 
 .muted{
