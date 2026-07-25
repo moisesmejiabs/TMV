@@ -46,6 +46,22 @@ Interactive controls may use smaller shadows for affordance, but navigation,
 menus, dialogs, and overlays should not inherit the full content-surface shadow
 unless they are intentionally presented as primary page content.
 
+## Editable field contrast
+
+Text inputs, date and number controls, textareas, and selects use a solid light
+surface, a two-pixel berry border at moderate opacity, and `--shadow-field`:
+
+```css
+--shadow-field:
+  inset 0 2px 5px rgba(72, 28, 48, 0.12),
+  0 5px 13px rgba(72, 28, 48, 0.16);
+```
+
+Focused fields use a stronger berry border, white background, deeper outer
+shadow, and a gold-tinted four-pixel focus outline. Do not remove the focus
+outline. Checkboxes, radios, buttons, file inputs, and other specialized
+controls keep their component-specific styling.
+
 ## Heading contrast
 
 Standard `h1` through `h6` headings use the shared `--shadow-heading` token:
