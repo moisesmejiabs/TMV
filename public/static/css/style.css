@@ -1144,6 +1144,36 @@ h1{
 }
 
 /* =========================
+   USER PROFILE EDITOR
+========================= */
+.admin-user-page #admin-user-form{
+  width: 100%;
+}
+
+.admin-user-page #admin-user-form input:not([type="file"]),
+.admin-user-page #admin-user-form textarea{
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+}
+
+.admin-user-page #video_url{
+  min-height: 3.5rem;
+}
+
+.admin-user-page #testimony{
+  min-height: 32rem;
+  resize: vertical;
+}
+
+@media (max-width: 600px){
+  .admin-user-page #testimony{
+    min-height: 24rem;
+  }
+}
+
+/* =========================
    END OF FORM COURSE CREATION
 ========================= */
 
