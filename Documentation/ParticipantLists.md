@@ -87,7 +87,10 @@ show only their existing self-registration behavior.
 
 The administrator enrollment heading follows the selected language:
 **Registered Users** in English and **Usuarios Registrados** in Spanish. Do not
-label this section “Self-Registered Users” or “Usuarios Auto-Registrados.”
+label this section “Self-Registered Users” or “Usuarios Auto-Registrados.” The
+registered-user list and its empty state appear in their own event-detail
+surface, separate from Assigned Participants. Event detail pages do not show a
+redundant Back / Volver link.
 
 Ad-hoc entries are deduplicated by case-insensitive trimmed name plus phone
 digits. A matching selected registered participant wins over an ad-hoc entry.
