@@ -1503,6 +1503,45 @@ article{
   border-radius: var(--radius-md);
 }
 
+.content-surface,
+.event-detail-section,
+.course-detail-grid > div,
+.feedback-form,
+.feedback-list-wrap,
+.scroll-list,
+.mission-card .overlay-card,
+.section-card > form:not(.feedback-form){
+  padding: clamp(14px, 2vw, 20px);
+  border: 1px solid rgba(109,33,64,0.22);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.74);
+  box-shadow: var(--shadow-nested);
+}
+
+.event-detail-media,
+.course-detail-media{
+  border: 1px solid rgba(109,33,64,0.20);
+  box-shadow: var(--shadow-nested);
+}
+
+body:not(.home-page) :where(
+  .event-list,
+  .course-list,
+  .workshop-list,
+  .event-list-delete,
+  .workshop-list-delete,
+  .list
+) > li,
+body:not(.home-page) #list > ul > li,
+.testimonial{
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  border: 1px solid rgba(109,33,64,0.20);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.76);
+  box-shadow: var(--shadow-nested);
+}
+
 .muted{
   color: var(--text-soft);
 }
