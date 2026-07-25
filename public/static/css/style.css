@@ -711,6 +711,20 @@ h1{
   gap: 24px;
 }
 
+.event-page main.container,
+.event-page .event-detail-card,
+.event-page .event-detail-card > .event-detail-section,
+.event-page .event-detail-card > #admin,
+.event-page .event-detail-card > #admin > .event-detail-section{
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.event-page main.container{
+  margin-inline: 0;
+}
+
 .event-detail-card #title{
   margin: 0;
 }

@@ -148,3 +148,8 @@ one `.event-participation-section` surface under a bilingual Participation /
 Participación heading for non-administrators. For administrators, this heading
 changes to **Edit and Delete Event / Editar y Eliminar Evento**, with the action
 buttons directly visible.
+
+Event detail pages and every direct or dynamically generated event-detail
+surface use the full available content width. Do not apply narrow `max-width`
+constraints to the information, administration, Assigned Participants, or
+Registered Users sections.
