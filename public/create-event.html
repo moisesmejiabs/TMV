@@ -132,19 +132,24 @@
     <legend>External and Assigned Participants</legend>
     <p><a href="/admin-participants.html">Manage participants and reusable lists</a></p>
     <label>Reusable participant lists</label>
-    <div id="event-participant-lists" class="participant-picker" aria-live="polite"></div>
+    <details class="multi-list-dropdown">
+      <summary id="selected-lists-summary">Select one or more lists</summary>
+      <div id="event-participant-lists" class="participant-picker" aria-live="polite"></div>
+    </details>
+    <p id="selected-list-count" aria-live="polite"></p>
+    <label>Participants in selected lists</label>
+    <div id="selected-list-participants" class="participant-picker" aria-live="polite">
+      <p>Select one or more reusable lists.</p>
+    </div>
     <label>Registered Users</label>
     <p>Select website accounts only when this event should appear in their User View.</p>
     <div id="event-registered-users" class="participant-picker" aria-live="polite"></div>
-    <label>Individual participants</label>
-    <label for="event-participant-scope">Show participants from</label>
-    <select id="event-participant-scope">
-      <option value="all">All external participants</option>
-      <option value="unlisted">Participants not in a reusable list</option>
-    </select>
-    <input id="event-participant-search" type="search" placeholder="Search name or phone">
-    <p id="event-participant-count" aria-live="polite"></p>
-    <div id="event-participants" class="participant-picker" aria-live="polite"></div>
+    <details>
+      <summary>Add individual participants outside the selected lists</summary>
+      <input id="event-participant-search" type="search" placeholder="Search name or phone">
+      <p id="event-participant-count" aria-live="polite"></p>
+      <div id="event-participants" class="participant-picker" aria-live="polite"></div>
+    </details>
     <div id="ad-hoc-participants"></div>
     <button id="add-ad-hoc" type="button">Add Ad-hoc Participant</button>
   </fieldset>
@@ -156,6 +161,7 @@
 .participant-picker{max-height:15rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #ddd;border-radius:.5rem;padding:.5rem;margin:.4rem 0 1rem}
 .participant-picker label{display:block;padding:.35rem;overflow-wrap:anywhere}.ad-hoc-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin:.5rem 0}
 .participant-mode-toggle{display:flex;gap:.6rem;align-items:center;margin-top:1rem}.participant-mode-toggle input{width:auto}
+.multi-list-dropdown{margin:.4rem 0 1rem}.multi-list-dropdown>summary{cursor:pointer;border:1px solid #bbb;border-radius:.45rem;padding:.7rem;background:#fff}
 @media(max-width:650px){.ad-hoc-row{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}}
 </style>
 <script>
@@ -182,19 +188,27 @@ updateParticipantMode();
 
 function renderEventParticipants() {
   const query = document.getElementById("event-participant-search").value;
-  const scope = document.getElementById("event-participant-scope").value;
   const normalized = query.trim().toLowerCase();
   const digits = query.replace(/\D/g, "");
-  const listedIds = new Set(eventLists.flatMap(list => list.members.map(member => Number(member.id))));
-  const scopedIds = /^\d+$/.test(scope)
-    ? new Set((eventLists.find(list => Number(list.id) === Number(scope))?.members || []).map(member => Number(member.id)))
-    : null;
+  const selectedListIds = new Set([...document.querySelectorAll("[data-list-id]:checked")].map(input => Number(input.value)));
+  const selectedLists = eventLists.filter(list => selectedListIds.has(Number(list.id)));
+  const selectedMembers = new Map();
+  selectedLists.forEach(list => list.members.forEach(member => selectedMembers.set(Number(member.id), member)));
+  const selectedNames = selectedLists.map(list => list.name);
+  document.getElementById("selected-lists-summary").textContent = selectedNames.length
+    ? `${selectedNames.length} selected: ${selectedNames.join(", ")}`
+    : "Select one or more lists";
+  document.getElementById("selected-list-count").textContent =
+    `${selectedLists.length} list${selectedLists.length === 1 ? "" : "s"} · ${selectedMembers.size} unique participant${selectedMembers.size === 1 ? "" : "s"}`;
+  document.getElementById("selected-list-participants").innerHTML = selectedMembers.size
+    ? [...selectedMembers.values()].sort((a,b) => a.name.localeCompare(b.name)).map(person =>
+        `<div>${eventEscape(person.name)} <small>${eventEscape(person.phone || "")}</small></div>`).join("")
+    : "<p>Select one or more reusable lists.</p>";
   const visible = eventParticipants.filter(person => {
-    const id = Number(person.id);
-    const inScope = scope === "all" || (scope === "unlisted" ? !listedIds.has(id) : scopedIds?.has(id));
+    const outsideSelectedLists = !selectedMembers.has(Number(person.id));
     const matchesSearch = !normalized || person.name.toLowerCase().includes(normalized) ||
       (digits && String(person.phone || '').replace(/\D/g, '').includes(digits));
-    return inScope && matchesSearch;
+    return outsideSelectedLists && matchesSearch;
   });
   document.getElementById("event-participant-count").textContent = `${visible.length} participant${visible.length === 1 ? "" : "s"}`;
   document.getElementById("event-participants").innerHTML = visible.map(person => `
@@ -222,11 +236,6 @@ async function loadParticipantChoices() {
   eventParticipants = participantData.participants;
   eventLists = lists;
   registeredUsers = users.filter(user => user.role === "user");
-  document.getElementById("event-participant-scope").innerHTML = `
-    <option value="all">All external participants</option>
-    <option value="unlisted">Participants not in a reusable list</option>
-    ${lists.map(list => `<option value="${list.id}">${eventEscape(list.name)} (${list.member_count})</option>`).join("")}
-  `;
   document.getElementById("event-participant-lists").innerHTML = lists.map(list =>
     `<label><input type="checkbox" value="${list.id}" data-list-id> ${eventEscape(list.name)} (${list.member_count})</label>`
   ).join("") || "<p>No saved participant lists.</p>";
@@ -237,7 +246,7 @@ async function loadParticipantChoices() {
 }
 
 document.getElementById("event-participant-search").addEventListener("input", renderEventParticipants);
-document.getElementById("event-participant-scope").addEventListener("change", renderEventParticipants);
+document.getElementById("event-participant-lists").addEventListener("change", renderEventParticipants);
 document.getElementById("event-participants").addEventListener("change", event => {
   if (!event.target.matches("[data-participant-id]")) return;
   const person = eventParticipants.find(item => Number(item.id) === Number(event.target.value));
@@ -279,13 +288,26 @@ async function loadEventForEdit() {
   formEl.elements.requirements.value = event.requirements || "";
   document.getElementById("uses-external-participants").checked = Boolean(event.uses_external_participants);
   updateParticipantMode();
-  const existingResponse = await fetch(`/api/admin/events/${encodeURIComponent(editEventId)}/participants`, {credentials:"include"});
+  const [existingResponse, selectedListsResponse] = await Promise.all([
+    fetch(`/api/admin/events/${encodeURIComponent(editEventId)}/participants`, {credentials:"include"}),
+    fetch(`/api/admin/events/${encodeURIComponent(editEventId)}/participant-lists`, {credentials:"include"})
+  ]);
   const existing = await existingResponse.json().catch(() => []);
+  const selectedSources = await selectedListsResponse.json().catch(() => []);
   if (!existingResponse.ok) throw new Error(existing.error || "Failed to load event participants");
+  if (!selectedListsResponse.ok) throw new Error(selectedSources.error || "Failed to load selected participant lists");
+  const selectedSourceIds = new Set(selectedSources.map(list => Number(list.id)));
+  document.querySelectorAll("[data-list-id]").forEach(input => {
+    input.checked = selectedSourceIds.has(Number(input.value));
+  });
+  const selectedMemberIds = new Set(
+    eventLists.filter(list => selectedSourceIds.has(Number(list.id)))
+      .flatMap(list => list.members.map(member => Number(member.id)))
+  );
   for (const person of existing) {
     if (person.participant_type === "registered" && person.participant_id) {
       const match = eventParticipants.find(item => Number(item.id) === Number(person.participant_id));
-      if (match) match.selected = true;
+      if (match && !selectedMemberIds.has(Number(person.participant_id))) match.selected = true;
     } else if (person.participant_type === "registered" && person.user_id) {
       const input = document.querySelector(`[data-registered-user-id][value="${Number(person.user_id)}"]`);
       if (input) input.checked = true;

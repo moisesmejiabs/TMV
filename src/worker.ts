@@ -1154,6 +1154,17 @@ async function handleParticipants(request: Request, env: Env, pathname: string) 
     return json(out.results || []);
   }
 
+  const eventListsMatch = pathname.match(/^\/api\/admin\/events\/(\d+)\/participant-lists$/);
+  if (request.method === 'GET' && eventListsMatch) {
+    const admin = await requireAdmin(request, env);
+    if (admin.error) return admin.error;
+    const out = await env.DB.prepare(`
+      SELECT participant_list_id AS id,list_name
+      FROM event_participant_list WHERE event_id = ? ORDER BY LOWER(list_name)
+    `).bind(Number(eventListsMatch[1])).all();
+    return json(out.results || []);
+  }
+
   return null;
 }
 
@@ -1266,6 +1277,25 @@ function eventParticipantStatements(env: Env, eventId: number, rows: any[]) {
     row.address,
     now
   ));
+}
+
+function eventListStatements(env: Env, eventId: number, listIds: number[], lists: any[]) {
+  const names = new Map(lists.map((list: any) => [Number(list.id), String(list.name)]));
+  const now = isoNow();
+  return listIds.map((listId) => env.DB.prepare(`
+    INSERT INTO event_participant_list (event_id,participant_list_id,list_name,created_at)
+    VALUES (?,?,?,?)
+  `).bind(eventId, listId, names.get(listId) || 'Participant list', now));
+}
+
+async function selectedParticipantLists(env: Env, value: unknown) {
+  const ids = integerIds(value);
+  if (!ids.length) return { ids, lists: [] as any[] };
+  const placeholders = ids.map(() => '?').join(',');
+  const out = await env.DB.prepare(
+    `SELECT id,name FROM participant_list WHERE id IN (${placeholders})`
+  ).bind(...ids).all();
+  return { ids, lists: (out.results || []) as any[] };
 }
 
 async function handleMilkGiveaway(request: Request, env: Env, pathname: string) {
@@ -1517,6 +1547,9 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       ? await resolveEventParticipants(env, body)
       : { error: null, rows: [] };
     if (resolved.error) return badRequest(resolved.error);
+    const selectedLists = usesExternalParticipants
+      ? await selectedParticipantLists(env, (body as any).participant_list_ids)
+      : { ids: [], lists: [] as any[] };
 
     const update = env.DB.prepare(`
       UPDATE event
@@ -1529,6 +1562,8 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       ? (await env.DB.batch([
           update,
           env.DB.prepare('DELETE FROM event_participant WHERE event_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM event_participant_list WHERE event_id = ?').bind(id),
+          ...eventListStatements(env, id, selectedLists.ids, selectedLists.lists),
           ...eventParticipantStatements(env, id, resolved.rows)
         ]))[0]
       : await update.run();
@@ -1801,6 +1836,9 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
       ? await resolveEventParticipants(env, body)
       : { error: null, rows: [] };
     if (resolved.error) return badRequest(resolved.error);
+    const selectedLists = usesExternalParticipants
+      ? await selectedParticipantLists(env, (body as any).participant_list_ids)
+      : { ids: [], lists: [] as any[] };
 
     const res = await env.DB.prepare(
       'INSERT INTO event (name,date,presenter,about,location,requirements,image_url,capacity,uses_external_participants,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
@@ -1819,8 +1857,12 @@ async function handleEvents(request: Request, env: Env, pathname: string) {
     ).run();
 
     const eventId = Number(res.meta.last_row_id);
-    if (resolved.rows.length) {
-      await env.DB.batch(eventParticipantStatements(env, eventId, resolved.rows));
+    const assignmentStatements = [
+      ...eventListStatements(env, eventId, selectedLists.ids, selectedLists.lists),
+      ...eventParticipantStatements(env, eventId, resolved.rows)
+    ];
+    if (assignmentStatements.length) {
+      await env.DB.batch(assignmentStatements);
     }
     return json({ id: eventId });
   }
