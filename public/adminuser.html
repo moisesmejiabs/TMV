@@ -1,507 +1,176 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tu Mejor Versión — User Profile</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724">
 </head>
 <body data-page-type="user">
   <header class="top">
     <div class="brand" style="text-align: center;">
-
-      <img src="/static/images/TuMejorVersionBird.png"
-          alt="Logo"
-          class="brand-img flipped">
-      
+      <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img flipped">
       <h1 class="nav-gold">
-        <span 
-          data-en="Tu<br>Mejor<br>Version" 
-          data-es="Tu<br>Mejor<br>Versión">
-        </span>
-      </h1> 
-      <img src="/static/images/TuMejorVersionBird.png"
-          alt="Logo"
-          class="brand-img flipped">
-
-      <!-- Right side: Auth controls -->
+        <span data-en="Tu<br>Mejor<br>Version" data-es="Tu<br>Mejor<br>Versión"></span>
+      </h1>
+      <img src="/static/images/TuMejorVersionBird.png" alt="" class="brand-img flipped">
       <div id="nav-auth" style="display:flex; gap:12px; align-items:center;"></div>
-
     </div>
 
     <div style="margin-bottom: 20px;">
-      <!-- 🌐 Language toggle buttons -->
       <span class="lang-toggle">
         <button type="button" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</button>
         <span class="lang-sep">|</span>
         <button type="button" class="lang-btn" onclick="setLanguage('es')">🇲🇽 ES</button>
       </span>
     </div>
-    
+
     <div class="nav-container">
-      <!-- Hamburger Button -->
-      <button id="menu-toggle" class="menu-toggle">
+      <button id="menu-toggle" class="menu-toggle"
+              data-aria-label-en="Open menu" data-aria-label-es="Abrir menú"
+              aria-label="Open menu">
         <span></span>
         <span></span>
         <span></span>
       </button>
 
-      <!-- Overlay Menu -->
       <nav id="mobile-menu" class="mobile-menu">
-
-        <a href="/" class="nav-btn">
-          <span data-en="Home" data-es="Inicio"></span>
-        </a>
-
-        <a href="/courses" class="nav-btn">
-          <span data-en="Courses" data-es="Cursos"></span>
-        </a>
-
-        <a href="/events" class="nav-btn">
-          <span data-en="Events" data-es="Eventos"></span>
-        </a>
-
-        <a href="/donate" class="nav-btn">
-          <span data-en="Donate" data-es="Donar"></span>
-        </a>        <a href="/forum" class="nav-btn">
-          <span data-en="Forum" data-es="Foro"></span>
-        </a>
-
-        <a href="/about" class="nav-btn">
-          <span data-en="About Us" data-es="Sobre Nosotros"></span>
-        </a>
-
-        <a href="/testimonials" class="nav-btn">
-          <span data-en="Testimonials" data-es="Testimonios"></span>
-        </a>
-
+        <a href="/" class="nav-btn"><span data-en="Home" data-es="Inicio"></span></a>
+        <a href="/courses" class="nav-btn"><span data-en="Courses" data-es="Cursos"></span></a>
+        <a href="/events" class="nav-btn"><span data-en="Events" data-es="Eventos"></span></a>
+        <a href="/donate" class="nav-btn"><span data-en="Donate" data-es="Donar"></span></a>
+        <a href="/forum" class="nav-btn"><span data-en="Forum" data-es="Foro"></span></a>
+        <a href="/about" class="nav-btn"><span data-en="About Us" data-es="Sobre Nosotros"></span></a>
+        <a href="/testimonials" class="nav-btn"><span data-en="Testimonials" data-es="Testimonios"></span></a>
         <div id="auth-links" class="auth-links"></div>
-
       </nav>
-    </div>>
+    </div>
   </header>
-<body>
-  <h1 class="nav-gold">
-    <span data-en="User Profile" data-es="Perfil de Usuario"></span>
-  </h1>
-
-  <div id="me" class="section-card">
-  <h3>Current User</h3>
-  <p><b>Name:</b> <span id="me-name"></span></p>
-  <p><b>Email:</b> <span id="me-email"></span></p>
-  </div>
-
-  <p><a href="/">Administrative</a></p>
-
-  <section class="section-card">
-    <h2>Profile Information</h2>
-
-    <form id="admin-user-form" enctype="multipart/form-data">
-
-      <div>
-        <label for="username">Username</label><br>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          placeholder="Enter username"
-        >
-      </div>
-
-      <br>
-
-      <div>
-        <label for="first_name">First Name</label><br>
-        <input
-          type="text"
-          id="first_name"
-          name="first_name"
-          placeholder="Enter first name"
-        >
-      </div>
-
-      <br>
-
-      <div>
-        <label for="last_name">Last Name</label><br>
-        <input
-          type="text"
-          id="last_name"
-          name="last_name"
-          placeholder="Enter last name"
-        >
-      </div>
-
-      <br>
-
-      <div>
-        <label for="email">E-mail</label><br>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="Enter email"
-        >
-      </div>
-
-      <br>
-
-      <div>
-        <label for="password">New Password</label><br>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Leave blank if not changing password"
-        >
-      </div>
-
-      <br>
-
-      <div>
-        <label for="photo">Upload Photo</label><br>
-        <input
-          type="file"
-          id="photo"
-          name="photo"
-          accept="image/*"
-        >
-      </div>
-
-      <br>
-
-      <div>
-        <label for="video_url">Testimony Video URL</label><br>
-        <input
-          type="url"
-          id="video_url"
-          name="video_url"
-          placeholder="Paste YouTube video URL"
-        >
-        <p style="font-size: 0.9rem; color: #555;">Enter a YouTube video link for admin approval.</p>
-      </div>
-
-      <br>
-
-      <div>
-        <label for="testimony">Testimony</label><br>
-        <textarea
-          id="testimony"
-          name="testimony"
-          rows="8"
-          placeholder="Write your testimony here..."
-        ></textarea>
-      </div>
-
-      <br>
-
-      <button type="submit">Save Changes</button>
-      <p id="profile-status"></p>
-
-    </form>
-  </section>
-  <section>
-    <h2>Pending Agreement Documents</h2>
-    <div id="pending-agreements"></div>
-  </section>
-
-</body> 
-</main>
-<script>
-  async function api(path, opts = {}) {
-    console.log("🌐 API CALL →", path);
-    console.log("📤 Options →", opts);
-
-    let r;
-    try {
-      r = await fetch(path, {
-        credentials: 'include',
-        headers: {
-          ...(opts.body ? { 'content-type': 'application/json' } : {})
-        },
-        ...opts
-      });
-    } catch (err) {
-      console.error("❌ FETCH FAILED:", err);
-      throw err;
-    }
-
-    console.log("📡 Response status:", r.status);
-
-    let j;
-    try {
-      j = await r.json();
-      console.log("📦 Response JSON:", j);
-    } catch (err) {
-      console.warn("⚠️ Failed to parse JSON");
-      j = null;
-    }
-
-    if (!r.ok) {
-      console.error("❌ API ERROR:", j);
-      throw new Error(j?.error || 'Failed');
-    }
-
-    console.log("✅ API SUCCESS");
-    return j;
-  }
-(async () => {
-  try {
-    console.log("REGISTER USER ADMIN PAGE: starting");
-
-    const me = await api('/api/me');
-    console.log("REGISTER USER ADMIN PAGE:  /api/me =", me);
-
-    // 🔐 AUTH CHECK
-    if (!me) {
-      console.log("❌ No user session → redirecting to login");
-      window.location.href = "/login.html";
-      return;
-    }
-
-    console.log("🧩 Starting form population...");
-
-    const usernameEl = document.getElementById('username');
-    const emailEl = document.getElementById('email');
-    const firstNameEl = document.getElementById('first_name');
-    const lastNameEl = document.getElementById('last_name');
-    const testimonyEl = document.getElementById('testimony');
-
-    console.log("🔍 Elements found:", {
-      usernameEl,
-      emailEl,
-      firstNameEl,
-      lastNameEl,
-      testimonyEl
-    });
-
-    if (usernameEl) {
-      usernameEl.value = me.name || '';
-      console.log("✏️ username populated:", usernameEl.value);
-    }
-
-    if (emailEl) {
-      emailEl.value = me.email || '';
-      console.log("✏️ email populated:", emailEl.value);
-    }
-
-    if (firstNameEl) {
-      firstNameEl.value = me.first_name || '';
-      console.log("✏️ first_name populated:", firstNameEl.value);
-    }
-
-    if (lastNameEl) {
-      lastNameEl.value = me.last_name || '';
-      console.log("✏️ last_name populated:", lastNameEl.value);
-    }
-
-    if (testimonyEl) {
-      testimonyEl.value = me.testimony || '';
-      console.log("✏️ testimony populated:", testimonyEl.value);
-    }
-
-    const videoUrlEl = document.getElementById('video_url');
-    if (videoUrlEl) {
-      videoUrlEl.value = me.video_url || '';
-      console.log("✏️ video_url populated:", videoUrlEl.value);
-    }
-
-    console.log("✅ Form population complete");
-
-    //const users = await api('/api/admin/users');
-    //console.log("REGISTER USER ADMIN PAGE:  /api/admin/users =", users);
-
-    //const usersEl = document.getElementById('users');
-    //if (!usersEl) {
-    //  console.error("REGISTER USER ADMIN PAGE:  #users element not found");
-    //  return;
-    //}
-
-    //usersEl.innerHTML =
-    //  '<ul>' +
-    //  users.map(u => {
-    //    const isAdmin = u.role === 'admin';
-    //    return `
-    //      <li>
-    //        ${u.id} — ${u.name} (${u.email}) [${u.role}]
-    //        <button
-    //          data-id="${u.id}"
-    //          data-name="${escapeHtml(u.name || '')}"
-    //          class="toggle-admin">
-    //          ${isAdmin ? 'Remove Admin' : 'Make Admin'}
-    //        </button>
-    //        <button
-    //          data-id="${u.id}"
-    //          data-name="${escapeHtml(u.name || '')}"
-    //          class="del">
-    //          Delete
-    //        </button>
-    //      </li>
-    //    `;
-    //  }).join('') +
-    //  '</ul>';
-
-    document.querySelectorAll('.del').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-id');
-        const name = btn.getAttribute('data-name');
-
-        console.log("DELETE CLICK: id =", id, "name =", name);
-
-        if (!confirm(`Delete user ${name || id}?`)) {
-          console.log("DELETE CANCELLED");
-          return;
-        }
-
-        try {
-          const result = await api(`/api/admin/users/${id}`, {
-            method: 'DELETE'
-          });
-
-          console.log("DELETE SUCCESS:", result);
-          location.reload();
-        } catch (err) {
-          console.error("DELETE FAILED:", err);
-          alert(`Delete failed: ${err.message}`);
-        }
-      });
-    });
-
-    document.getElementById('admin-user-form')
-    .addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const id = me.id /* selected user id */
-
-      const body = {
-        username: document.getElementById('username').value,
-        first_name: document.getElementById('first_name').value,
-        last_name: document.getElementById('last_name').value,
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value,
-        image_url: document.getElementById('photo').value,
-        testimony: document.getElementById('testimony').value,
-        video_url: document.getElementById('video_url').value
-      };
-
-      console.log("📤 Sending update:", body);
-
-      await api(`/api/me`, {
-        method: 'PATCH',
-        body: JSON.stringify(body)
-      });
-
-      alert("✅ User updated");
-    });
-
-    document.querySelectorAll('.toggle-admin').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-id');
-        const rowText = btn.parentElement ? btn.parentElement.textContent : '';
-        const currentlyAdmin = rowText.includes('[admin]');
-        const newRole = currentlyAdmin ? 'user' : 'admin';
-
-        console.log("TOGGLE ADMIN CLICK:");
-        console.log("  id =", id);
-        console.log("  currentlyAdmin =", currentlyAdmin);
-        console.log("  newRole =", newRole);
-
-        if (!confirm(`Change user ${id} role to "${newRole}"?`)) {
-          console.log("ROLE CHANGE CANCELLED");
-          return;
-        }
-
-        try {
-          const result = await api(`/api/admin/users/${id}/role`, {
-            method: 'PATCH',
-            body: JSON.stringify({ role: newRole })
-          });
-
-          console.log("ROLE CHANGE SUCCESS:", result);
-          location.reload();
-        } catch (err) {
-          console.error("ROLE CHANGE FAILED:", err);
-          alert(`Role update failed: ${err.message}`);
-        }
-      });
-    });
-
-    async function loadPendingAgreements() {
-      const container = document.getElementById('pending-agreements');
-      if (!container) return;
-      try {
-        const docs = await api('/api/agreement-docs');
-        const pending = docs.filter((doc) => !doc.acknowledged);
-        const accepted = docs.filter((doc) => doc.acknowledged);
-
-        if (!docs.length) {
-          container.innerHTML = '<p>No agreement documents are currently active.</p>';
-          return;
-        }
-
-        container.innerHTML = `
-          <div style="margin-bottom: 18px;">
-            <strong>Accepted documents</strong>
-            ${accepted.length ? `<ul>${accepted.map((doc) => `
-              <li>${escapeHtml(doc.title)} by ${escapeHtml(doc.author)} <a href="${doc.download_url}" target="_blank">Download</a></li>
-            `).join('')}</ul>` : '<p>No documents accepted yet.</p>'}
-          </div>
-          <div>
-            <strong>Pending documents</strong>
-            ${pending.length ? `<ul>${pending.map((doc) => `
-              <li style="margin-bottom: 10px;">
-                ${escapeHtml(doc.title)} by ${escapeHtml(doc.author)}
-                <a href="${doc.download_url}" target="_blank">Download</a>
-                <button type="button" data-doc-id="${doc.id}" class="acknowledge-doc">Acknowledge</button>
-              </li>
-            `).join('')}</ul>` : '<p>No pending documents.</p>'}
-          </div>
-        `;
-
-        document.querySelectorAll('.acknowledge-doc').forEach((btn) => {
-          btn.addEventListener('click', async () => {
-            const docId = btn.getAttribute('data-doc-id');
-            try {
-              await api(`/api/agreement-docs/${docId}/acknowledge`, { method: 'POST' });
-              await loadPendingAgreements();
-            } catch (err) {
-              alert(`Unable to acknowledge document: ${err.message}`);
-            }
-          });
-        });
-
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('pending') === '1') {
-          const notice = document.createElement('div');
-          notice.style.marginBottom = '16px';
-          notice.style.padding = '12px';
-          notice.style.border = '1px solid #d9534f';
-          notice.style.background = '#f9e6e6';
-          notice.style.color = '#d9534f';
-          notice.textContent = 'You have pending documents that must be acknowledged before you can continue using the site.';
-          container.prepend(notice);
-        }
-      } catch (err) {
-        container.innerHTML = `<p>Error loading documents: ${escapeHtml(err.message)}</p>`;
-      }
-    }
-
-    await loadPendingAgreements();
-
-  } catch (err) {
-    console.error("❌ PAGE LOAD ERROR:", err);
-    alert(`Page load failed: ${err.message}`);
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
-  }
-})();
-</script>
-<script src="/static/js/app.js"></script>
-</body></html>
+
+  <main>
+    <h1 class="nav-gold">
+      <span data-en="User Profile" data-es="Perfil de usuario"></span>
+    </h1>
+
+    <div id="me" class="section-card">
+      <h3 data-en="Current User" data-es="Usuario actual"></h3>
+      <p>
+        <b data-en="Name:" data-es="Nombre:"></b>
+        <span id="me-name"></span>
+      </p>
+      <p>
+        <b data-en="Email:" data-es="Correo electrónico:"></b>
+        <span id="me-email"></span>
+      </p>
+    </div>
+
+    <p>
+      <a href="/" data-en="Administration" data-es="Administración"></a>
+    </p>
+
+    <section class="section-card">
+      <h2 data-en="Profile Information" data-es="Información del perfil"></h2>
+
+      <form id="admin-user-form">
+        <div>
+          <label for="username" data-en="Username" data-es="Nombre de usuario"></label><br>
+          <input type="text" id="username" name="username"
+                 data-placeholder-en="Enter username"
+                 data-placeholder-es="Escriba el nombre de usuario">
+        </div>
+
+        <br>
+
+        <div>
+          <label for="first_name" data-en="First Name" data-es="Nombre"></label><br>
+          <input type="text" id="first_name" name="first_name"
+                 data-placeholder-en="Enter first name"
+                 data-placeholder-es="Escriba el nombre">
+        </div>
+
+        <br>
+
+        <div>
+          <label for="last_name" data-en="Last Name" data-es="Apellido"></label><br>
+          <input type="text" id="last_name" name="last_name"
+                 data-placeholder-en="Enter last name"
+                 data-placeholder-es="Escriba el apellido">
+        </div>
+
+        <br>
+
+        <div>
+          <label for="email" data-en="Email" data-es="Correo electrónico"></label><br>
+          <input type="email" id="email" name="email"
+                 data-placeholder-en="Enter email address"
+                 data-placeholder-es="Escriba el correo electrónico">
+        </div>
+
+        <br>
+
+        <div>
+          <label for="password" data-en="New Password" data-es="Nueva contraseña"></label><br>
+          <input type="password" id="password" name="password"
+                 data-placeholder-en="Leave blank if you do not want to change it"
+                 data-placeholder-es="Déjela en blanco si no desea cambiarla">
+        </div>
+
+        <br>
+
+        <div>
+          <span data-en="Upload Photo" data-es="Subir foto"></span><br>
+          <input type="file" id="photo" name="photo" accept="image/*" hidden>
+          <label for="photo" role="button" class="nav-btn"
+                 data-en="Choose photo" data-es="Elegir foto"></label>
+          <span id="photo-name"
+                data-empty-en="No photo selected"
+                data-empty-es="Ninguna foto seleccionada"></span>
+        </div>
+
+        <br>
+
+        <div>
+          <label for="video_url"
+                 data-en="Testimonial Video URL"
+                 data-es="URL del video testimonial"></label><br>
+          <input type="url" id="video_url" name="video_url"
+                 data-placeholder-en="Paste the YouTube video URL"
+                 data-placeholder-es="Pegue la URL del video de YouTube">
+          <p style="font-size: 0.9rem; color: #555;"
+             data-en="Enter a YouTube video link for administrator approval."
+             data-es="Ingrese un enlace de video de YouTube para la aprobación del administrador."></p>
+        </div>
+
+        <br>
+
+        <div>
+          <label for="testimony" data-en="Testimonial" data-es="Testimonio"></label><br>
+          <textarea id="testimony" name="testimony" rows="8"
+                    data-placeholder-en="Write your testimonial here..."
+                    data-placeholder-es="Escriba su testimonio aquí..."></textarea>
+        </div>
+
+        <br>
+
+        <button type="submit" data-en="Save Changes" data-es="Guardar cambios"></button>
+        <p id="profile-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="section-card">
+      <h2 data-en="Agreement Documents" data-es="Documentos de acuerdos"></h2>
+      <div id="pending-agreements" aria-live="polite"></div>
+    </section>
+
+    <section class="section-card">
+      <h2 data-en="My Events" data-es="Mis eventos"></h2>
+      <p data-en="Only events associated with your signed-in account are shown."
+         data-es="Solo se muestran los eventos asociados con su cuenta."></p>
+      <div id="my-events" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/adminuser.js"></script>
+</body>
+</html>
