@@ -137,7 +137,7 @@
   border: 1px solid rgba(109, 33, 64, 0.12);
   border-radius: 22px;
   background: #fff;
-  box-shadow: 0 12px 30px rgba(109, 33, 64, 0.08);
+  box-shadow: var(--shadow-surface);
 }
 
 .milk-admin-toolbar h2 { margin: 0; }
@@ -148,6 +148,11 @@
   grid-template-columns: minmax(220px, 2fr) minmax(210px, 1fr) auto auto;
   align-items: end;
   gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(109, 33, 64, 0.20);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--shadow-nested);
 }
 
 .milk-admin-filters label {

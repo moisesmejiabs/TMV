@@ -45,3 +45,9 @@ npm run deploy
 
 Never deploy to a `workers.dev` test address. The project configuration keeps
 `workers_dev` and preview URLs disabled.
+
+## Participant management
+
+Participant directory, reusable-list, event-snapshot, role, and migration
+details are in
+[`Documentation/ParticipantLists.md`](Documentation/ParticipantLists.md).

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tu Mejor Versión</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=unified-header-20260724" />
+  <link rel="stylesheet" href="/static/css/style.css?v=event-full-width-20260725" />
   <style>
     .event-detail-media {
       width: min(100%, 452px);
@@ -40,7 +40,7 @@
     }
   </style>
 </head>
-<body>
+<body class="event-page">
     <header class="top">
     <div class="brand" style="text-align: center;">
 
@@ -125,12 +125,10 @@
 
       <h1 id="title" class="nav-gold">Event</h1>
 
-      <section class="event-detail-section">
+      <section class="event-detail-section event-information-section">
         <h2 data-en="About This Event" data-es="Sobre Este Evento">About This Event</h2>
         <p id="about"></p>
-      </section>
 
-      <section class="event-detail-section">
         <h2 data-en="Event Details" data-es="Detalles del Evento">Event Details</h2>
         <dl class="event-detail-grid">
           <div>
@@ -154,17 +152,17 @@
             <dd><span id="cap"></span> · <span id="count"></span> <span data-en="registered" data-es="registrados">registered</span></dd>
           </div>
         </dl>
-      </section>
 
-      <section class="event-detail-section">
         <h2 data-en="Requirements" data-es="Requisitos">Requirements</h2>
         <p id="req"></p>
       </section>
 
-      <div id="actions" class="event-actions"></div>
+      <section class="event-detail-section event-participation-section">
+        <h2 id="event-actions-title" data-en="Participation" data-es="Participación">Participation</h2>
+        <div id="actions" class="event-actions"></div>
+      </section>
       <div id="admin"></div>
 
-      <p><a href="/events.html" data-en="Back" data-es="Volver">Back</a></p>
       <div style="margin-top:10px;">
         <a
           href="#"
@@ -230,6 +228,7 @@
 
   <script>
   function q(name){return new URLSearchParams(location.search).get(name)}
+  function eventSafe(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function imageSrc(value){
     if(!value) return '';
     if(/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
@@ -329,25 +328,64 @@
 
     const me = await api('/api/me').catch(()=>null);
     let html='';
-    if(!me){ html = '<p><a href="/login.html" data-en="Login" data-es="Iniciar sesión">Login</a> <span data-en="to register." data-es="para registrarte.">to register.</span></p>'; }
+    let adminRegistrationHtml='';
+    if(!me){
+      html = e.uses_external_participants
+        ? '<p data-en="Participation for this event is managed by the administrator." data-es="La participación para este evento es administrada por el administrador.">Participation for this event is managed by the administrator.</p>'
+        : '<p><a href="/login.html" data-en="Login" data-es="Iniciar sesión">Login</a> <span data-en="to register." data-es="para registrarte.">to register.</span></p>';
+    }
     else {
-      html += e.enrolled ? '<button id="cancel" data-en="Cancel Registration" data-es="Cancelar Registro">Cancel Registration</button>' : '<button id="enroll" data-en="Register" data-es="Registrarse">Register</button>';
-      if(me.role==='admin') html += ` <a class="btn" href="/create-event.html?id=${encodeURIComponent(id)}" data-en="Edit Event" data-es="Editar Evento">Edit Event</a> <button id="delete" data-en="Delete Event" data-es="Eliminar Evento">Delete Event</button>`;
+      if (e.uses_external_participants) {
+        html += '<p data-en="Participation for this event is managed by the administrator." data-es="La participación para este evento es administrada por el administrador.">Participation for this event is managed by the administrator.</p>';
+      } else {
+        const registrationButton = e.enrolled ? '<button id="cancel" data-en="Cancel Registration" data-es="Cancelar Registro">Cancel Registration</button>' : '<button id="enroll" data-en="Register" data-es="Registrarse">Register</button>';
+        if (me.role === 'admin') adminRegistrationHtml = registrationButton;
+        else html += registrationButton;
+      }
+      if(me.role==='admin') {
+        const actionsTitle = document.getElementById('event-actions-title');
+        actionsTitle.setAttribute('data-en', 'Edit and Delete Event');
+        actionsTitle.setAttribute('data-es', 'Editar y Eliminar Evento');
+        html += `
+          <a class="btn" href="/create-event.html?id=${encodeURIComponent(id)}" data-en="Edit Event" data-es="Editar Evento">Edit Event</a>
+          <button id="delete" data-en="Delete Event" data-es="Eliminar Evento">Delete Event</button>`;
+      }
     }
     document.getElementById('actions').innerHTML = html;
     applyEventLanguage();
 
-    const enrollBtn=document.getElementById('enroll');
-    if(enrollBtn) enrollBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/enroll`,{method:'POST'}); location.reload();});
-    const cancelBtn=document.getElementById('cancel');
-    if(cancelBtn) cancelBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/cancel`,{method:'POST'}); location.reload();});
+    const bindRegistrationButtons=()=>{
+      const enrollBtn=document.getElementById('enroll');
+      if(enrollBtn) enrollBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/enroll`,{method:'POST'}); location.reload();});
+      const cancelBtn=document.getElementById('cancel');
+      if(cancelBtn) cancelBtn.addEventListener('click', async()=>{await api(`/api/events/${id}/cancel`,{method:'POST'}); location.reload();});
+    };
+    bindRegistrationButtons();
     const delBtn=document.getElementById('delete');
     if(delBtn) delBtn.addEventListener('click', async()=>{if(confirm(eventText('Delete this event? Feedback will be saved for future display.', '¿Eliminar este evento? Los comentarios se guardarán para mostrarlos en el futuro.'))){await api(`/api/events/${id}`,{method:'DELETE'}); location.href='/events.html';}});
 
     if(me && me.role==='admin'){
-      const users = await api(`/api/events/${id}/registered`);
-      document.getElementById('admin').innerHTML = '<h3 data-en="Registered Users" data-es="Usuarios Registrados">Registered Users</h3>' + (users.length?('<ul>'+users.map(u=>`<li>${u.name} (${u.email})</li>`).join('')+'</ul>'):'<p data-en="No registrations." data-es="No hay registros.">No registrations.</p>');
+      const [assigned, users] = await Promise.all([
+        api(`/api/admin/events/${id}/participants`),
+        api(`/api/events/${id}/registered`)
+      ]);
+      const assignedHtml = assigned.length ? `
+        <section class="event-detail-section">
+          <h3 data-en="Assigned Participants" data-es="Participantes Asignados">Assigned Participants</h3>
+          <p>${assigned.length} participant${assigned.length === 1 ? '' : 's'}</p>
+          <div style="max-height:18rem;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #ddd;border-radius:.5rem;padding:.5rem;">
+            <ul>${assigned.map(person => `<li><strong>${eventSafe(person.name)}</strong>${person.phone ? ` — ${eventSafe(person.phone)}` : ''}${person.address ? `<br><small>${eventSafe(person.address)}</small>` : ''}</li>`).join('')}</ul>
+          </div>
+        </section>` : '';
+      const registeredHtml = `
+        <section class="event-detail-section">
+          <h3 data-en="Registered Users" data-es="Usuarios Registrados">Registered Users</h3>
+          ${users.length ? '<ul>'+users.map(u=>`<li>${eventSafe(u.name)} (${eventSafe(u.email)})</li>`).join('')+'</ul>' : '<p data-en="No registrations." data-es="No hay registros.">No registrations.</p>'}
+          ${adminRegistrationHtml}
+        </section>`;
+      document.getElementById('admin').innerHTML = assignedHtml + registeredHtml;
       applyEventLanguage();
+      bindRegistrationButtons();
     }
   })().catch(err=>{document.getElementById('about').textContent=err.message;});
   </script>

@@ -11,7 +11,22 @@ routes = [
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/milk-giveaway", "/milk-giveaway.html"]
+run_worker_first = [
+  "/milk-giveaway",
+  "/milk-giveaway.html",
+  "/admin",
+  "/admin.html",
+  "/admin-milk-registrations",
+  "/admin-milk-registrations.html",
+  "/admin-participants",
+  "/admin-participants.html",
+  "/adminuser",
+  "/adminuser.html",
+  "/create-event",
+  "/create-event.html",
+  "/event_delete",
+  "/event_delete.html"
+]
 
 [[d1_databases]]
 binding = "DB"
