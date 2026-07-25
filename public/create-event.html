@@ -142,17 +142,21 @@
     <div id="selected-list-participants" class="participant-picker" aria-live="polite">
       <p>Select one or more reusable lists.</p>
     </div>
-    <label>Registered Users</label>
-    <p>Select website accounts only when this event should appear in their User View.</p>
-    <div id="event-registered-users" class="participant-picker" aria-live="polite"></div>
+    <section id="registered-users-section" hidden>
+      <label>Registered Users</label>
+      <p>Select website accounts only when this event should appear in their User View.</p>
+      <div id="event-registered-users" class="participant-picker" aria-live="polite"></div>
+    </section>
     <details>
-      <summary>Add individual participants outside the selected lists</summary>
+      <summary>Add participants outside the selected lists</summary>
+      <h4>Individual participants</h4>
       <input id="event-participant-search" type="search" placeholder="Search name or phone">
       <p id="event-participant-count" aria-live="polite"></p>
       <div id="event-participants" class="participant-picker" aria-live="polite"></div>
+      <h4>Ad-hoc participant</h4>
+      <div id="ad-hoc-participants"></div>
+      <button id="add-ad-hoc" type="button">Add Ad-hoc Participant</button>
     </details>
-    <div id="ad-hoc-participants"></div>
-    <button id="add-ad-hoc" type="button">Add Ad-hoc Participant</button>
   </fieldset>
 
   <button type="submit">Create Event</button>
@@ -175,6 +179,7 @@ let eventParticipants = [];
 let eventLists = [];
 let registeredUsers = [];
 const selectedParticipantListIds = new Set();
+let registeredUsersGroupSelected = false;
 console.log("🔍 event form element:", formEl);
 
 function eventEscape(value) {
@@ -196,9 +201,14 @@ function renderEventParticipants() {
   const selectedLists = eventLists.filter(list => selectedParticipantListIds.has(Number(list.id)));
   const selectedMembers = new Map();
   selectedLists.forEach(list => list.members.forEach(member => selectedMembers.set(Number(member.id), member)));
-  document.getElementById("event-selected-lists").innerHTML = selectedLists.length
-    ? selectedLists.map(list => `<div class="selected-list-row"><span>${eventEscape(list.name)} (${list.member_count})</span><button type="button" data-remove-list="${list.id}">Remove</button></div>`).join("")
+  const selectedRows = [
+    ...selectedLists.map(list => `<div class="selected-list-row"><span>${eventEscape(list.name)} (${list.member_count})</span><button type="button" data-remove-list="${list.id}">Remove</button></div>`),
+    ...(registeredUsersGroupSelected ? [`<div class="selected-list-row"><span>Registered Users (${registeredUsers.length})</span><button type="button" data-remove-registered-users>Remove</button></div>`] : [])
+  ];
+  document.getElementById("event-selected-lists").innerHTML = selectedRows.length
+    ? selectedRows.join("")
     : "<p>No reusable lists selected.</p>";
+  document.getElementById("registered-users-section").hidden = !registeredUsersGroupSelected;
   document.getElementById("selected-list-count").textContent =
     `${selectedLists.length} list${selectedLists.length === 1 ? "" : "s"} · ${selectedMembers.size} unique participant${selectedMembers.size === 1 ? "" : "s"}`;
   document.getElementById("selected-list-participants").innerHTML = selectedMembers.size
@@ -239,6 +249,7 @@ async function loadParticipantChoices() {
   registeredUsers = users.filter(user => user.role === "user");
   document.getElementById("event-participant-list-selector").innerHTML = `
     <option value="">Choose a list…</option>
+    <option value="registered-users">Registered Users (${registeredUsers.length})</option>
     ${lists.map(list => `<option value="${list.id}">${eventEscape(list.name)} (${list.member_count})</option>`).join("")}
   `;
   document.getElementById("event-registered-users").innerHTML = registeredUsers.map(user =>
@@ -249,6 +260,7 @@ async function loadParticipantChoices() {
 
 document.getElementById("event-participant-search").addEventListener("input", renderEventParticipants);
 document.getElementById("event-participant-list-selector").addEventListener("change", event => {
+  if (event.target.value === "registered-users") registeredUsersGroupSelected = true;
   const id = Number(event.target.value);
   if (id) selectedParticipantListIds.add(id);
   event.target.value = "";
@@ -256,8 +268,13 @@ document.getElementById("event-participant-list-selector").addEventListener("cha
 });
 document.getElementById("event-selected-lists").addEventListener("click", event => {
   const button = event.target.closest("[data-remove-list]");
-  if (!button) return;
-  selectedParticipantListIds.delete(Number(button.dataset.removeList));
+  const registeredButton = event.target.closest("[data-remove-registered-users]");
+  if (!button && !registeredButton) return;
+  if (button) selectedParticipantListIds.delete(Number(button.dataset.removeList));
+  if (registeredButton) {
+    registeredUsersGroupSelected = false;
+    document.querySelectorAll("[data-registered-user-id]").forEach(input => { input.checked = false; });
+  }
   renderEventParticipants();
 });
 document.getElementById("event-participants").addEventListener("change", event => {
@@ -315,6 +332,9 @@ async function loadEventForEdit() {
   const selectedMemberIds = new Set(
     eventLists.filter(list => selectedSourceIds.has(Number(list.id)))
       .flatMap(list => list.members.map(member => Number(member.id)))
+  );
+  registeredUsersGroupSelected = existing.some(person =>
+    person.participant_type === "registered" && !person.participant_id && person.user_id
   );
   for (const person of existing) {
     if (person.participant_type === "registered" && person.participant_id) {
@@ -375,7 +395,7 @@ if (!formEl) {
         image_url: imageUrl,
         uses_external_participants: usesExternalParticipants,
         participant_list_ids: usesExternalParticipants ? [...selectedParticipantListIds] : [],
-        registered_user_ids: usesExternalParticipants ? [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)) : [],
+        registered_user_ids: usesExternalParticipants && registeredUsersGroupSelected ? [...document.querySelectorAll("[data-registered-user-id]:checked")].map(input => Number(input.value)) : [],
         participant_ids: usesExternalParticipants ? eventParticipants.filter(person => person.selected).map(person => Number(person.id)) : [],
         ad_hoc_participants: usesExternalParticipants ? [...document.querySelectorAll(".ad-hoc-row")].map(row => ({
           name: row.querySelector("[data-adhoc-name]").value.trim(),

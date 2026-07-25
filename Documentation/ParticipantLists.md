@@ -49,7 +49,9 @@ it to the event; the administrator can use the dropdown repeatedly to add
 multiple lists and remove selections individually. A compact scrollable preview
 shows only the unique combined members of the selected lists. Source-list
 selections are stored so they can be restored while editing. Additional
-individual participants remain available in a separate optional section.
+individual and ad-hoc participants remain available in one collapsed optional
+section. Registered Users is a special dropdown choice; its account picker is
+hidden unless that choice is added.
 
 On event detail pages, administrators see the saved assigned-participant
 snapshot when one exists. Events without assigned participants continue to
