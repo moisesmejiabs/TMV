@@ -90,45 +90,37 @@
     <h1 class="nav-gold"><span id="event-form-title" data-en="Create Event" data-es="Crear Evento"></span></h1>
 
  <form id="eventForm" class="form">
-  <label>Event Name
-    <input name="name" required>
-  </label>
+  <section class="event-form-section event-form-section--rose">
+    <h2>Event Details</h2>
+    <div class="event-form-grid">
+      <label>Event Name<input name="name" required></label>
+      <label>Date & Time<input type="datetime-local" name="date" required></label>
+      <label>Presenter<input name="presenter" required></label>
+      <label>Location<input name="location" required></label>
+      <label>Capacity<input type="number" name="capacity" min="0"></label>
+    </div>
+  </section>
 
-  <label>Date & Time
-    <input type="datetime-local" name="date" required>
-  </label>
+  <section class="event-form-section event-form-section--champagne">
+    <h2>Description</h2>
+    <label>About<textarea name="about" rows="6" required></textarea></label>
+    <label>Requirements<textarea name="requirements" rows="4"></textarea></label>
+  </section>
 
-  <label>Presenter
-    <input name="presenter" required>
-  </label>
+  <section class="event-form-section event-form-section--lavender">
+    <h2>Event Image</h2>
+    <label>Choose image<input type="file" name="image" accept="image/*"></label>
+  </section>
 
-  <label>Location
-    <input name="location" required>
-  </label>
+  <section class="event-form-section event-form-section--participants">
+    <h2>Participation</h2>
+    <label class="participant-mode-toggle">
+      <input id="uses-external-participants" type="checkbox">
+      This event will use an administrator-managed external participant list
+    </label>
+    <p>Leave unchecked for the traditional event flow where registered users register themselves.</p>
 
-  <label>Capacity
-    <input type="number" name="capacity" min="0">
-  </label>
-
-  <label>About
-    <textarea name="about" rows="6" required></textarea>
-  </label>
-
-  <label>Requirements
-    <textarea name="requirements" rows="4"></textarea>
-  </label>
-
-  <label>Event Image
-    <input type="file" name="image" accept="image/*">
-  </label>
-
-  <label class="participant-mode-toggle">
-    <input id="uses-external-participants" type="checkbox">
-    This event will use an administrator-managed external participant list
-  </label>
-  <p>Leave unchecked for the traditional event flow where registered users register themselves.</p>
-
-  <fieldset id="participant-assignment-fields" hidden>
+    <fieldset id="participant-assignment-fields" hidden>
     <legend>External and Assigned Participants</legend>
     <p><a href="/admin-participants.html">Manage participants and reusable lists</a></p>
     <label for="event-participant-list-selector">Add a reusable participant list</label>
@@ -157,9 +149,10 @@
       <div id="ad-hoc-participants"></div>
       <button id="add-ad-hoc" type="button">Add Ad-hoc Participant</button>
     </details>
-  </fieldset>
+    </fieldset>
+  </section>
 
-  <button type="submit">Create Event</button>
+  <div class="event-form-actions"><button type="submit">Create Event</button></div>
 </form>
 
 <style>
@@ -168,7 +161,17 @@
 .participant-mode-toggle{display:flex;gap:.6rem;align-items:center;margin-top:1rem}.participant-mode-toggle input{width:auto}
 .selected-list-row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.45rem .6rem;margin:.35rem 0;border:1px solid #ddd;border-radius:.45rem}
 .selected-list-row button{min-height:2rem;width:auto}
-@media(max-width:650px){.ad-hoc-row{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}}
+.event-form-section{margin:1rem 0;padding:1.15rem;border:1px solid rgba(109,33,64,.15);border-radius:18px;box-shadow:0 10px 24px rgba(95,52,71,.08)}
+.event-form-section>h2{margin-top:0;color:var(--berry,#6d2140)}
+.event-form-section--rose{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(242,215,222,.58))}
+.event-form-section--champagne{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(246,234,223,.72))}
+.event-form-section--lavender{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(241,233,239,.76))}
+.event-form-section--participants{background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(242,215,222,.42))}
+.event-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem}
+.event-form-grid label:first-child{grid-column:1/-1}
+.event-form-actions{display:flex;justify-content:flex-end;margin-top:1rem}
+#participant-assignment-fields{margin-top:1rem;padding:1rem;border:1px solid rgba(109,33,64,.2);border-radius:14px;background:rgba(255,255,255,.58)}
+@media(max-width:650px){.ad-hoc-row,.event-form-grid{grid-template-columns:1fr}.ad-hoc-row button{width:max-content}.event-form-section{padding:.85rem}}
 </style>
 <script>
 console.log("🚀 eventForm script loaded");
