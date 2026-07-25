@@ -836,11 +836,26 @@ h1{
 }
 
 .event-information-section .event-detail-grid > div{
-  padding: 0.45rem 0;
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.35fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1.25rem, 4vw, 3.5rem);
+  padding: 0.8rem 0;
   border: 0;
+  border-bottom: 1px solid rgba(109,33,64,0.16);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.event-information-section .event-detail-grid > div:last-child{
+  border-bottom: 0;
+}
+
+.event-information-section .event-detail-grid dd{
+  min-height: 1.7rem;
+  padding-left: clamp(1rem, 3vw, 2rem);
+  border-left: 3px solid rgba(109,33,64,0.24);
 }
 
 .event-detail-grid dt{
@@ -857,7 +872,28 @@ h1{
 .event-actions{
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
+}
+
+.event-participation-section .event-actions > p{
+  flex: 1 0 100%;
+  margin: 0 0 0.5rem;
+  padding: 0.85rem 1rem;
+  border-left: 4px solid rgba(109,33,64,0.38);
+  background: rgba(255,255,255,0.56);
+}
+
+@media (max-width: 600px){
+  .event-information-section .event-detail-grid > div{
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .event-information-section .event-detail-grid dd{
+    margin-left: 0.75rem;
+    padding-left: 1rem;
+  }
 }
 
 .feedback-section{

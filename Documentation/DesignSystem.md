@@ -136,3 +136,13 @@ cards. Metadata rows inside that surface remain flat: do not add individual
 backgrounds, rounded borders, or shadows to Day, Time, Presenter, Location, or
 Capacity. The enclosing event-information surface is the single background
 rectangle.
+
+Event metadata uses a consistent key/value layout within that rectangle. Keys
+occupy a fixed left column; values use a wider indented right column with a
+subtle berry vertical divider. Horizontal separators may distinguish rows
+without turning them into individual cards. On narrow screens, stack the value
+below the key while retaining a smaller indentation.
+
+Event registration messaging and administrator Edit/Delete controls belong in
+one `.event-participation-section` surface under a bilingual Participation /
+Participación heading.
