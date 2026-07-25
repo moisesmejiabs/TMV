@@ -92,6 +92,12 @@ registered-user list and its empty state appear in their own event-detail
 surface, separate from Assigned Participants. Event detail pages do not show a
 redundant Back / Volver link.
 
+For traditional self-registration events, the Register / Registrarse or Cancel
+Registration / Cancelar Registro control appears beneath the Registered Users
+list or empty state for administrators. Administrator Edit/Delete actions are
+collapsed behind a high-visibility right-aligned checkbox labeled **Edit and
+Delete Event / Editar y Eliminar Evento** in the Participation section.
+
 Ad-hoc entries are deduplicated by case-insensitive trimmed name plus phone
 digits. A matching selected registered participant wins over an ad-hoc entry.
 The final rows are copied into `event_participant`; later list edits cannot

@@ -884,6 +884,48 @@ h1{
   background: rgba(255,255,255,0.56);
 }
 
+.event-management-toggle{
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid rgba(109,33,64,0.38);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.76);
+  box-shadow: var(--shadow-nested);
+  color: var(--berry);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.event-management-toggle input{
+  flex: 0 0 auto;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: 0;
+  accent-color: var(--berry);
+  filter: drop-shadow(0 3px 4px rgba(72,28,48,0.30));
+}
+
+.event-management-toggle:has(input:checked){
+  border-color: rgba(109,33,64,0.72);
+  background: rgba(242,215,222,0.72);
+}
+
+.event-management-controls{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 0.5rem;
+}
+
+.event-management-controls[hidden]{
+  display: none;
+}
+
 @media (max-width: 600px){
   .event-information-section .event-detail-grid > div{
     grid-template-columns: 1fr;
