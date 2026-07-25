@@ -101,3 +101,9 @@ When selected, strengthen the row border and muted blush background, then
 reveal the associated nested content surface immediately below it. The
 checkbox must expose `aria-controls` and keep `aria-expanded` synchronized with
 the panel's visible state.
+
+Event creation forms use a wide content area (up to `1100px`) so multi-column
+details and participant controls do not feel compressed. Related core event
+fields—Event Details, Description, and Event Image—belong to one primary
+surface, separated by subheadings and restrained dividers rather than separate
+outer cards.

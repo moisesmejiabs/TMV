@@ -40,6 +40,11 @@ disabled and attendance is managed through the saved event snapshot. Turning
 the mode off while editing clears assigned participant snapshots and returns
 the event to self-registration.
 
+The Event Builder uses one wide Event Details surface containing the core
+details, Description, and Event Image fields. Participation remains a separate
+wide surface. Its external-participant control uses a high-visibility checkbox
+on the right side of the description and expands the assignment fieldset below.
+
 The Event Builder accepts reusable-list IDs, individual participant IDs, and
 ad-hoc participant details. It also offers authentication accounts in a
 separate Registered Users group. The server validates IDs, expands current
