@@ -1872,6 +1872,39 @@ body:not(.home-page) #list > ul > li,
   box-shadow: 0 6px 16px rgba(72,28,48,0.42);
 }
 
+.home-page .sponsor-content{
+  display: grid;
+  gap: 18px;
+}
+
+.home-page .sponsor-content > :where(h2, p){
+  margin: 0;
+}
+
+.home-page .sponsor-contact{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(109,33,64,0.54);
+}
+
+.home-page .sponsor-contact p{
+  margin: 0;
+}
+
+@media (max-width: 600px){
+  .home-page .sponsor-contact{
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-page .sponsor-contact .btn{
+    width: 100%;
+  }
+}
+
 @media (max-width: 600px){
   .home-page{
     --home-content-inset: 0px;
