@@ -1722,6 +1722,22 @@ body:not(.home-page) #list > ul > li,
 ========================= */
 .home-page{
   --home-content-inset: 40px;
+  /* High-contrast index treatment: berry shadow opacity is 3× the base. */
+  --shadow-soft: 0 14px 34px rgba(95, 52, 71, 0.30);
+  --shadow-surface:
+    0 20px 44px rgba(72, 28, 48, 0.75),
+    0 3px 10px rgba(72, 28, 48, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --shadow-heading:
+    0 2px 2px rgba(72, 28, 48, 0.48),
+    0 7px 16px rgba(72, 28, 48, 0.54);
+  --shadow-nested:
+    0 9px 22px rgba(72, 28, 48, 0.54),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80);
+  --shadow-field:
+    inset 0 2px 5px rgba(72, 28, 48, 0.36),
+    0 5px 13px rgba(72, 28, 48, 0.48);
+  --shadow-strong: var(--shadow-surface);
   font-size: 16px;
 }
 
@@ -1789,23 +1805,28 @@ body:not(.home-page) #list > ul > li,
 
 .home-page .section-card{
   margin-bottom: 40px;
+  border-color: rgba(109,33,64,0.30);
+}
+
+.home-page :is(.card, .form){
+  border-color: rgba(109,33,64,0.75);
 }
 
 /* Homepage contrast: muted backgrounds with clearly layered inner surfaces. */
 .home-page main.container > .image-slider{
-  border: 1px solid rgba(109,33,64,0.30);
+  border: 1px solid rgba(109,33,64,0.90);
   box-shadow: var(--shadow-surface);
 }
 
 .home-page main.container > .image-slider .image-slider{
-  border: 1px solid rgba(109,33,64,0.22);
+  border: 1px solid rgba(109,33,64,0.66);
   background: rgba(255,255,255,0.72);
   box-shadow: var(--shadow-nested);
 }
 
 .home-page .mission-card .overlay-card{
   padding: clamp(20px, 3vw, 32px);
-  border: 1px solid rgba(109,33,64,0.24);
+  border: 1px solid rgba(109,33,64,0.72);
   border-radius: 24px;
   background: rgba(255,255,255,0.78);
   box-shadow: var(--shadow-nested);
@@ -1814,18 +1835,18 @@ body:not(.home-page) #list > ul > li,
 .home-page .mission-card .overlay-card > p:not(.section-description){
   margin: 0 0 20px;
   padding: 16px 18px;
-  border: 1px solid rgba(109,33,64,0.18);
+  border: 1px solid rgba(109,33,64,0.54);
   border-radius: 14px;
   background: rgba(255,255,255,0.68);
-  box-shadow: 0 6px 16px rgba(72,28,48,0.14);
+  box-shadow: 0 6px 16px rgba(72,28,48,0.42);
 }
 
 .home-page .section-card > .section-description{
   padding: 12px 16px;
-  border: 1px solid rgba(109,33,64,0.16);
+  border: 1px solid rgba(109,33,64,0.48);
   border-radius: 14px;
   background: rgba(255,255,255,0.62);
-  box-shadow: 0 6px 16px rgba(72,28,48,0.13);
+  box-shadow: 0 6px 16px rgba(72,28,48,0.39);
 }
 
 .home-page .workshops-card .workshop-summary-card,
@@ -1834,7 +1855,7 @@ body:not(.home-page) #list > ul > li,
 .home-page .book-presentation,
 .home-page .yt-channel-presentation,
 .home-page .partner-item{
-  border-color: rgba(109,33,64,0.22);
+  border-color: rgba(109,33,64,0.66);
   background: rgba(255,255,255,0.82);
   box-shadow: var(--shadow-nested);
 }
@@ -1847,8 +1868,8 @@ body:not(.home-page) #list > ul > li,
 }
 
 .home-page .partner-media-link{
-  border-color: rgba(109,33,64,0.20);
-  box-shadow: 0 6px 16px rgba(72,28,48,0.14);
+  border-color: rgba(109,33,64,0.60);
+  box-shadow: 0 6px 16px rgba(72,28,48,0.42);
 }
 
 @media (max-width: 600px){
