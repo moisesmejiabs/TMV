@@ -4142,6 +4142,21 @@ export default {
     console.log("   full URL:", url.toString());
     console.log("   search:", url.search);
 
+    if (
+      (request.method === 'GET' || request.method === 'HEAD') &&
+      pathname === '/baby-formula-registration'
+    ) {
+      const destination = new URL('/milk-giveaway', url);
+      destination.search = url.search;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          location: destination.pathname + destination.search,
+          'cache-control': 'public, max-age=3600',
+        },
+      });
+    }
+
     const adminPages = new Set([
       '/admin',
       '/admin.html',

@@ -12,6 +12,7 @@ routes = [
 directory = "./public"
 binding = "ASSETS"
 run_worker_first = [
+  "/baby-formula-registration",
   "/milk-giveaway",
   "/milk-giveaway.html",
   "/admin",
